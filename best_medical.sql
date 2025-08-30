@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Aug 29, 2025 at 11:10 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Host: 127.0.0.1:3306
+-- Generation Time: Aug 30, 2025 at 11:38 AM
+-- Server version: 10.4.25-MariaDB
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -33,7 +33,15 @@ CREATE TABLE `cart_items` (
   `product_id` int(11) DEFAULT NULL,
   `quantity` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `cart_items`
+--
+
+INSERT INTO `cart_items` (`cart_id`, `user_id`, `product_id`, `quantity`, `created_at`) VALUES
+(1, 1, 1, 5, '2025-08-30 06:39:51'),
+(2, 1, 2, 1, '2025-08-30 06:39:51');
 
 -- --------------------------------------------------------
 
@@ -44,7 +52,16 @@ CREATE TABLE `cart_items` (
 CREATE TABLE `categories` (
   `category_id` int(11) NOT NULL,
   `name` varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `categories`
+--
+
+INSERT INTO `categories` (`category_id`, `name`) VALUES
+(1, 'อุปกรณ์การแพทย์'),
+(2, 'อุปกรณ์ป้องกัน'),
+(3, 'เวชภัณฑ์');
 
 -- --------------------------------------------------------
 
@@ -57,7 +74,15 @@ CREATE TABLE `coupons` (
   `code` varchar(50) DEFAULT NULL,
   `discount_percent` int(11) DEFAULT NULL,
   `expire_date` date DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `coupons`
+--
+
+INSERT INTO `coupons` (`coupon_id`, `code`, `discount_percent`, `expire_date`) VALUES
+(1, 'WELCOME10', 10, '2025-12-31'),
+(2, 'NEWYEAR20', 20, '2026-01-15');
 
 -- --------------------------------------------------------
 
@@ -72,7 +97,14 @@ CREATE TABLE `orders` (
   `status` enum('pending','paid','shipping','completed','cancelled') DEFAULT 'pending',
   `shipping_address` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`order_id`, `user_id`, `total_price`, `status`, `shipping_address`, `created_at`) VALUES
+(1, 1, '175.00', 'paid', '123 ถนนสุขใจ กรุงเทพฯ', '2025-08-30 06:39:51');
 
 -- --------------------------------------------------------
 
@@ -86,7 +118,15 @@ CREATE TABLE `order_items` (
   `product_id` int(11) DEFAULT NULL,
   `quantity` int(11) DEFAULT NULL,
   `price` decimal(10,2) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `order_items`
+--
+
+INSERT INTO `order_items` (`order_item_id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
+(1, 1, 1, 5, '25.00'),
+(2, 1, 2, 1, '150.00');
 
 -- --------------------------------------------------------
 
@@ -102,7 +142,14 @@ CREATE TABLE `payments` (
   `status` enum('pending','success','failed') DEFAULT 'pending',
   `slip_url` varchar(255) DEFAULT NULL,
   `paid_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`payment_id`, `order_id`, `method`, `amount`, `status`, `slip_url`, `paid_at`) VALUES
+(1, 1, 'promptpay', '175.00', 'success', 'slips/payment1.png', '2025-08-30 06:39:51');
 
 -- --------------------------------------------------------
 
@@ -119,7 +166,17 @@ CREATE TABLE `products` (
   `category_id` int(11) DEFAULT NULL,
   `image_url` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `products`
+--
+
+INSERT INTO `products` (`product_id`, `name`, `description`, `price`, `stock`, `category_id`, `image_url`, `created_at`) VALUES
+(1, 'หน้ากากอนามัย', 'หน้ากากอนามัย 3 ชั้น ป้องกันฝุ่นและเชื้อโรค', '5.00', 1000, 2, 'mask.jpg', '2025-08-30 06:39:51'),
+(2, 'เครื่องวัดอุณหภูมิ', 'เครื่องวัดอุณหภูมิระบบดิจิทัล', '150.00', 200, 1, 'thermometer.jpg', '2025-08-30 06:39:51'),
+(3, 'เครื่องวัดความดัน', 'เครื่องวัดความดันโลหิตดิจิทัล', '1200.00', 50, 1, 'blood_pressure.jpg', '2025-08-30 06:39:51'),
+(4, 'ถุงมือยาง', 'ถุงมือยางตรวจโรค ใช้แล้วทิ้ง', '300.00', 500, 3, 'gloves.jpg', '2025-08-30 06:39:51');
 
 -- --------------------------------------------------------
 
@@ -134,7 +191,14 @@ CREATE TABLE `shipping` (
   `provider` varchar(100) DEFAULT NULL,
   `status` enum('waiting','in_transit','delivered') DEFAULT NULL,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `shipping`
+--
+
+INSERT INTO `shipping` (`shipping_id`, `order_id`, `tracking_number`, `provider`, `status`, `updated_at`) VALUES
+(1, 1, 'TH1234567890', 'Thailand Post', 'in_transit', '2025-08-30 06:39:51');
 
 -- --------------------------------------------------------
 
@@ -151,7 +215,16 @@ CREATE TABLE `users` (
   `address` text DEFAULT NULL,
   `role` enum('customer','admin','staff') DEFAULT 'customer',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`user_id`, `name`, `email`, `password`, `phone`, `address`, `role`, `created_at`) VALUES
+(1, 'สมชาย ใจดี', 'somchai@example.com', '123456', '0811111111', '123 ถนนสุขใจ กรุงเทพฯ', 'customer', '2025-08-30 06:39:51'),
+(2, 'Admin User', 'admin@example.com', 'admin123', '0822222222', 'สำนักงานใหญ่ กรุงเทพฯ', 'admin', '2025-08-30 06:39:51'),
+(3, 'Staff One', 'staff@example.com', 'staff123', '0833333333', 'คลังสินค้า ปทุมธานี', 'staff', '2025-08-30 06:39:51');
 
 --
 -- Indexes for dumped tables
@@ -228,55 +301,55 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `cart_items`
 --
 ALTER TABLE `cart_items`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `coupons`
 --
 ALTER TABLE `coupons`
-  MODIFY `coupon_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `coupon_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `shipping`
 --
 ALTER TABLE `shipping`
-  MODIFY `shipping_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `shipping_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Constraints for dumped tables

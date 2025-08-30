@@ -5,8 +5,8 @@ import "./globals.css";
 import { Prompt } from "next/font/google";
 
 const prompt = Prompt({
-  subsets: ["thai", "latin"], // รองรับภาษาไทย
-  weight: ["400", "700"], // น้ำหนักตัวอักษร
+  subsets: ["latin","thai"], // รองรับภาษาไทย
+  weight: ["700", "400"], // น้ำหนักตัวอักษร
   display: "swap",
 });
 export const metadata = {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Img from "next/image";
-import { Menu, X, Globe, User, Bell, Briefcase } from "lucide-react";
+import { Menu, X, Globe, User,ShoppingCart, Bell, Briefcase } from "lucide-react";
 import Link from "next/link";
 
 const Navbar = () => {
@@ -40,8 +40,16 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-10">
-      <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-10 xl:px-12">
-        <div className="flex justify-between items-center h-25">
+      <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-12">
+        <br />
+     <div className="relative flex justify-end items-center pr-4">
+  <ShoppingCart className="h-7 w-7 text-blue-700" />
+  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+    3
+  </span>
+
+</div>
+        <div className="flex justify-between items-center h-18">
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
@@ -51,18 +59,18 @@ const Navbar = () => {
                 width={200}
                 height={200}
               ></Img>
-              <span className="text-xl font-bold text-gray-800">
-                เบส อุปกรณ์การแพทย์
+              {/* <span className="text-xl font-bold text-gray-800">
+                เบสท์ อุปกรณ์การแพทย์
                 <div>
-                  <small>Best-Medical</small>
+                  <small>Best-Medical Company</small>
                 </div>
-              </span>
+              </span> */}
             </div>
           </div>
 
           {/* Desktop Menu */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-12 flex items-baseline space-x-4">
               <Link
                 href="/"
                 className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
