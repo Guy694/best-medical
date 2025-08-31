@@ -90,7 +90,7 @@ export default function Contact() {
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+        <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">ติดต่อเรา</h1>
             <p className="text-xl md:text-2xl opacity-90"></p>
@@ -277,7 +277,7 @@ export default function Contact() {
                       className={`px-8 py-3 rounded-md font-medium transition duration-200 ${
                         isSubmitting
                           ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                          : "bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          : "bg-gradient-to-r from-blue-900 to-blue-800 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       }`}
                     >
                       {isSubmitting ? (

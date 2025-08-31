@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Img from "next/image";
-import { Menu, X, Globe, User,ShoppingCart, Bell, Briefcase } from "lucide-react";
+import { Menu, X, Globe, User,ShoppingCart, Bell, Briefcase,ShieldCheck } from "lucide-react";
 import Link from "next/link";
+
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,7 +29,7 @@ const Navbar = () => {
       home: "หน้าแรก",
       product: "สินค้าทั้งหมด",
       howtopay: "วิธีการสั่งซื้อ/ชำระเงิน",
-      alert: "แจ้งการชำระเงิน",
+      payment_notice: "แจ้งการชำระเงิน",
       etc: "เพิ่มเติม",
       contact: "ติดต่อเรา",
       login: "เข้าสู่ระบบ",
@@ -40,7 +41,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-10">
-      <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-12">
         <br />
      <div className="relative flex justify-end items-center pr-4">
   <ShoppingCart className="h-7 w-7 text-blue-700" />
@@ -90,10 +91,10 @@ const Navbar = () => {
                 {currentNav.howtopay}
               </Link>
               <Link
-                href="/alert"
+                href="/payment-notice"
                 className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                {currentNav.alert}
+                {currentNav.payment_notice}
               </Link>
                <Link
                 href="/etc"
@@ -150,7 +151,7 @@ const Navbar = () => {
             {/* Login Button */}
             <Link
               href="/login"
-              className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+              className="flex items-center bg-gradient-to-r from-blue-900 to-blue-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
             >
               <User className="h-4 w-4 mr-2" />
               {currentNav.login}
