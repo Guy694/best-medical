@@ -62,10 +62,14 @@ export default function priduct_medical() {
             <Navbar />
             <div className="min-h-screen bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 py-8">
-                    <br />
-                    <h1 className="text-6xl font-bold md:text-4xl sm:text-2xl text-black">
-                        ผลิตภัณฑ์ทั้งหมด
-                    </h1>
+               
+                         <section id="products" className="py-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าทั้งหมด</h2>
+        </div>
+        <div className="text-center">
+        </div>
+      </section>
                     <br />
                     <div className=" text-black w-full p-4 bg-white border border-gray-200 rounded-lg shadow-sm sm:p-8 white">
                         <div className="flex flex-col md:flex-row gap-4">

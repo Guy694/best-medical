@@ -87,15 +87,17 @@ export default function Contact() {
           content="ติดต่อเราได้ทุกช่องทาง พร้อมแผนที่และข้อมูลติดต่อครบครัน"
         />
       </Head>
-
+<br />
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">ติดต่อเรา</h1>
-            <p className="text-xl md:text-2xl opacity-90"></p>
+        
+          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16 shadow-2xl rounded-xl max-w-7xl mx-auto px-4 ">
+            <div className="container mx-auto px-4 text-center">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">ติดต่อเรา</h1>
+
+              <p className="text-xl md:text-2xl opacity-90"></p>
+            </div>
           </div>
-        </div>
 
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

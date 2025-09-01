@@ -19,7 +19,7 @@ export default function Home() {
 
           <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16 shadow-2xl rounded-xl ">
             <div className="container mx-auto px-4 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">เบสท์ อุปกรณ์การแพทย์</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">บริษัท เบสท เมดิคอล จำกัด</h1>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">ศูนย์รวมอุปกรณ์การแพทย์ ครบวงจร</h1>
               <p className="text-xl md:text-2xl opacity-90"></p>
             </div>
@@ -28,16 +28,16 @@ export default function Home() {
            <div className="max-w-7xl mx-auto bg-white shadow rounded-xl p-6 flex items-center space-x-6">
       {/* โลโก้ */}
       <img
-        src="/logo.png"
+        src="/banner.png"
         alt="Rakmor Logo"
-        className="w-40 h-40 object-contain rounded-lg"
+        className="w-90 h-90 object-contain rounded-lg"
       />
 
       {/* ข้อมูลร้าน */}
       <div className="flex-1">
-        <h2 className="text-xl font-bold text-green-500">
-          ร้านขายอุปกรณ์การแพทย์ <span className="text-blue-900">บริษัท เบสท์ เมดิคัล จำกัด</span>
-        </h2>
+        <h1 className="text-3xl font-bold text-green-500">
+          ร้านขายอุปกรณ์การแพทย์ <span className="text-blue-900">บริษัท เบสท เมดิคอล จำกัด</span>
+        </h1>
         <p className="text-gray-700 mt-2">
         แหล่งรวมอุปกรณ์ทางการแพทย์ เครื่องมือสำหรับการตรวจรักษา ผลิตภัณฑ์ดูแลสุขภาพ ผู้ป่วย ผู้สูงอายุ รวมถึงครุภัณฑ์และเวชภัณฑ์ที่ใช้ในโรงพยาบาล คลินิก และสถานพยาบาลต่าง ๆ นอกจากนี้ยังมีเครื่องมือวิทยาศาสตร์ อุปกรณ์กู้ชีพ กู้ภัยฉุกเฉิน จากผู้ผลิตและแบรนด์คุณภาพระดับโลก พร้อมให้บริการจัดหาสินค้าตามความต้องการของลูกค้าอย่างครบวงจรในที่เดียว
         </p>
@@ -66,7 +66,7 @@ export default function Home() {
       </div>
     </div>
 
-     <section className="py-16 bg-gray-50">
+     <section className="py-6 bg-gray-50">
         <div className="max-w-7xl mx-auto text-center grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-6 bg-white rounded-xl shadow">
              <div className="flex justify-center items-center h-20">
@@ -91,6 +91,26 @@ export default function Home() {
           </div>
         </div>
       </section>
+           <section id="products" className="py-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto text-center border-8 p-5 rounded-2xl border-red-500">
+          <h2 className="text-3xl font-bold mb-10 text-red-500">สินค้าโปรโมชั่น</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+              >
+                <div className="h-40 bg-gray-200 rounded mb-4"></div>
+                <h3 className="text-lg font-semibold">สินค้า {i}</h3>
+                <p className="text-gray-600">รายละเอียดสั้น ๆ ของสินค้า</p>
+                <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
+                  เพิ่มลงตะกร้า
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
          <section id="products" className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto text-center">
@@ -110,6 +130,56 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+           <section id="products" className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าขายดี</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+              >
+                <div className="h-40 bg-gray-200 rounded mb-4"></div>
+                <h3 className="text-lg font-semibold">สินค้า {i}</h3>
+                <p className="text-gray-600">รายละเอียดสั้น ๆ ของสินค้า</p>
+                <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
+                  เพิ่มลงตะกร้า
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      
+           <section id="products" className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าทั้งหมด</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white p-6 rounded-xl shadow hover:shadow-lg"
+              >
+                <div className="h-40 bg-gray-200 rounded mb-4"></div>
+                <h3 className="text-lg font-semibold">สินค้า {i}</h3>
+                <p className="text-gray-600">รายละเอียดสั้น ๆ ของสินค้า</p>
+                <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
+                  เพิ่มลงตะกร้า
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="text-center">
+          <br />
+          <button className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
+                  ดูรายการเพิ่มเติมที่นี่
+                </button>
         </div>
       </section>
 
@@ -166,11 +236,6 @@ export default function Home() {
 
 
           <br />
-          <h1 className="text-6xl font-bold md:text-4xl sm:text-2xl text-gray-700">
-        ผลิตภัณฑ์
-           </h1>
-
-          <br />
             {/* รีวิวลูกค้า */}
       <section className="py-16">
         <div className="max-w-6xl mx-auto text-center">
@@ -191,6 +256,7 @@ export default function Home() {
         </div>
 
       </div>
+      
     </div>
   );
 }

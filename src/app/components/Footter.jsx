@@ -1,11 +1,11 @@
 export default function Footter() {
   return (
-    <footer className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-10">
+    <footer className="shrink-0 bg-gradient-to-r from-blue-900 to-blue-800 text-white py-10">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 px-6">
         
         {/* ข้อมูลร้าน */}
         <div>
-          <h2 className="text-xl font-bold mb-4">บริษัท เบสท์ เมดิคัล จำกัด</h2>
+          <h2 className="text-xl font-bold mb-4">บริษัท เบสท เมดิคอล จำกัด</h2>
           <p>
             ศูนย์รวมอุปกรณ์การแพทย์และสุขภาพครบวงจร
             พร้อมบริการจัดหาสินค้าตามความต้องการของลูกค้า
@@ -44,7 +44,7 @@ export default function Footter() {
       </div>
 
       <div className="border-t border-gray-500 mt-8 pt-4 text-center text-sm">
-        © 2025 Best-Medical Company – All Rights Reserved
+        © 2025 Best-Medical-BM – All Rights Reserved
       </div>
     </footer>
   );

@@ -3,6 +3,7 @@ import Navbar from "./components/Nav";
 import Sidebar from "./components/sidebar";
 import "./globals.css";
 import { Prompt } from "next/font/google";
+import CookieBanner from "./components/cookiebanner";
 
 const prompt = Prompt({
   subsets: ["latin","thai"], // รองรับภาษาไทย
@@ -10,8 +11,8 @@ const prompt = Prompt({
   display: "swap",
 });
 export const metadata = {
-  title: "ระบบรับสมัครงาน โรงเรียนสาธิตมหาวิทยาลัยทักษิณ ฝ่ายมัธยม",
-  description: "ระบบรับสมัครงาน โรงเรียนสาธิตมหาวิทยาลัยทักษิณ ฝ่ายมัธยม",
+  title: "บริษัท เบสท เมดิคอล จำกัด",
+  description: "บริษัท เบสท เมดิคอล จำกัด",
   icons: {
     icon: "/favicon.ico",
     apple: "/logo.png",
@@ -43,8 +44,10 @@ export default function RootLayout({ children }) {
             </main>
           </div>
         </div>
+        <CookieBanner />
         <Footter />
       </body>
+      
     </html>
   );
 }
