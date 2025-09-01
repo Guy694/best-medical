@@ -205,12 +205,12 @@ const Navbar = () => {
               {currentNav.login}
             </Link>
             {/* Register Button */}
-            {/* <a
+            <a
               href="/register"
-              className="border border-blue-600 text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50 transition-colors"
+              className="border  text-grey-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
             >
               {currentNav.register}
-            </a> */}
+            </a>
           </div>
 
           {/* Mobile menu button */}
