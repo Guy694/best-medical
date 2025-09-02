@@ -141,7 +141,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section>      
 
            <section id="products" className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto text-center">

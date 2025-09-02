@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const articles = await prisma.article.findMany({
+    const articles = await prisma.articles.findMany({
       select: {
         article_title: true,
         article_content: true,
@@ -25,7 +25,7 @@ export async function POST(req) {
     const data = await req.json();
     const { article_title, article_content,article_author,article_banner} = data;
 
-    const newUser = await prisma.user.create({
+    const newUser = await prisma.articles.create({
       data: {article_title,article_content,article_author,article_banner},
     });
 

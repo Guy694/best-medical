@@ -177,7 +177,7 @@ model contact {
   createdAt        DateTime @default(now())
 }
 
-model articles {
+model Articles {
   articleID       Int      @id @default(autoincrement())
   article_title   String
   article_content String

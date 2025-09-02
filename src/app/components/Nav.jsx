@@ -34,10 +34,11 @@ const Navbar = () => {
       product: "/product",
       howtopay: "/howtopay",
       payment_notice: "/payment-notice",
-      etc: "เพิ่มเติม",
-      contact: "ติดต่อเรา",
-      login: "เข้าสู่ระบบ",
-      register: "สมัครสมาชิก",
+      article: "/article",
+      contact: "/contact",
+      login: "/login",
+      register: "/register",
+      paidstatus: "/paidstatus",
     },
   };
 
@@ -137,27 +138,33 @@ const Navbar = () => {
 
                 {/* Dropdown */}
                 <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
-                  <Link
-                    href="/aricle"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                   <Link
+                    href="/article"
+                    className={`block px-4 py-2 text-sm ${pathname === currentNav.article ? "text-green-400 font-semibold" : "text-gray-700"
+                      } hover:bg-gray-100`}
                   >
-                    บทความและข่าวสาร
+                   บทความและข่าวสาร
                   </Link>
-                  <Link
-                    href="/question"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    <Link
+                    href="/qa"
+                    className={`block px-4 py-2 text-sm ${pathname === currentNav.qa ? "text-green-400 font-semibold" : "text-gray-700"
+                      } hover:bg-gray-100`}
                   >
-                    คำถามที่พบบ่อย (FAQ)
+                   คำถามที่พบบ่อย (FAQ)
                   </Link>
                 </div>
               </div>
 
-              <Link
-                href="/contact"
-                className="text-white hover:text-green-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              
+                 <Link
+                href={currentNav.contact}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname === currentNav.contact ? "text-green-400" : "text-white hover:text-green-400"
+                  }`}
               >
-                {currentNav.contact}
+                ติดต่อเรา
               </Link>
+
+              
             </div>
           </div>
 
