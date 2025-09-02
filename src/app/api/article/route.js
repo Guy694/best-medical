@@ -1,34 +1,32 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-// GET = ดึง users ทั้งหมด
+
 export async function GET() {
   try {
-    const users = await prisma.user.findMany({
+    const articles = await prisma.article.findMany({
       select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        address: true,
-        role: true,
+        article_title: true,
+        article_content: true,
+        article_author: true,
+        article_banner: true,
         createdAt: true,
       },
     });
-    return Response.json(users);
+    return Response.json(articles);
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
 
-// POST = เพิ่ม user ใหม่
+
 export async function POST(req) {
   try {
     const data = await req.json();
-    const { name, email, password, phone, address, role } = data;
+    const { article_title, article_content,article_author,article_banner} = data;
 
     const newUser = await prisma.user.create({
-      data: { name, email, password, phone, address, role },
+      data: {article_title,article_content,article_author,article_banner},
     });
 
     return Response.json(newUser, { status: 201 });

@@ -3,6 +3,7 @@ import { Menu, X, Globe, User,ShoppingCart, Bell, Briefcase,ShieldCheck,Truck,St
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "./components/Nav";
+import Img from "next/image";
 
 
 export default function Home() {
@@ -19,6 +20,15 @@ export default function Home() {
 
           <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16 shadow-2xl rounded-xl ">
             <div className="container mx-auto px-4 text-center">
+              <div className="flex justify-center mb-4">
+                <Img
+                        src="/logo.png"
+                        alt="โลโก้"
+                        width={200}
+                        height={200}
+                      ></Img>
+              </div>
+                      
               <h1 className="text-4xl md:text-5xl font-bold mb-4">บริษัท เบสท เมดิคอล จำกัด</h1>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">ศูนย์รวมอุปกรณ์การแพทย์ ครบวงจร</h1>
               <p className="text-xl md:text-2xl opacity-90"></p>

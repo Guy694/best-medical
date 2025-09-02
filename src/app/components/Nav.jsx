@@ -61,8 +61,8 @@ const Navbar = () => {
               <Img
                 src="/logo.png"
                 alt="โลโก้"
-                width={200}
-                height={200}
+                width={120}
+                height={120}
               ></Img>
               {/* <span className="text-xl font-bold text-gray-800">
                 เบสท อุปกรณ์การแพทย์

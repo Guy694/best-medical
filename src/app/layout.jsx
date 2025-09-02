@@ -4,6 +4,7 @@ import Sidebar from "./components/sidebar";
 import "./globals.css";
 import { Prompt } from "next/font/google";
 import CookieBanner from "./components/cookiebanner";
+import FloatingContact from "./components/FloatingContact";
 
 const prompt = Prompt({
   subsets: ["latin","thai"], // รองรับภาษาไทย
@@ -44,7 +45,13 @@ export default function RootLayout({ children }) {
             </main>
           </div>
         </div>
+        <FloatingContact
+  facebookUrl="https://www.facebook.com/profile.php?id=100070566921817"
+  lineUrl="https://line.me/ti/p/bestmedical"
+  label="ติดต่อผ่านโซเชียล"
+/>
         <CookieBanner />
+        
         <Footter />
       </body>
       

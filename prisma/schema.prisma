@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -31,9 +31,6 @@ enum UserRole {
   STAFF
 }
 
-/* ========================
-   Categories
-   ======================== */
 model Category {
   id       Int       @id @map("category_id") @default(autoincrement())
   name     String    @db.VarChar(100)
@@ -41,14 +38,12 @@ model Category {
   products Product[]
 }
 
-/* ========================
-   Products
-   ======================== */
+
 model Product {
   id          Int        @id @map("product_id") @default(autoincrement())
   name        String     @db.VarChar(200)
   description String?
-  price       Float      @db.Decimal(10,2)
+  price       Decimal      @db.Decimal(10,2)
   stock       Int
   categoryId  Int
   category    Category   @relation(fields: [categoryId], references: [id])
@@ -74,13 +69,11 @@ model CartItem {
   product   Product @relation(fields: [productId], references: [id])
 }
 
-/* ========================
-   Orders
-   ======================== */
+
 model Order {
   id              Int         @id @map("order_id") @default(autoincrement())
   userId          Int
-  totalPrice      Float       @map("total_price") @db.Decimal(10,2)
+  totalPrice      Decimal      @map("total_price") @db.Decimal(10,2)
   status          OrderStatus @default(PENDING)
   shippingAddress String?     @map("shipping_address")
   createdAt       DateTime    @map("created_at") @default(now())
@@ -107,7 +100,7 @@ model OrderItem {
   orderId   Int
   productId Int
   quantity  Int
-  price     Float   @db.Decimal(10,2)
+  price     Decimal   @db.Decimal(10,2)
 
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
@@ -120,7 +113,7 @@ model Payment {
   id        Int       @id @map("payment_id") @default(autoincrement())
   orderId   Int
   method    PaymentMethod
-  amount    Float     @db.Decimal(10,2)
+  amount    Decimal     @db.Decimal(10,2)
   status    PaymentStatus @default(PENDING)
   slipUrl   String?   @map("slip_url") @db.VarChar(255)
   paidAt    DateTime? @map("paid_at")
@@ -144,9 +137,10 @@ enum PaymentStatus {
 /* ========================
    Shipping
    ======================== */
+
 model Shipping {
   id            Int         @id @map("shipping_id") @default(autoincrement())
-  orderId       Int
+  orderId       Int         @unique
   trackingNumber String?    @map("tracking_number") @db.VarChar(100)
   provider      String?     @db.VarChar(100)
   status        ShippingStatus?
@@ -154,6 +148,7 @@ model Shipping {
 
   order         Order       @relation(fields: [orderId], references: [id])
 }
+
 
 enum ShippingStatus {
   WAITING
@@ -171,9 +166,27 @@ model Coupon {
   expireDate   DateTime? @map("expire_date")
 }
 
-/* ========================
-   Reviews
-   ======================== */
+
+model contact {
+  contactsID       Int      @id @default(autoincrement())
+  contacts_name    String
+  contacts_email   String
+  contacts_phone   String?
+  contacts_article String?
+  contacts_detail  String?
+  createdAt        DateTime @default(now())
+}
+
+model articles {
+  articleID       Int      @id @default(autoincrement())
+  article_title   String
+  article_content String
+  article_author  String
+  article_banner    String
+  createdAt       DateTime @default(now())
+
+}
+
 model Review {
   id        Int      @id @map("review_id") @default(autoincrement())
   userId    Int
@@ -185,5 +198,5 @@ model Review {
   user      User    @relation(fields: [userId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
 
-  @@check(rating >= 1 && rating <= 5)
+  // ลบ @@check ออก
 }

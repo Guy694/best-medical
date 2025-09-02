@@ -5,11 +5,11 @@ import Navbar from "../components/Nav";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    message: "",
+    contacts_name: "",
+    contacts_email: "",
+    contacts_phone: "",
+    contacts_article: "",
+    contacts_detail: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
@@ -21,22 +21,31 @@ export default function Contact() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+
+  try {
+    const res = await fetch("/api/contacts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    if (res.ok) {
       setSubmitMessage("ส่งข้อความเรียบร้อยแล้ว เราจะติดต่อกลับโดยเร็วที่สุด");
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-    } catch (error) {
+      setFormData({ contacts_name: "", contacts_email: "", contacts_phone: "", contacts_article: "", contacts_detail: "" }); // reset form
+    } else {
       setSubmitMessage("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-    } finally {
-      setIsSubmitting(false);
-      setTimeout(() => setSubmitMessage(""), 5000);
     }
-  };
+  } catch (error) {
+    setSubmitMessage("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+  } finally {
+    setIsSubmitting(false);
+    setTimeout(() => setSubmitMessage(""), 5000);
+  }
+};
 
   const contactInfo = [
     {
@@ -196,8 +205,8 @@ export default function Contact() {
                       </label>
                       <input
                         type="text"
-                        name="name"
-                        value={formData.name}
+                        name="contacts_name"
+                        value={formData.contacts_name}
                         onChange={handleInputChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -211,8 +220,8 @@ export default function Contact() {
                       </label>
                       <input
                         type="email"
-                        name="email"
-                        value={formData.email}
+                        name="contacts_email"
+                        value={formData.contacts_email}
                         onChange={handleInputChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -228,8 +237,8 @@ export default function Contact() {
                       </label>
                       <input
                         type="tel"
-                        name="phone"
-                        value={formData.phone}
+                        name="contacts_phone"
+                        value={formData.contacts_phone}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="08X-XXX-XXXX"
@@ -241,8 +250,8 @@ export default function Contact() {
                         หัวข้อ *
                       </label>
                       <select
-                        name="subject"
-                        value={formData.subject}
+                        name="contacts_article"
+                        value={formData.contacts_article}
                         onChange={handleInputChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -262,8 +271,8 @@ export default function Contact() {
                       ข้อความ *
                     </label>
                     <textarea
-                      name="message"
-                      value={formData.message}
+                      name="contacts_detail"
+                      value={formData.contacts_detail}
                       onChange={handleInputChange}
                       required
                       rows={5}
