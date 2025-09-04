@@ -30,7 +30,24 @@ export const metadata = {
       },
     ],
   },
+  openGraph: {
+    title: 'สินค้าสุขภาพ | เบสท เมดิคอล',
+    description: 'ซื้อสินค้าสุขภาพ X ราคาดี',
+    url: 'https://example.com/product',
+    images: ['https://example.com/product.jpg'],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'สินค้าสุขภาพ | เบสท เมดิคอล',
+    description: 'ซื้อสินค้าสุขภาพ X ราคาดี',
+    images: ['https://example.com/product.jpg'],
+  },
+  icons: '/favicon.ico',
 };
+
+
+
 export default function RootLayout({ children }) {
   return (
     <html lang="th">

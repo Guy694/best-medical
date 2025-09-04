@@ -1,5 +1,5 @@
 "use client";
-import { Menu, X, Globe, User,ShoppingCart, Bell, Briefcase,ShieldCheck,Truck,Store } from "lucide-react";
+import { Menu, X, Globe, User,ShoppingCart, Bell, Briefcase,ShieldCheck,Truck,Store,ArrowBigRightDash } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "./components/Nav";
@@ -121,8 +121,17 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-         <section id="products" className="py-16 bg-gray-50">
+  <div className="text-center">
+          <br />
+        
+ <a  
+  href=""  
+  className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
+>
+  ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
+</a>
+        </div>
+         <section id="products" className="py-6 bg-gray-50">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าแนะนำ</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -142,8 +151,17 @@ export default function Home() {
           </div>
         </div>
       </section>      
-
-           <section id="products" className="py-16 bg-gray-50">
+  <div className="text-center">
+          <br />
+        
+ <a  
+  href=""  
+  className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
+>
+  ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
+</a>
+        </div>
+           <section id="products" className="py-6 bg-gray-50">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าขายดี</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -163,7 +181,16 @@ export default function Home() {
           </div>
         </div>
       </section>
-
+  <div className="text-center">
+          <br />
+        
+ <a  
+  href=""  
+  className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
+>
+  ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
+</a>
+        </div>
       
            <section id="products" className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto text-center">
@@ -187,9 +214,13 @@ export default function Home() {
 
         <div className="text-center">
           <br />
-          <button className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
-                  ดูรายการเพิ่มเติมที่นี่
-                </button>
+        
+ <a  
+  href=""  
+  className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
+>
+  ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
+</a>
         </div>
       </section>
 

@@ -205,18 +205,21 @@ const Navbar = () => {
 
             {/* Login Button */}
             <Link
-              href="/login"
+              href={currentNav.login}
               className="flex items-center bg-white text-grey-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
             >
               <User className="h-4 w-4 mr-2" />
-              {currentNav.login}
+             
+              เข้าสู่ระบบ
             </Link>
+            
             {/* Register Button */}
             <a
-              href="/register"
+              href={currentNav.register}
               className="border  text-grey-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
             >
-              {currentNav.register}
+              
+              ลงทะเบียน
             </a>
           </div>
 

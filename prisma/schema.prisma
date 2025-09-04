@@ -7,11 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/* ========================
-   Users
-   ======================== */
 model User {
-  id        Int      @id @map("user_id") @default(autoincrement())
+  id        Int      @id @map("userId") @default(autoincrement())
   name      String   @db.VarChar(100)
   email     String   @unique @db.VarChar(100)
   password  String   @db.VarChar(255)
@@ -32,7 +29,7 @@ enum UserRole {
 }
 
 model Category {
-  id       Int       @id @map("category_id") @default(autoincrement())
+  id       Int       @id @map("categoryId") @default(autoincrement())
   name     String    @db.VarChar(100)
 
   products Product[]
@@ -40,8 +37,9 @@ model Category {
 
 
 model Product {
-  id          Int        @id @map("product_id") @default(autoincrement())
+  id          Int        @id @map("productId") @default(autoincrement())
   name        String     @db.VarChar(200)
+  codename    String     @unique @db.VarChar(100)
   description String?
   price       Decimal      @db.Decimal(10,2)
   stock       Int
@@ -49,10 +47,12 @@ model Product {
   category    Category   @relation(fields: [categoryId], references: [id])
   imageUrl    String?    @map("image_url") @db.VarChar(255)
   createdAt   DateTime   @map("created_at") @default(now())
-
+  promotions  Promotion[]  
   cartItems   CartItem[]
   orderItems  OrderItem[]
   reviews     Review[]
+
+  ProductPromotion ProductPromotion[]
 }
 
 /* ========================
@@ -77,7 +77,6 @@ model Order {
   status          OrderStatus @default(PENDING)
   shippingAddress String?     @map("shipping_address")
   createdAt       DateTime    @map("created_at") @default(now())
-
   user            User        @relation(fields: [userId], references: [id])
   orderItems      OrderItem[]
   payments        Payment[]
@@ -92,6 +91,25 @@ enum OrderStatus {
   CANCELLED
 }
 
+
+model Promotion {
+  id          Int       @id @default(autoincrement())
+  name        String
+  discount    Float     // อาจเป็นเปอร์เซ็นต์หรือจำนวนเงิน
+  type        String    // เช่น 'percent' หรือ 'fixed'
+  startDate   DateTime
+  endDate     DateTime
+  products    ProductPromotion[]
+
+  Product Product[]
+}
+model ProductPromotion {
+  id          Int       @id @default(autoincrement())
+  productId   Int
+  promotionId Int
+  product     Product   @relation(fields: [productId], references: [id])
+  promotion   Promotion @relation(fields: [promotionId], references: [id])
+}
 /* ========================
    Order Items
    ======================== */
@@ -167,7 +185,7 @@ model Coupon {
 }
 
 
-model contact {
+model Contact {
   contactsID       Int      @id @default(autoincrement())
   contacts_name    String
   contacts_email   String

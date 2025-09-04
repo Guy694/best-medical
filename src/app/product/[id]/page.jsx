@@ -1,64 +1,98 @@
 "use client";
-import { useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import Image from "next/image";
+import { div } from "framer-motion/client";
+import Navbar from "@/app/components/Nav";
 
-// mock data
-const products = [
-  { id: "1", name: "เครื่องวัดความดัน", price: 1200, description: "วัดความดันได้แม่นยำ" },
-  { id: "2", name: "เครื่องวัดน้ำตาล", price: 850, description: "ใช้ง่าย พกพาสะดวก" },
-  { id: "3", name: "ปรอทวัดไข้ดิจิตอล", price: 250, description: "แสดงผลเร็ว" },
-];
+const productData = {
+  id: "RMM-BGM011",
+  name: "เครื่องตรวจน้ำตาลในเลือด BLUEDOT รุ่น B-GM162 มีเสียงพูดภาษาไทย",
+  price: 1000,
+  brand: "Blue Dot",
+  description:
+    "เครื่องวัดระดับน้ำตาลในเลือด BLUEDOT รุ่น B-GM162 ที่มาพร้อมฟังก์ชันเสียงรายงานผลเป็นภาษาไทย การันตีคุณภาพด้วยการรับประกันตลอดอายุการใช้งาน เหมาะสำหรับการตรวจระดับน้ำตาลในเลือดอย่างสะดวกและรวดเร็ว",
+  images: [
+    "/product-main.png", // เปลี่ยนเป็น path จริงของรูป
+    "/product-1.png",
+    "/product-2.png",
+    "/product-3.png"
+  ],
+};
 
-export default function ProductDetail({ params }) {
-  // ✅ ใช้ React.use() แทนการเข้าถึง params ตรง ๆ
-  const { id } = use(params);
+export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
-  const router = useRouter();
-
-  const product = products.find((p) => p.id === id);
-
-  if (!product) {
-    return <p className="p-6">ไม่พบสินค้า</p>;
-  }
-
-  const addToCart = async () => {
-    await fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        quantity,
-      }),
-    });
-
-    router.push("/cart");
-  };
+  const [mainImage, setMainImage] = useState(productData.images[0]);
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">{product.name}</h1>
-      <p className="text-gray-600 mb-2">{product.description}</p>
-      <p className="text-xl font-semibold text-blue-700 mb-4">฿{product.price}</p>
+    <div className="bg-white">
+      <Navbar />
+   <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-8">
 
-      <div className="flex items-center gap-3 mb-4">
-        <label>จำนวน:</label>
-        <input
-          type="number"
-          min="1"
-          value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          className="border rounded p-2 w-20"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* รูปสินค้า */}
+        <div>
+          <div className="border p-4 rounded-lg">
+            <Image
+              src={mainImage}
+              alt={productData.name}
+              width={400}
+              height={400}
+              className="object-contain"
+            />
+          </div>
+          <div className="flex gap-2 mt-4">
+            {productData.images.map((img, idx) => (
+              <div
+                key={idx}
+                className={`border p-1 rounded cursor-pointer ${
+                  mainImage === img ? "border-blue-500" : ""
+                }`}
+                onClick={() => setMainImage(img)}
+              >
+                <Image src={img} alt="" width={80} height={80} className="object-contain"/>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* รายละเอียดสินค้า */}
+        <div>
+          <h1 className="text-2xl font-bold mb-2">{productData.name}</h1>
+          <p className="text-gray-600 mb-2">รหัสสินค้า: {productData.id}</p>
+          <p className="text-xl font-semibold text-red-600 mb-4">{productData.price.toLocaleString()} ฿</p>
+          <p className="mb-4">{productData.description}</p>
+
+          <div className="flex items-center gap-2 mb-4">
+            <button
+              className="px-3 py-1 border rounded"
+              onClick={() => setQuantity(quantity > 1 ? quantity - 1 : 1)}
+            >
+              -
+            </button>
+            <span>{quantity}</span>
+            <button
+              className="px-3 py-1 border rounded"
+              onClick={() => setQuantity(quantity + 1)}
+            >
+              +
+            </button>
+          </div>
+
+          <button className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-800 mb-4">
+            หยิบใส่ตะกร้า
+          </button>
+
+          <div className="flex gap-4">
+            <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
+              แอดไลน์
+            </button>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-800">
+              แชร์บนเฟสบุ๊ค
+            </button>
+          </div>
+        </div>
       </div>
-
-      <button
-        onClick={addToCart}
-        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-      >
-        เพิ่มลงตะกร้า
-      </button>
-    </div>
+    </div></div></div>
   );
 }
