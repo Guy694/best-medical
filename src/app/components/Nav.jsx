@@ -27,6 +27,7 @@ const Navbar = () => {
   const toggleLangDropdown = () => {
     setIsLangDropdownOpen(!isLangDropdownOpen);
   };
+  const [cartCount, setCartCount] = useState(0);
 
   const navItems = {
     th: {
@@ -49,10 +50,12 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-12">
         <br />
         <div className="relative flex justify-end items-center pr-3">
-          <ShoppingCart className="h-7 w-7 text-white" />
-          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-            3
-          </span>
+         <Link href="/cart" className="text-white relative">
+  <ShoppingCart className="h-7 w-7 text-white" />
+  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+    {cartCount}
+  </span>
+</Link>
 
         </div>
         <div className="flex justify-between items-center h-22">

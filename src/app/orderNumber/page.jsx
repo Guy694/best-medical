@@ -3,9 +3,12 @@
 import Navbar from './../components/Nav';
 import { useState } from "react";
 import dayjs from "dayjs";
-const orderpurchase = [
-  { ordercode: "68006554", time: "2025-09-04 10:30", },
-];
+
+const orderpurchase = {
+  ordercode: "68006554", time: "2025-09-04 10:30",
+};
+
+
 
 function formatThaiDate(dateStr) {
   const d = dayjs(dateStr);
