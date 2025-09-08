@@ -1,10 +1,11 @@
 "use client";
-import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck, Truck, Store, ArrowBigRightDash } from "lucide-react";
+import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck, Truck, Store, ArrowBigRightDash, Car } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "./components/Nav";
 import Img from "next/image";
 import { p } from "framer-motion/client";
+import Carousel from "./components/carousel_article";
 
 
 export default function Home() {
@@ -52,13 +53,14 @@ export default function Home() {
         discount_value: 300,
       },
     },
-    { id: 2, name: "สินค้า 2", description: "รายละเอียดสินค้า 2", price: 2000, image: "/image.png", promotion: {
-        discount_type: "amount",  
-        discount_value: 300,  
+    {
+      id: 2, name: "สินค้า 2", description: "รายละเอียดสินค้า 2", price: 2000, image: "/image.png", promotion: {
+        discount_type: "amount",
+        discount_value: 300,
       },
     },
     {
-      id: 3, name: "สินค้า 3", description: "รายละเอียดสินค้า 3", price: 3000, image: "/image.png", promotion: { 
+      id: 3, name: "สินค้า 3", description: "รายละเอียดสินค้า 3", price: 3000, image: "/image.png", promotion: {
         discount_type: "amount",
         discount_value: 300,
       },
@@ -68,7 +70,7 @@ export default function Home() {
 
   const promotionProducts = [
     {
-      id: 1, name: "สินค้า 1", description: "รายละเอียดสินค้า 1", price: 1000, image: "/image.png", promotion: { 
+      id: 1, name: "สินค้า 1", description: "รายละเอียดสินค้า 1", price: 1000, image: "/image.png", promotion: {
         discount_type: "amount",
         discount_value: 300,
       },
@@ -87,7 +89,7 @@ export default function Home() {
     },
   ]
 
-    const Allproduct = [
+  const Allproduct = [
     {
       id: 1, name: "สินค้า 1", description: "รายละเอียดสินค้า 1", price: 1000, image: "/image.png", promotion: {
         discount_type: "amount",
@@ -122,6 +124,19 @@ export default function Home() {
       ? recomendProducts.price - recomendProducts.promotion.discount_value
       : recomendProducts.price - (recomendProducts.price * recomendProducts.promotion.discount_value) / 100
     : recomendProducts.price;
+
+
+
+
+  const articles = [
+    { id: 1, article_title: "บทความสุขภาพ 1", article_content: "สรุปเนื้อหาบทความสุขภาพ 1", article_banner: "/image.png" },
+    { id: 2, article_title: "บทความสุขภาพ 2", article_content: "สรุปเนื้อหาบทความสุขภาพ 2", article_banner: "/image.png" },
+    { id: 3, article_title: "บทความสุขภาพ 3", article_content: "สรุปเนื้อหาบทความสุขภาพ 3", article_banner: "/image.png" },
+    { id: 4, article_title: "บทความสุขภาพ 4", article_content: "สรุปเนื้อหาบทความสุขภาพ 4", article_banner: "/image.png" },
+    { id: 5, article_title: "บทความสุขภาพ 5", article_content: "สรุปเนื้อหาบทความสุขภาพ 5", article_banner: "/image.png" },
+    { id: 6, article_title: "บทความสุขภาพ 6", article_content: "สรุปเนื้อหาบทความสุขภาพ 6", article_banner: "/image.png" },
+    { id: 7, article_title: "บทความสุขภาพ 7", article_content: "สรุปเนื้อหาบทความสุขภาพ 7", article_banner: "/image.png" },
+  ]
 
   return (
 
@@ -217,43 +232,10 @@ export default function Home() {
             </div>
           </section>
           <section id="products" className="py-6 bg-gray-50">
-            <div className="max-w-7xl mx-auto text-center border-8 p-5 rounded-2xl border-red-500">
+            <div className="max-w-7xl mx-auto text-center border-8 p-5 rounded-2xl border-red-500 bg-white shadow-lg">
               <h2 className="text-3xl font-bold mb-10 text-red-500">สินค้าโปรโมชั่น</h2>
-             <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+              <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 {promotionProducts.map((i) => (
-                  <div
-                    key={i.id}
-                    className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0"
-                  >
-                   <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
-                      <img src={i.image} alt={i.name} className="w-full h-full object-fill" />
-                    </div>
-                    <h3 className="text-lg font-semibold">สินค้า {i.name}</h3>
-                    <p className="text-gray-600">{i.description}</p>
-                    <p className="text-gray-600">{i.price} บาท</p>
-                    <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
-                      เพิ่มลงตะกร้า
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-          <div className="text-center">
-            <br />
-
-            <a
-              href=""
-              className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
-            >
-              ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
-            </a>
-          </div>
-          <section id="products" className="py-6 bg-gray-50">
-            <div className="max-w-6xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าแนะนำ</h2>
-            <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {recomendProducts.map((i) => (
                   <div
                     key={i.id}
                     className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0"
@@ -270,19 +252,54 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-            </div>
-          </section>
-          <div className="text-center">
-            <br />
-
-            <a
+                 <a
               href=""
               className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
             >
               ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
             </a>
+            </div>
+          </section>
+          <div className="text-center">
+            <br />
+
+         
           </div>
-          <section id="products" className="py-6 bg-gray-50">
+          <section id="products" className="py-6 bg-white rounded-2xl shadow-lg">
+            <div className="max-w-6xl mx-auto text-center">
+              <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าแนะนำ</h2>
+              <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {recomendProducts.map((i) => (
+                  <div
+                    key={i.id}
+                    className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0 "
+                  >
+                    <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
+                      <img src={i.image} alt={i.name} className="w-full h-full object-fill" />
+                    </div>
+                    <h3 className="text-lg font-semibold">สินค้า {i.name}</h3>
+                    <p className="text-gray-600">{i.description}</p>
+                    <p className="text-gray-600">{i.price} บาท</p>
+                    <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
+                      เพิ่มลงตะกร้า
+                    </button>
+                  </div>
+                ))}
+              </div>
+                 <a
+              href=""
+              className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
+            >
+              ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
+            </a>
+            </div>
+          </section>
+          <div className="text-center">
+            <br />
+
+        
+          </div>
+          <section id="products" className="py-6 bg-white rounded-2xl shadow-lg">
             <div className="max-w-6xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าขายดี</h2>
               <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
@@ -303,20 +320,21 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-            </div>
-          </section>
-          <div className="text-center">
-            <br />
-
+              
             <a
               href=""
               className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
             >
               ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
             </a>
+            </div>
+          </section>
+          <div className="text-center">
+            <br />
+
           </div>
 
-              <section id="products" className="py-6 bg-gray-50">
+          <section id="products" className="py-6 bg-white rounded-2xl shadow-lg">
             <div className="max-w-6xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าขายดี</h2>
               <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
@@ -338,79 +356,31 @@ export default function Home() {
                 ))}
               </div>
             </div>
-              <div className="text-center">
-            <br />
+            <div className="text-center">
+              <br />
 
-            <a
-              href=""
-              className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
-            >
-              ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
-            </a>
-          </div>
+              <a
+                href=""
+                className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
+              >
+                ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
+              </a>
+            </div>
           </section>
 
 
-          <div id="default-carousel" className="relative w-full" data-carousel="slide">
 
-            <div className="relative h-56 overflow-hidden rounded-lg md:h-96">
 
-              <div className="hidden duration-700 ease-in-out" data-carousel-item>
-                <img src="your-image.jpg" className="absolute block w-full -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2" alt="Description of the image" />
-              </div>
-
-              <div className="hidden duration-700 ease-in-out" data-carousel-item>
-                <img src="/docs/images/carousel/carousel-2.svg" className="absolute block w-full -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2" alt="..." />
-              </div>
-
-              <div className="hidden duration-700 ease-in-out" data-carousel-item>
-                <img src="/docs/images/carousel/carousel-3.svg" className="absolute block w-full -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2" alt="..." />
-              </div>
-
-              <div className="hidden duration-700 ease-in-out" data-carousel-item>
-                <img src="/docs/images/carousel/carousel-4.svg" className="absolute block w-full -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2" alt="..." />
-              </div>
-
-              <div className="hidden duration-700 ease-in-out" data-carousel-item>
-                <img src="/docs/images/carousel/carousel-5.svg" className="absolute block w-full -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2" alt="..." />
-              </div>
-            </div>
-
-            <div className="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3 rtl:space-x-reverse">
-              <button type="button" className="w-3 h-3 rounded-full" aria-current="true" aria-label="Slide 1" data-carousel-slide-to="0"></button>
-              <button type="button" className="w-3 h-3 rounded-full" aria-current="false" aria-label="Slide 2" data-carousel-slide-to="1"></button>
-              <button type="button" className="w-3 h-3 rounded-full" aria-current="false" aria-label="Slide 3" data-carousel-slide-to="2"></button>
-              <button type="button" className="w-3 h-3 rounded-full" aria-current="false" aria-label="Slide 4" data-carousel-slide-to="3"></button>
-              <button type="button" className="w-3 h-3 rounded-full" aria-current="false" aria-label="Slide 5" data-carousel-slide-to="4"></button>
-            </div>
-
-            <button type="button" className="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" data-carousel-prev>
-              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30 dark:bg-gray-800/30 group-hover:bg-white/50 dark:group-hover:bg-gray-800/60 group-focus:ring-4 group-focus:ring-white dark:group-focus:ring-gray-800/70 group-focus:outline-none">
-                <svg className="w-4 h-4 text-white dark:text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 1 1 5l4 4" />
-                </svg>
-                <span className="sr-only">Previous</span>
-              </span>
-            </button>
-            <button type="button" className="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" data-carousel-next>
-              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30 dark:bg-gray-800/30 group-hover:bg-white/50 dark:group-hover:bg-gray-800/60 group-focus:ring-4 group-focus:ring-white dark:group-focus:ring-gray-800/70 group-focus:outline-none">
-                <svg className="w-4 h-4 text-white dark:text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 9 4-4-4-4" />
-                </svg>
-                <span className="sr-only">Next</span>
-              </span>
-            </button>
-          </div>
 
 
           <br />
           {/* รีวิวลูกค้า */}
           <section className="py-16">
-            <div className="max-w-6xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-10 text-gray-700">เสียงจากลูกค้า</h2>
+            <div className="max-w-7xl mx-auto text-center bg-white shadow rounded-2xl p-6">
+              <h2 className="text-3xl font-bold mb-10 text-gray-700 p-6">เสียงจากลูกค้า</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white p-6 rounded-xl shadow">
+                  <div key={i} className="bg-white p-6 rounded-xl shadow-xl">
                     <p className="text-gray-600">
                       ⭐⭐⭐⭐⭐ บริการดีมาก สินค้าคุณภาพ ราคาคุ้มค่า
                     </p>

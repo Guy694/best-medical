@@ -46,7 +46,7 @@ const Navbar = () => {
   const currentNav = navItems[language];
 
   return (
-    <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-lg sticky top-0 z-10">
+    <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-2xl shadow-blue-600 sticky top-0 z-10  rounded-b-3xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-12">
         <br />
         <div className="relative flex justify-end items-center pr-3">

@@ -1,10 +1,4 @@
-
-
-
-
-
-
-  const cartproducts = [
+const cartproducts = [
     {
     id: "RMM-BGM011",
     name: "เครื่องตรวจน้ำตาลในเลือด BLUEDOT รุ่น B-GM162 มีเสียงพูดภาษาไทย",
