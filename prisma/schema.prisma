@@ -16,7 +16,6 @@ model User {
   address   String?
   role      UserRole @default(CUSTOMER)
   createdAt DateTime @map("created_at") @default(now())
-
   orders      Order[]
   cartItems   CartItem[]
   reviews     Review[]
@@ -29,10 +28,12 @@ enum UserRole {
 }
 
 model Category {
-  id       Int       @id @map("categoryId") @default(autoincrement())
-  name     String    @db.VarChar(100)
-
-  products Product[]
+  id         Int        @id @map("categoryId") @default(autoincrement())
+  name       String     @db.VarChar(100)
+  parent_id  Int?
+  parent     Category?  @relation("CategoryToCategory", fields: [parent_id], references: [id])
+  children   Category[] @relation("CategoryToCategory")
+  products   Product[]
 }
 
 
@@ -50,8 +51,9 @@ model Product {
   promotions  Promotion[]  
   cartItems   CartItem[]
   orderItems  OrderItem[]
+  waranty    Int?       
+  property   Json
   reviews     Review[]
-
   ProductPromotion ProductPromotion[]
 }
 
@@ -200,9 +202,8 @@ model Articles {
   article_title   String
   article_content String
   article_author  String
-  article_banner    String
+  article_banner  String
   createdAt       DateTime @default(now())
-
 }
 
 model Review {
@@ -212,9 +213,6 @@ model Review {
   rating    Int
   comment   String?
   createdAt DateTime @map("created_at") @default(now())
-
   user      User    @relation(fields: [userId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
-
-  // ลบ @@check ออก
 }

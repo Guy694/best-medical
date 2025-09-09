@@ -8,7 +8,7 @@ export default function paidstatus() {
   return (
     <div>
       <Navbar />
-      <div className='min-h-screen bg-gray-50'>
+      <div className='min-h-screen bg-white'>
         {/* Header */}
         <div className="max-w-7xl mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold text-blue-900 text-center mb-8">
@@ -16,9 +16,12 @@ export default function paidstatus() {
           </h1>
 
           <div className="max-w-7xl mx-auto space-y-12">
-            <section className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-2xl font-semibold text-blue-800 mb-4">สถานะการสั่งซื้อ</h2>
-              <form className="space-y-4">
+            <section className="bg-white rounded-lg shadow-md">
+              <div className="header bg-gradient-to-bl from-blue-600 to-blue-900 p-4 rounded-t-3xl ">
+                  <h2 className="text-2xl font-semibold text-white p-6 text-center">สถานะการสั่งซื้อ</h2>
+              </div>
+            
+              <form className="space-y-4 p-7">
                 <div>
                   <label className="block text-gray-700 font-medium mb-1">เลขที่ใบสั่งซื้อ <span className=' text-red-500 text-xl'>*</span></label>
                   <input
@@ -29,7 +32,7 @@ export default function paidstatus() {
                 </div>
                 <button
                   type="submit"
-                  className="bg-blue-700 text-white px-6 py-2 rounded-md hover:bg-blue-800 transition"
+                  className="bg-blue-700 text-white px-6 py-2 rounded-md hover:bg-blue-900 transition"
                 >
                   ตรวจสอบสถานะ
                 </button>

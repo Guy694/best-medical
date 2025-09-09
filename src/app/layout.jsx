@@ -52,25 +52,21 @@ export default function RootLayout({ children }) {
   return (
     <html lang="th">
       <body className={prompt.className}>
-        <div className="flex h-screen">
-          {/* <Sidebar role="user" /> */}
-          {/* Main Content */}
-          <div className="flex flex-col flex-1">
-            {/* <Navbar /> */}
-            <main className="flex-1 overflow-y-auto  bg-gray-100">
-              {children}
-            </main>
-          </div>
-        </div>
-        <FloatingContact
+  <div className="flex flex-col min-h-screen">
+    {/* <Sidebar /> */}
+    {/* <Navbar /> */}
+    <main className="flex-1 bg-gray-100">
+      {children}
+    </main>
+    <Footter />
+  </div>
+  <FloatingContact
   facebookUrl="https://www.facebook.com/profile.php?id=100070566921817"
   lineUrl="https://line.me/ti/p/bestmedical"
   label="ติดต่อผ่านโซเชียล"
 />
-        <CookieBanner />
-        
-        <Footter />
-      </body>
+  <CookieBanner />
+</body>
       
     </html>
   );

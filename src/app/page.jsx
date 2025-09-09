@@ -1,15 +1,24 @@
 "use client";
 import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck, Truck, Store, ArrowBigRightDash, Car } from "lucide-react";
 import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Heart, Eye } from "lucide-react";
 import Link from "next/link";
 import Navbar from "./components/Nav";
-import Img from "next/image";
+import Image from "next/image";
 import { p } from "framer-motion/client";
-import Carousel from "./components/carousel_article";
 
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
+    const [current, setCurrent] = useState(0);
+
+  const nextSlide = () => {
+    setCurrent((prev) => (prev + 1) % products.length);
+  };
+
+  const prevSlide = () => {
+    setCurrent((prev) => (prev - 1 + products.length) % products.length);
+  };
 
   const bestsellerProducts = [
     {
@@ -110,6 +119,56 @@ export default function Home() {
     },
   ]
 
+
+  const products = [
+  {
+    id: 1,
+    category: "Phone",
+    name: "JPhone 13 High Quality Value Buy Best Cam...",
+    price: 999,
+    oldPrice: null,
+    rating: 50,
+    image: "/image.png",
+  },
+  {
+    id: 2,
+    category: "Audio",
+    name: "WH-1000XM4 Wireless Headphones High Qua...",
+    price: 59,
+    oldPrice: 199,
+    rating: 100,
+    discount: 50,
+    image: "/image.png",
+  },
+  {
+    id: 3,
+    category: "Laptop",
+    name: "S21 Laptop Ultra HD LED Screen Feature 2023...",
+    price: 1199,
+    oldPrice: null,
+    rating: 100,
+    image: "/image.png",
+  },
+  {
+    id: 4,
+    category: "Camera",
+    name: "Mini Polaroid Camera for Girls with Flash Li...",
+    price: 79,
+    oldPrice: null,
+    rating: 70,
+    image: "/image.png",
+  },
+  {
+    id: 5,
+    category: "Television",
+    name: "AG OLED65CXPUA 4K Smart OLED TV New ...",
+    price: 2799,
+    oldPrice: null,
+    rating: 20,
+    image: "/image.png",
+  },
+];
+
   const hasPromotionbestsellerProducts = bestsellerProducts.promotion && bestsellerProducts.promotion.discount_value > 0;
   const finalPrice = hasPromotionbestsellerProducts
     ? bestsellerProducts.promotion.discount_type === "amount"
@@ -140,37 +199,33 @@ export default function Home() {
 
   return (
 
-    <div className="bg-white">
-
-
+    <div>
       <Navbar />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
-
-
-          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16 shadow-2xl rounded-xl ">
+          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16  rounded-xl ">
             <div className="container mx-auto px-4 text-center">
               <div className="flex justify-center mb-4">
-                <Img
+                <Image
                   src="/logo.png"
                   alt="โลโก้"
-                  width={200}
-                  height={200}
-                ></Img>
+                  width={120}
+                  height={120}
+                  className="w-24 h-24 md:w-48 md:h-48"
+                />
               </div>
-
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">บริษัท เบสท เมดิคอล จำกัด</h1>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">ศูนย์รวมอุปกรณ์การแพทย์ ครบวงจร</h1>
+              <h1 className="text-2xl md:text-4xl font-bold mb-2">บริษัท เบสท เมดิคอล จำกัด</h1>
+              <h1 className="text-xl md:text-3xl font-bold mb-2">ศูนย์รวมอุปกรณ์การแพทย์ ครบวงจร</h1>
               <p className="text-xl md:text-2xl opacity-90"></p>
             </div>
           </div>
           <br />
-          <div className="max-w-7xl mx-auto bg-white shadow rounded-xl p-6 flex items-center space-x-6">
+          <div className="max-w-7xl mx-auto bg-white  rounded-xl p-6  flex items-center space-x-6">
             {/* โลโก้ */}
             <img
               src="/banner.png"
-              alt="Rakmor Logo"
-              className="w-90 h-90 object-contain rounded-lg"
+              alt="หกห"
+              className="w-32 h-32 object-contain rounded-lg"
             />
 
             {/* ข้อมูลร้าน */}
@@ -206,7 +261,7 @@ export default function Home() {
             </div>
           </div>
 
-          <section className="py-6 bg-gray-50">
+          <section className="py-6 bg-white">
             <div className="max-w-7xl mx-auto text-center grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="p-6 bg-white rounded-xl shadow">
                 <div className="flex justify-center items-center h-20">
@@ -231,27 +286,84 @@ export default function Home() {
               </div>
             </div>
           </section>
-          <section id="products" className="py-6 bg-gray-50">
+
+
+
+           <section className="py-10 px-6 max-w-7xl mx-auto">
+  <div className="flex justify-between items-center mb-6">
+    <h2 className="text-2xl font-bold text-gray-700">สินค้าโปรโมชั่น</h2>
+    <a href="products" className="text-red-500 hover:underline">
+      ดูสินค้าทั้งหมด
+    </a>
+  </div>
+
+  <div className="relative">
+    <div className="flex gap-6 overflow-x-auto pb-4">
+      {products.map((product) => (
+        <div
+          key={product.id}
+          className="min-w-[260px] p-4 border rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
+        >
+          {product.discount && (
+            <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+              {product.discount}%
+            </span>
+          )}
+          <div className="flex justify-center mb-4">
+            <Image
+              src={product.image}
+              alt={product.name}
+              width={120}
+              height={120}
+              className="object-contain"
+            />
+          </div>
+          <p className="text-gray-400 text-xs uppercase mb-1">{product.category}</p>
+          <h3 className="text-sm font-semibold line-clamp-2 mb-2">{product.name}</h3>
+          <div className="mb-2">
+            <span className="text-lg font-bold">${product.price}</span>
+            {product.oldPrice && (
+              <span className="text-gray-400 line-through ml-2">${product.oldPrice}</span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500">({product.rating})</p>
+          <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
+            <button className="p-2 bg-white rounded-full shadow hover:text-red-500">
+              <Heart size={18} />
+            </button>
+            <button className="p-2 bg-white rounded-full shadow hover:text-blue-500">
+              <ShoppingCart size={18} />
+            </button>
+            <button className="p-2 bg-white rounded-full shadow hover:text-green-500">
+              <Eye size={18} />
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+          {/* <section id="products" className="py-6 bg-gray-50">
             <div className="max-w-7xl mx-auto text-center border-8 p-5 rounded-2xl border-red-500 bg-white shadow-lg">
               <h2 className="text-3xl font-bold mb-10 text-red-500">สินค้าโปรโมชั่น</h2>
               <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {promotionProducts.map((i) => (
-                  <div
-                    key={i.id}
-                    className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0"
-                  >
-                    <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
-                      <img src={i.image} alt={i.name} className="w-full h-full object-fill" />
-                    </div>
-                    <h3 className="text-lg font-semibold">สินค้า {i.name}</h3>
-                    <p className="text-gray-600">{i.description}</p>
-                    <p className="text-gray-600">{i.price} บาท</p>
-                    <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
-                      เพิ่มลงตะกร้า
-                    </button>
-                  </div>
-                ))}
-              </div>
+  {promotionProducts.map((i) => (
+    <div
+      key={i.id}
+      className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0"
+    >
+      <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
+        <img src={i.image} alt={i.name} className="w-24 h-24 object-contain" />
+      </div>
+      <h3 className="text-lg font-semibold">สินค้า {i.name}</h3>
+      <p className="text-gray-600">{i.description}</p>
+      <p className="text-gray-600">{i.price} บาท</p>
+      <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
+        เพิ่มลงตะกร้า
+      </button>
+    </div>
+  ))}
+</div>
                  <a
               href=""
               className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
@@ -259,117 +371,13 @@ export default function Home() {
               ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
             </a>
             </div>
-          </section>
+          </section> */}
           <div className="text-center">
             <br />
 
-         
-          </div>
-          <section id="products" className="py-6 bg-white rounded-2xl shadow-lg">
-            <div className="max-w-6xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าแนะนำ</h2>
-              <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {recomendProducts.map((i) => (
-                  <div
-                    key={i.id}
-                    className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0 "
-                  >
-                    <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
-                      <img src={i.image} alt={i.name} className="w-full h-full object-fill" />
-                    </div>
-                    <h3 className="text-lg font-semibold">สินค้า {i.name}</h3>
-                    <p className="text-gray-600">{i.description}</p>
-                    <p className="text-gray-600">{i.price} บาท</p>
-                    <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
-                      เพิ่มลงตะกร้า
-                    </button>
-                  </div>
-                ))}
-              </div>
-                 <a
-              href=""
-              className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
-            >
-              ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
-            </a>
-            </div>
-          </section>
-          <div className="text-center">
-            <br />
-
-        
-          </div>
-          <section id="products" className="py-6 bg-white rounded-2xl shadow-lg">
-            <div className="max-w-6xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าขายดี</h2>
-              <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {bestsellerProducts.map((i) => (
-                  <div
-                    key={i.id}
-                    className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0"
-                  >
-                    <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
-                      <img src={i.image} alt={i.name} className="w-full h-full object-fill" />
-                    </div>
-                    <h3 className="text-lg font-semibold">สินค้า {i.name}</h3>
-                    <p className="text-gray-600">{i.description}</p>
-                    <p className="text-gray-600">{i.price} บาท</p>
-                    <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
-                      เพิ่มลงตะกร้า
-                    </button>
-                  </div>
-                ))}
-              </div>
-              
-            <a
-              href=""
-              className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
-            >
-              ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
-            </a>
-            </div>
-          </section>
-          <div className="text-center">
-            <br />
 
           </div>
-
-          <section id="products" className="py-6 bg-white rounded-2xl shadow-lg">
-            <div className="max-w-6xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-10 text-gray-700">สินค้าขายดี</h2>
-              <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {Allproduct.map((i) => (
-                  <div
-                    key={i.id}
-                    className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0"
-                  >
-                    <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
-                      <img src={i.image} alt={i.name} className="w-full h-full object-fill" />
-                    </div>
-                    <h3 className="text-lg font-semibold">สินค้า {i.name}</h3>
-                    <p className="text-gray-600">{i.description}</p>
-                    <p className="text-gray-600">{i.price} บาท</p>
-                    <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
-                      เพิ่มลงตะกร้า
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="text-center">
-              <br />
-
-              <a
-                href=""
-                className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
-              >
-                ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
-              </a>
-            </div>
-          </section>
-
-
-
+          
 
 
 

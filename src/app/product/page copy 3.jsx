@@ -112,7 +112,27 @@ export default function ProductsPage() {
     { id: 16, name: "สายน้ำเกลือ / ชุดให้น้ำเกลือ (IV Set)", category: { name: "เวชภัณฑ์และอุปกรณ์ทั่วไป" }, price: 200, image: "/images/product16.jpg" },
   ]
 
+  useEffect(() => {
+    async function fetchProducts() {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      setProducts(data);
 
+      const uniqueCategories = Array.from(new Set(data.map(p => p.category.name)));
+      setCategories(uniqueCategories);
+    }
+
+    fetchProducts();
+  }, []);
+
+  const filteredProducts = filterCategory === "All"
+    ? products
+    : products.filter(p => p.category.name === filterCategory);
+
+  const addToCart = (product) => {
+    setCart((prev) => [...prev, product]);
+    alert(`${product.name} ถูกเพิ่มลงตะกร้าแล้ว`);
+  };
 
   return (
     <div>

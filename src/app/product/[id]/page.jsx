@@ -4,6 +4,7 @@ import Image from "next/image";
 import { div } from "framer-motion/client";
 import Navbar from "@/app/components/Nav";
 import { Facebook } from 'lucide-react';
+import Breadcrumb from "@/app/components/Breadcrumb";
 
 const productData = {
   id: "RMM-BGM011",
@@ -28,10 +29,19 @@ const productData = {
 };
 
 
+const tabs = [
+  { label: "คำอธิบาย" },
+  { label: "ข้อมูลเพิ่มเติม" },
+  { label: "บทวิจารณ์ (0)" },
+];
+
+
+
+
 
 export default function ProductPage() {
 
-  
+    const [active, setActive] = useState(0);
   const hasPromotion = productData.promotion && productData.promotion.discount_value > 0;
   const finalPrice = hasPromotion
     ? productData.promotion.discount_type === "amount"
@@ -47,8 +57,22 @@ export default function ProductPage() {
       <Navbar />
    <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-8">
+          <Breadcrumb
+  items={[
+    { label: "หน้าหลัก", href: "/" },
+    { label: "เครื่องชั่งน้ำหนัก", href: "/category/scale" },
+    { label: "เครื่องชั่งน้ำหนักดิจิตอล" }
+  ]}
+/>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+{/* <Breadcrumb
+  items={[
+    { label: "หน้าหลัก", href: "/" },
+    { label: productData.category, href: `/category/${productData.category}` },
+    { label: productData.subcategory }
+  ]}
+/> */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
         {/* รูปสินค้า */}
         <div>
           <div className="border p-4 rounded-lg w-full h-96 relative">
@@ -127,21 +151,55 @@ export default function ProductPage() {
         </div>
       </div>
       <br />
-      <div className="max-w-7xl mx-auto space-y-12">
-            <section className="bg-white p-6 rounded-lg shadow-md">
-              <h4 className="text-2xl font-semibold text-blue-800 mb-4">คุณสมบัติ</h4>
-              <ul className="list-disc list-inside">
-                {productData.property.map((prop, index) => (
-                  <li key={index}>
-                    <span className="font-medium">{prop.name}:</span> {prop.value}
-                  </li>
-                ))}
-              </ul>
-              <br />
-               <h4 className="text-2xl font-semibold text-blue-800 mb-4">การรับประกัน</h4>
-               <p>{productData.waranty}</p>
-            </section>
+            <div className="bg-white rounded shadow p-4">
+      {/* Tabs */}
+      <div className="flex border-b">
+        {tabs.map((tab, idx) => (
+          <button
+            key={tab.label}
+            className={`px-6 py-2 font-medium ${
+              active === idx
+                ? "border-b-2 border-blue-600 text-blue-700"
+                : "text-gray-600"
+            }`}
+            onClick={() => setActive(idx)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="py-6">
+        {active === 0 && (
+          <div>
+            <h2 className="font-bold text-lg mb-4">
+              คุณสมบัติ
+            </h2>
+            <ul className="list-disc list-inside space-y-2">
+              <li>ดีไซน์บางเฉียบ (Ultra Slim) ทนทานด้วยกระจกนิรภัย</li>
+              <li>อ่านค่าง่ายด้วยหน้าจอแสดงผล LCD ขนาด 30 มม.</li>
+              <li>ชั่งน้ำหนักสูงสุด 150 กิโลกรัม (330 ปอนด์)</li>
+              <li>ความละเอียด 100 กรัม (Weight Capacity)</li>
+              <li>ขนาด 300 x 320 x 22 มิลลิเมตร</li>
+              <li>ตัวเครื่องสีดำ</li>
+              <li>แบตเตอรี่ : Lithium CR2032 x 1 pc</li>
+              <li>รับประกัน 1 ปีจากการใช้งานปกติ</li>
+            </ul>
           </div>
+        )}
+        {active === 1 && (
+          <div>
+            <p>ข้อมูลเพิ่มเติมเกี่ยวกับสินค้า...</p>
+          </div>
+        )}
+        {active === 2 && (
+          <div>
+            <p>ยังไม่มีบทวิจารณ์</p>
+          </div>
+        )}
+      </div>
+    </div>
     </div>
     </div>
     </div>

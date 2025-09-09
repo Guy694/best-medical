@@ -112,10 +112,11 @@ export default function Contact() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Contact Information */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                  ข้อมูลติดต่อ
-                </h2>
+              <div className="bg-white rounded-lg shadow-lg mb-8">
+                 <div className="header bg-gradient-to-bl from-blue-600 to-blue-900 p-2 rounded-t-3xl ">
+                  <h2 className="text-2xl font-semibold text-white p-6 text-center"> ข้อมูลติดต่อ</h2>
+              </div>
+                <div className="p-7">
 
                 <div className="space-y-4">
                   {contactInfo.map((info, index) => (
@@ -151,13 +152,15 @@ export default function Contact() {
                     </div>
                   ))}
                 </div>
+                </div>
               </div>
 
               {/* Social Media */}
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
-                  ติดตามเราได้ที่
-                </h3>
+              <div className="bg-white rounded-lg shadow-lg">
+                <div className="header bg-gradient-to-bl from-blue-600 to-blue-900 p-2 rounded-t-3xl ">
+                  <h3 className="text-2xl font-semibold text-white p-6 text-center"> ติดตามเราได้ที่</h3>
+              </div>
+                  <div className="p-7">
                 <div className="grid grid-cols-2 gap-3">
                   {socialLinks.map((social, index) => (
                     <a
@@ -175,15 +178,18 @@ export default function Contact() {
                   ))}
                 </div>
               </div>
+              </div>
             </div>
 
             {/* Contact Form and Map */}
             <div className="lg:col-span-2 space-y-8">
               {/* Contact Form */}
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                  ส่งข้อความถึงเรา
-                </h2>
+              <div className="bg-white rounded-lg shadow-lg">
+                
+                <div className="header bg-gradient-to-bl from-blue-600 to-blue-900 p-2 rounded-t-3xl ">
+                  <h2 className="text-2xl font-semibold text-white p-6 text-center">  ส่งข้อความถึงเรา</h2>
+              </div>
+              <div className="p-7">
 
                 {submitMessage && (
                   <div
@@ -321,6 +327,7 @@ export default function Contact() {
                     </button>
                   </div>
                 </form>
+                </div>
               </div>
 
               {/* Map Section */}

@@ -67,7 +67,9 @@ export default function paidstatus() {
 
               <p className="text-gray-600">เรายินดีให้บริการคุณเสมอ</p>
             </section>
-          </div>   </div>
-      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

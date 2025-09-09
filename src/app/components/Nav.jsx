@@ -46,7 +46,7 @@ const Navbar = () => {
   const currentNav = navItems[language];
 
   return (
-    <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-2xl shadow-blue-600 sticky top-0 z-10  rounded-b-3xl">
+    <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-lg shadow-blue-600 sticky top-0 z-30  rounded-b-3xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-12">
         <br />
         <div className="relative flex justify-end items-center pr-3">
@@ -86,7 +86,7 @@ const Navbar = () => {
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname === currentNav.home ? "text-green-400" : "text-white hover:text-green-400"
                   }`}
               >
-                หน้าแรก
+                หน้าหลัก
               </Link>
               <Link
                 href={currentNav.product}
@@ -104,7 +104,7 @@ const Navbar = () => {
                 </button>
 
                 {/* Dropdown */}
-                <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
+                <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
                   <Link
                     href="/howtopay"
                     className={`block px-4 py-2 text-sm ${pathname === currentNav.howtopay ? "text-green-400 font-semibold" : "text-gray-700"
@@ -140,7 +140,7 @@ const Navbar = () => {
                 </button>
 
                 {/* Dropdown */}
-                <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
+                <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
                    <Link
                     href="/article"
                     className={`block px-4 py-2 text-sm ${pathname === currentNav.article ? "text-green-400 font-semibold" : "text-gray-700"
@@ -183,7 +183,7 @@ const Navbar = () => {
                 {language === "th" ? "ไทย" : "EN"} */}
               </button>
               {isLangDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-24 bg-white rounded-md shadow-lg py-1 z-10">
+                <div className="absolute right-0 mt-2 w-24 bg-white rounded-md shadow-lg py-1 z-30">
                   <button
                     onClick={() => toggleLanguage("th")}
                     className={`block px-4 py-2 text-sm w-full text-left hover:bg-gray-100 ${language === "th"
