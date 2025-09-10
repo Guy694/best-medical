@@ -53,9 +53,9 @@ export default function ProductPage() {
   const [mainImage, setMainImage] = useState(productData.images[0]);
 
   return (
-    <div className="bg-white">
+    <div >
       <Navbar />
-   <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <Breadcrumb
   items={[
@@ -72,10 +72,10 @@ export default function ProductPage() {
     { label: productData.subcategory }
   ]}
 /> */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-3xl shadow">
         {/* รูปสินค้า */}
         <div>
-          <div className="border p-4 rounded-lg w-full h-96 relative">
+          <div className="border border-gray-300 p-4 rounded-xl w-full h-96 relative">
               <Image
                 src={mainImage}
                 alt={productData.name}
@@ -100,8 +100,8 @@ export default function ProductPage() {
         </div>
 
         {/* รายละเอียดสินค้า */}
-        <div>
-          <h1 className="text-2xl font-bold mb-2">{productData.name}</h1>
+        <div >
+          <h1 className="text-2xl font-bold mb-2 ">{productData.name}</h1>
           <p className="text-gray-600 mb-2">รหัสสินค้า: {productData.id}</p>
             {hasPromotion ? (
         <div>
@@ -151,7 +151,7 @@ export default function ProductPage() {
         </div>
       </div>
       <br />
-            <div className="bg-white rounded shadow p-4">
+      <div className="bg-white rounded-2xl shadow p-4">
       {/* Tabs */}
       <div className="flex border-b">
         {tabs.map((tab, idx) => (
@@ -170,7 +170,7 @@ export default function ProductPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="py-6">
+      <div className="py-6 ">
         {active === 0 && (
           <div>
             <h2 className="font-bold text-lg mb-4">

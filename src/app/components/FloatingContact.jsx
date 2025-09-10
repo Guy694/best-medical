@@ -39,7 +39,7 @@ export default function FloatingContact({
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
             className="mb-3 mr-2 w-56 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 overflow-hidden"
           >
-            <div className="px-4 pt-4 pb-3 border-b text-sm font-medium">
+            <div className="px-4 pt-4 pb-3 border-b text-sm font-medium text-gray-800">
               {label}
             </div>
             <div className="p-2 flex flex-col gap-2">
@@ -53,8 +53,8 @@ export default function FloatingContact({
                   <FacebookIcon className="h-5 w-5" />
                 </span>
                 <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-semibold">Facebook Messenger</span>
-                  <span className="text-xs text-gray-500">แชตกับแอดมิน</span>
+                  <span className="text-sm font-semibold text-gray-800">Facebook Messenger</span>
+                  <span className="text-xs text-gray-800">แชตกับแอดมิน</span>
                 </div>
               </a>
 
@@ -68,7 +68,7 @@ export default function FloatingContact({
                   <LineIcon className="h-5 w-5" />
                 </span>
                 <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-semibold">LINE Official</span>
+                  <span className="text-sm font-semibold text-green-700">LINE Official</span>
                   <span className="text-xs text-gray-500">เพิ่มเพื่อน/แชตเลย</span>
                 </div>
               </a>
@@ -81,7 +81,7 @@ export default function FloatingContact({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group relative flex items-center justify-center h-12 w-12 rounded-full bg-blue-600 text-white shadow-lg hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className=" group relative flex items-center justify-center h-12 w-12 rounded-full bg-blue-600 text-white shadow-lg hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-blue-400"
         aria-label="เปิดเมนูติดต่อ"
       >
         <AnimatePresence initial={false}>

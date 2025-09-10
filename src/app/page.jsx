@@ -123,7 +123,7 @@ export default function Home() {
   const products = [
   {
     id: 1,
-    category: "Phone",
+    category: "เครื่องวัดความดันโลหิต",
     name: "JPhone 13 High Quality Value Buy Best Cam...",
     price: 999,
     oldPrice: null,
@@ -132,7 +132,7 @@ export default function Home() {
   },
   {
     id: 2,
-    category: "Audio",
+    category: "เครื่องตรวจน้ำตาลในเลือด",
     name: "WH-1000XM4 Wireless Headphones High Qua...",
     price: 59,
     oldPrice: 199,
@@ -142,7 +142,7 @@ export default function Home() {
   },
   {
     id: 3,
-    category: "Laptop",
+    category: "เครื่องตรวจคลื่นไฟฟ้าหัวใจ (ECG)",
     name: "S21 Laptop Ultra HD LED Screen Feature 2023...",
     price: 1199,
     oldPrice: null,
@@ -151,7 +151,7 @@ export default function Home() {
   },
   {
     id: 4,
-    category: "Camera",
+    category: "เครื่องตรวจคลื่นสมอง (EEG)",
     name: "Mini Polaroid Camera for Girls with Flash Li...",
     price: 79,
     oldPrice: null,
@@ -160,7 +160,7 @@ export default function Home() {
   },
   {
     id: 5,
-    category: "Television",
+    category: "เครื่องเอกซเรย์ (X-Ray)",
     name: "AG OLED65CXPUA 4K Smart OLED TV New ...",
     price: 2799,
     oldPrice: null,
@@ -201,15 +201,15 @@ export default function Home() {
 
     <div>
       <Navbar />
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16  rounded-xl ">
+          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-5 md:py-16  rounded-xl shadow-xl">
             <div className="container mx-auto px-4 text-center">
               <div className="flex justify-center mb-4">
                 <Image
                   src="/logo.png"
                   alt="โลโก้"
-                  width={120}
+                  width={120} 
                   height={120}
                   className="w-24 h-24 md:w-48 md:h-48"
                 />
@@ -220,17 +220,17 @@ export default function Home() {
             </div>
           </div>
           <br />
-          <div className="max-w-7xl mx-auto bg-white  rounded-xl p-6  flex items-center space-x-6">
+          <div className="grid grid-cols-1 bg-white  rounded-xl p-6 md:flex items-center space-x-6 max-w-7xl mx-auto shadow">
             {/* โลโก้ */}
-            <img
+            <img 
               src="/banner.png"
               alt="หกห"
               className="w-32 h-32 object-contain rounded-lg"
             />
 
             {/* ข้อมูลร้าน */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-green-500">
+            <div className=" md:flex-1">
+              <h1 className="md:text-2xl font-bold text-green-500">
                 ร้านขายอุปกรณ์การแพทย์ <span className="text-blue-900">บริษัท เบสท เมดิคอล จำกัด</span>
               </h1>
               <p className="text-gray-700 mt-2">
@@ -238,7 +238,7 @@ export default function Home() {
               </p>
 
               {/* ปุ่ม */}
-              <div className="flex space-x-3 mt-4">
+              <div className="flex space-x-4 mt-5">
                 <a
                   href="#"
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
@@ -261,7 +261,7 @@ export default function Home() {
             </div>
           </div>
 
-          <section className="py-6 bg-white">
+          <section className="py-6">
             <div className="max-w-7xl mx-auto text-center grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="p-6 bg-white rounded-xl shadow">
                 <div className="flex justify-center items-center h-20">
@@ -287,61 +287,141 @@ export default function Home() {
             </div>
           </section>
 
-
-
-           <section className="py-10 px-6 max-w-7xl mx-auto">
+   <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
   <div className="flex justify-between items-center mb-6">
-    <h2 className="text-2xl font-bold text-gray-700">สินค้าโปรโมชั่น</h2>
-    <a href="products" className="text-red-500 hover:underline">
+    <h2 className="text-2xl font-bold text-gray-700">หมวดหมู่สินค้า</h2>
+  </div>
+
+ <div className="relative">
+  <div className="flex gap-2 overflow-x-auto pb-4">
+    {products.map((product) => (
+      <div
+        key={product.id}
+        className="min-w-[160px] md:min-w-[260px] p-3 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
+      >
+       
+        <div className="flex justify-center mb-2 md:mb-4">
+          <Image
+            src={product.image}
+            alt={product.name}
+            width={120}
+            height={120}
+            className="object-contain"
+          />
+        </div>
+        <p className="text-xs md:text-lg uppercase mb-1 text-center bg-gradient-to-bl from-blue-900 to-blue-700 text-white font-bold rounded-b-2xl p-1">{product.category}</p>
+        <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
+          <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
+            <Eye size={40} />
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+</section>
+
+<br />
+
+
+  <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
+  <div className="flex justify-between items-center mb-6">
+    <h2 className="text-2xl font-bold text-gray-700">สินค้าเข้าใหม่</h2>
+    <a href="products" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
       ดูสินค้าทั้งหมด
     </a>
   </div>
 
-  <div className="relative">
-    <div className="flex gap-6 overflow-x-auto pb-4">
-      {products.map((product) => (
-        <div
-          key={product.id}
-          className="min-w-[260px] p-4 border rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
-        >
-          {product.discount && (
-            <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-              {product.discount}%
-            </span>
-          )}
-          <div className="flex justify-center mb-4">
-            <Image
-              src={product.image}
-              alt={product.name}
-              width={120}
-              height={120}
-              className="object-contain"
-            />
-          </div>
-          <p className="text-gray-400 text-xs uppercase mb-1">{product.category}</p>
-          <h3 className="text-sm font-semibold line-clamp-2 mb-2">{product.name}</h3>
-          <div className="mb-2">
-            <span className="text-lg font-bold">${product.price}</span>
-            {product.oldPrice && (
-              <span className="text-gray-400 line-through ml-2">${product.oldPrice}</span>
-            )}
-          </div>
-          <p className="text-xs text-gray-500">({product.rating})</p>
-          <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
-            <button className="p-2 bg-white rounded-full shadow hover:text-red-500">
-              <Heart size={18} />
-            </button>
-            <button className="p-2 bg-white rounded-full shadow hover:text-blue-500">
-              <ShoppingCart size={18} />
-            </button>
-            <button className="p-2 bg-white rounded-full shadow hover:text-green-500">
-              <Eye size={18} />
-            </button>
-          </div>
+ <div className="relative">
+  <div className="flex gap-2 overflow-x-auto pb-4">
+    {products.map((product) => (
+      <div
+        key={product.id}
+        className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
+      >
+        {product.discount && (
+          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+            {product.discount}%
+          </span>
+        )}
+        <div className="flex justify-center mb-2 md:mb-4">
+          <Image
+            src={product.image}
+            alt={product.name}
+            width={120}
+            height={120}
+            className="object-contain"
+          />
         </div>
-      ))}
-    </div>
+        <p className="text-gray-800 text-xs uppercase mb-1">{product.category}</p>
+        <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{product.name}</h3>
+        <div className="mb-2">
+          <span className="text-base text-gray-800 md:text-lg font-bold">{product.price} บาท</span>
+          {product.oldPrice && (
+            <span className="text-gray-800 line-through ml-2">${product.oldPrice}</span>
+          )}
+        </div>
+        <p className="text-xs text-green-600">({product.rating})</p>
+        <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
+          <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
+            <Eye size={40} />
+          </button>
+        </div>
+      </div>
+    ))}
   </div>
+</div>
+</section>
+<br />
+
+ิ<br />
+<section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
+  <div className="flex justify-between items-center mb-6">
+    <h2 className="text-2xl font-bold text-gray-700">สินค้าโปรโมชั่น</h2>
+    <a href="products" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
+      ดูสินค้าทั้งหมด
+    </a>
+  </div>
+
+ <div className="relative">
+  <div className="flex gap-2 overflow-x-auto pb-4">
+    {products.map((product) => (
+      <div
+        key={product.id}
+        className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
+      >
+        {product.discount && (
+          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+            {product.discount}%
+          </span>
+        )}
+        <div className="flex justify-center mb-2 md:mb-4">
+          <Image
+            src={product.image}
+            alt={product.name}
+            width={120}
+            height={120}
+            className="object-contain"
+          />
+        </div>
+        <p className="text-gray-800 text-xs uppercase mb-1">{product.category}</p>
+        <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{product.name}</h3>
+        <div className="mb-2">
+          <span className="text-base text-gray-800 md:text-lg font-bold">{product.price} บาท</span>
+          {product.oldPrice && (
+            <span className="text-gray-800 line-through ml-2">${product.oldPrice}</span>
+          )}
+        </div>
+        <p className="text-xs text-green-600">({product.rating})</p>
+        <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
+          <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
+            <Eye size={40} />
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
 </section>
           {/* <section id="products" className="py-6 bg-gray-50">
             <div className="max-w-7xl mx-auto text-center border-8 p-5 rounded-2xl border-red-500 bg-white shadow-lg">

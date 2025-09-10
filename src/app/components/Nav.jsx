@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Img from "next/image";
-import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck } from "lucide-react";
+import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck ,Search} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -49,34 +49,46 @@ const Navbar = () => {
     <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-lg shadow-blue-600 sticky top-0 z-30  rounded-b-3xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-12">
         <br />
-        <div className="relative flex justify-end items-center pr-3">
-         <Link href="/cart" className="text-white relative">
-  <ShoppingCart className="h-7 w-7 text-white" />
-  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-    {cartCount}
-  </span>
-</Link>
+        <div className="relative flex justify-end items-center pr-3 space-x-4">
+          <form action="">
+            <div className="relative">
+  <input
+    type="text"
+    className="bg-white rounded-3xl py-2 px-1 pl-10 border border-gray-300 placeholder-gray-400"
+    placeholder="ค้นหาสินค้า"
+  />
+  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+</div>
+          </form>
+          <Link href="/cart" className="text-white relative">
+            <ShoppingCart className="h-7 w-7 text-white" />
+            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {cartCount}
+            </span>
+          </Link>
+          
 
         </div>
         <div className="flex justify-between items-center h-22">
           {/* Logo */}
-          <div className="flex items-center">
-            <div className="flex-shrink-0 flex items-center">
-              <Img
-                src="/logo.png"
-                alt="โลโก้"
-                width={120}
-                height={120}
-              ></Img>
-              {/* <span className="text-xl font-bold text-gray-800">
-                เบสท อุปกรณ์การแพทย์
-                <div>
-                  <small>Best-Medical Company</small>
-                </div>
-              </span> */}
-            </div>
-
-          </div>
+       <div className="flex items-center">
+  <div className="flex-shrink-0 items-center hidden sm:block">
+    <Img
+      src="/logo.png"
+      alt="โลโก้"
+      width={120}
+      height={120}
+    />
+  </div>
+  <div className="flex-shrink-0 items-center block sm:hidden">
+    <span className="text-2xl font-bold text-white">
+      บริษัท เบสท เมดิคอล จำกัด
+      <div>
+        <small className="text-sm text-green-200">Best-Medical Company</small>
+      </div>
+    </span>
+  </div>
+</div>
 
           {/* Desktop Menu */}
           <div className="hidden md:block">
@@ -141,25 +153,25 @@ const Navbar = () => {
 
                 {/* Dropdown */}
                 <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
-                   <Link
+                  <Link
                     href="/article"
                     className={`block px-4 py-2 text-sm ${pathname === currentNav.article ? "text-green-400 font-semibold" : "text-gray-700"
                       } hover:bg-gray-100`}
                   >
-                   บทความและข่าวสาร
+                    บทความและข่าวสาร
                   </Link>
-                    <Link
+                  <Link
                     href="/qa"
                     className={`block px-4 py-2 text-sm ${pathname === currentNav.qa ? "text-green-400 font-semibold" : "text-gray-700"
                       } hover:bg-gray-100`}
                   >
-                   คำถามที่พบบ่อย (FAQ)
+                    คำถามที่พบบ่อย (FAQ)
                   </Link>
                 </div>
               </div>
 
-              
-                 <Link
+
+              <Link
                 href={currentNav.contact}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname === currentNav.contact ? "text-green-400" : "text-white hover:text-green-400"
                   }`}
@@ -167,44 +179,14 @@ const Navbar = () => {
                 ติดต่อเรา
               </Link>
 
-              
+
             </div>
           </div>
 
           {/* Right Side - Language, Login */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Language Selector */}
-            <div className="relative">
-              <button
-                onClick={toggleLangDropdown}
-                className="flex items-center text-white hover:text-green-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                {/* <Globe className="h-4 w-4 mr-1" />
-                {language === "th" ? "ไทย" : "EN"} */}
-              </button>
-              {isLangDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-24 bg-white rounded-md shadow-lg py-1 z-30">
-                  <button
-                    onClick={() => toggleLanguage("th")}
-                    className={`block px-4 py-2 text-sm w-full text-left hover:bg-gray-100 ${language === "th"
-                      ? "text-blue-600 font-semibold"
-                      : "text-gray-700"
-                      }`}
-                  >
-                    ไทย
-                  </button>
-                  <button
-                    onClick={() => toggleLanguage("en")}
-                    className={`block px-4 py-2 text-sm w-full text-left hover:bg-gray-100 ${language === "en"
-                      ? "text-blue-600 font-semibold"
-                      : "text-gray-700"
-                      }`}
-                  >
-                    English
-                  </button>
-                </div>
-              )}
-            </div>
+
 
             {/* Login Button */}
             <Link
@@ -212,16 +194,16 @@ const Navbar = () => {
               className="flex items-center bg-white text-grey-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
             >
               <User className="h-4 w-4 mr-2" />
-             
+
               เข้าสู่ระบบ
             </Link>
-            
+
             {/* Register Button */}
             <a
               href={currentNav.register}
               className="border  text-grey-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
             >
-              
+
               ลงทะเบียน
             </a>
           </div>
@@ -240,70 +222,88 @@ const Navbar = () => {
             </button>
           </div>
         </div>
-
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50">
-              <a
-                href="/"
-                className="text-white hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gradient-to-r from-blue-900 to-blue-800 rounded-b-3xl">
+              <Link
+                href={currentNav.home}
+                className={`block px-4 py-2 text-sm ${pathname === currentNav.home ? "text-green-400" : "text-white hover:text-green-400"
+                  }`}
               >
-                {currentNav.home}
-              </a>
-              <a
-                href="/jobs"
-                className="text-white hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+                หน้าหลัก
+              </Link>
+              <Link
+                href={currentNav.product}
+                className={`block px-4 py-2 text-sm ${pathname === currentNav.product ? "text-green-400" : "text-white hover:text-green-400"
+                  }`}
               >
-                {currentNav.jobs}
-              </a>
-              <a
-                href="/news"
-                className="text-white hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
-              >
-                {currentNav.news}
-              </a>
-              <a
-                href="/about"
-                className="text-white hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
-              >
-                {currentNav.about}
-              </a>
-              <a
-                href="/contact"
-                className="text-white hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
-              >
-                {currentNav.contact}
-              </a>
-
-              {/* Language Toggle Mobile */}
-              {/* <div className="border-t pt-3 mt-3">
+                สินค้าทั้งหมด
+              </Link>
+              <div className=" absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
+                <Link
+                  href="/howtopay"
+                  className={`block px-4 py-2 text-sm ${pathname === currentNav.howtopay ? "text-green-400 font-semibold" : "text-gray-700"
+                    } hover:bg-gray-100`}
+                >
+                  วิธีการสั่งซื้อ/ชำระเงิน
+                </Link>
+                <Link
+                  href="/paidstatus"
+                  className={`block px-4 py-2 text-sm ${pathname === currentNav.paidstatus ? "text-green-400 font-semibold" : "text-gray-700"
+                    } hover:bg-gray-100`}
+                >
+                  ตรวจสอบสถานะการสั่งซื้อ
+                </Link>
+              </div>
+              <div className="relative group">
                 <button
-                  onClick={() =>
-                    toggleLanguage(language === "th" ? "en" : "th")
-                  }
-                  className="flex items-center text-white hover:text-green-400 px-3 py-2 rounded-md text-base font-medium w-full"
+                  className="px-3 py-2 rounded-md text-sm font-medium text-white hover:text-green-400"
                 >
-                  <Globe className="h-5 w-5 mr-2" />
-                  {language === "th" ? "English" : "ภาษาไทย"}
+                  เพิ่มเติม
                 </button>
-              </div> */}
 
+                {/* Dropdown */}
+                <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
+                  <Link
+                    href="/article"
+                    className={`block px-4 py-2 text-sm ${pathname === currentNav.article ? "text-green-400 font-semibold" : "text-gray-700"
+                      } hover:bg-gray-100`}
+                  >
+                    บทความและข่าวสาร
+                  </Link>
+                  <Link
+                    href="/qa"
+                    className={`block px-4 py-2 text-sm ${pathname === currentNav.qa ? "text-green-400 font-semibold" : "text-gray-700"
+                      } hover:bg-gray-100`}
+                  >
+                    คำถามที่พบบ่อย (FAQ)
+                  </Link>
+                </div>
+              </div>
+              <Link
+                href={currentNav.contact}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${pathname === currentNav.contact ? "text-green-400" : "text-white hover:text-green-400"
+                  }`}
+              >
+                ติดต่อเรา
+              </Link>
               {/* Auth Buttons Mobile */}
-              <div className="border-t pt-3 mt-3 space-y-2">
-                <a
-                  href="/login"
-                  className="flex items-center bg-blue-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-blue-700 transition-colors"
+              <div className="border-t pt-10 mt-10 flex space-x-4">
+                <Link
+                  href={currentNav.login}
+                  className="text-grey-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
                 >
-                  <User className="h-5 w-5 mr-2" />
-                  {currentNav.login}
-                </a>
-                <a
-                  href="/register"
-                  className="flex items-center border border-blue-600 text-blue-600 px-3 py-2 rounded-md text-base font-medium hover:bg-blue-50 transition-colors"
+                  <User className="h-4 w-4 mr-2" />
+                  เข้าสู่ระบบ
+                </Link>
+                <Link
+                  href={currentNav.register}
+                  className="text-grey-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
                 >
-                  {currentNav.register}
-                </a>
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  ลงทะเบียน
+                </Link>
               </div>
             </div>
           </div>

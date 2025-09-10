@@ -58,7 +58,7 @@ const Checkout = () => {
       <Navbar
       />
       <br />
-    <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-3xl">
+    <div className="max-w-7xl mx-auto p-6 bg-white text-gray-800 shadow-md rounded-3xl">
       <h2 className="text-xl font-bold mb-4">ตะกร้าสินค้า</h2>
 
       {/* Product List */}
