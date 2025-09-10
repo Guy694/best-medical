@@ -61,10 +61,12 @@ export default function Login() {
   return (
     <div>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-        <div className="max-w-md w-full space-y-8">
-          {/* Header */}
-          <div className="text-center">
+      <div className="min-h-screen bg-gray-100 flex items-start justify-center p-4">
+        <div className="max-w-lg w-full space-y-8">
+        
+          {/* Login Form */}
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20">
+               <div className="text-center">
             <div className="mx-auto h-12 w-12 bg-white rounded-full flex items-center justify-center mb-4">
               <svg
                 className="h-8 w-8 text-indigo-600"
@@ -80,14 +82,11 @@ export default function Login() {
                 />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-white">เข้าสู่ระบบ</h2>
-            <p className="mt-2 text-indigo-200">
+            <h2 className="text-3xl font-bold text-gray-700">เข้าสู่ระบบ</h2>
+            <p className="mt-2 text-gray-600">
               กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ
             </p>
           </div>
-
-          {/* Login Form */}
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20">
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <div className="bg-red-500 backdrop-blur-sm border border-red-500/50 text-red-100 px-4 py-3 rounded-lg">
@@ -109,7 +108,7 @@ export default function Login() {
                   required
                   value={formData.username}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg text-blue-900 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3  bg-white/10 backdrop-blur-sm border rounded-3xl border-blue-700  text-blue-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                   placeholder="กรอกชื่อผู้ใช้"
                 />
               </div>
@@ -128,7 +127,7 @@ export default function Login() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg text-blue-900 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-blue-700 rounded-3xl text-blue-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                   placeholder="กรอกรหัสผ่าน"
                 />
               </div>
@@ -166,7 +165,13 @@ export default function Login() {
                 )}
               </button>
             </form>
-
+              <div className="my-4 text-center">หรือ</div>
+                      <button
+                        onClick={() => signIn("google")}
+                        className="w-full flex items-center justify-center gap-2 border border-gray-300 p-2 rounded-lg hover:bg-gray-100 transition"
+                      >
+                        สมัครด้วย Google
+                      </button>
             <div className="mt-6 text-center">
               <p className="text-sm text-blue-900 text-right">สมัครสมาชิก</p>
                <p className="text-sm text-blue-900 text-right">ลืมรหัสผ่าน</p>
