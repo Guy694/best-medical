@@ -68,7 +68,7 @@ const Navbar = () => {
           </Link>
           
 
-        </div>
+        </div> 
         <div className="flex justify-between items-center h-22">
           {/* Logo */}
        <div className="flex items-center">
