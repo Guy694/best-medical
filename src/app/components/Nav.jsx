@@ -54,10 +54,10 @@ const Navbar = () => {
             <div className="relative">
   <input
     type="text"
-    className="bg-white rounded-3xl py-2 px-1 pl-10 border border-gray-300 placeholder-gray-400 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+    className="bg-white rounded-3xl py-2 px-1 pl-10 placeholder-gray-400  border border-blue-70 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
     placeholder="ค้นหาสินค้า"
   />
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+  <Search className="absolute left-3 top-1/2 -translate-y-1/2  text-gray-400 w-5 h-5" />
 </div>
           </form>
           <Link href="/cart" className="text-white relative">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "@/app/components/Nav";
 import Breadcrumb from "@/app/components/Breadcrumb";
+import Link from "next/link";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
@@ -126,113 +127,39 @@ export default function ProductsPage() {
         />
         <h1 className="text-3xl font-bold mb-6">สินค้า</h1>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* เมนู (4 ส่วน) */}
-          <aside className="col-span-3 bg-white rounded-xl shadow p-6 hidden md:block">
-            <h2 className="text-xl font-semibold mb-4">หมวดหมู่</h2>
-            <ul>
-              <li
-                className={`cursor-pointer mb-2 ${filterCategory === "All" ? "font-bold text-blue-600" : ""}`}
-                onClick={() => setFilterCategory("All")}
-              >
-                ทั้งหมด
-              </li>
-              {Object.keys(subCategories).map((cat) => (
-                <li key={cat}>
-                  <div
-                    className={`cursor-pointer mb-2 ${filterCategory === cat ? "font-bold text-blue-600" : ""}`}
-                    onClick={() => setFilterCategory(cat)}
-                  >
-                    {cat}
-                  </div>
-                  {/* หมวดย่อย */}
-                  {filterCategory === cat && (
-                    <ul className="ml-4 mt-2">
-                      {subCategories[cat].map((subCat) => (
-                        <li key={subCat} className="text-sm text-gray-600 mb-1">
-                          {subCat}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </aside>
-
-          {/* Hamburger menu for mobile */}
-          <div className="md:hidden mb-4">
-            <button
-              className="p-2 rounded bg-blue-600 text-white"
-              onClick={() => setShowMenu((prev) => !prev)}
-            >
-              ☰ หมวดหมู่
-            </button>
-            {showMenu && (
-              <div className="absolute z-10 bg-white rounded-xl shadow p-6 mt-2 w-64">
-                <h2 className="text-xl font-semibold mb-4">หมวดหมู่</h2>
-                <ul>
-                  <li
-                    className={`cursor-pointer mb-2 ${filterCategory === "All" ? "font-bold text-blue-600" : ""}`}
-                    onClick={() => {
-                      setFilterCategory("All");
-                      setShowMenu(false);
-                    }}
-                  >
-                    ทั้งหมด
+          <aside className="col-span-3">
+            <div className="bg-white rounded-xl shadow p-6 mb-6">
+              <h2 className="text-xl font-semibold mb-4">หมวดหมู่สินค้า</h2>
+              <ul>
+                {Object.keys(subCategories).map((category) => (
+                  <li key={category} className="mb-2">
+                    <Link href={`/product?category=${category}`} className="text-blue-600 hover:underline">
+                      {category}
+                    </Link>
                   </li>
-                  {Object.keys(subCategories).map((cat) => (
-                    <li key={cat}>
-                      <div
-                        className={`cursor-pointer mb-2 ${filterCategory === cat ? "font-bold text-blue-600" : ""}`}
-                        onClick={() => {
-                          setFilterCategory(cat);
-                          setShowMenu(false);
-                        }}
-                      >
-                        {cat}
-                      </div>
-                      {/* หมวดย่อย */}
-                      {filterCategory === cat && (
-                        <ul className="ml-4 mt-2">
-                          {subCategories[cat].map((subCat) => (
-                            <li key={subCat} className="text-sm text-gray-600 mb-1">
-                              {subCat}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                ))}
+              </ul>
+              
+
+            </div>
+            <div className="bg-white rounded-xl shadow p-6">
+              <h2 className="text-xl font-semibold mb-4">ตะกร้าสินค้า</h2>
+              {cart.length === 0 ? (
+                <p className="text-gray-500">ตะกร้าสินค้าว่างเปล่า</p>
+              ) : (
+                <ul>
+                  {cart.map((item, index) => (
+                    <li key={index} className="mb-2 flex justify-between">
+                      <span>{item.name}</span>
+                      <span>{item.price} บาท</span>
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
-          </div>
-
+              )}
+            </div>
+          </aside>
           <main className="col-span-9 bg-white rounded-xl shadow p-6">
-            {filteredProducts.length === 0 ? (
-              <p className="text-gray-600">ไม่มีสินค้าในหมวดหมู่นี้</p>
-            ) : () => (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => ( 
-                  <div key={product.id} className="border rounded-lg p-4 flex flex-col">
-                    <img
-                      src={product.image || "/images/placeholder.png"}
-                      alt={product.name}
-                      className="h-40 w-full object-cover mb-4 rounded"
-                    />
-                    <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-                    <p className="text-gray-600 mb-4">หมวดหมู่: {product.category.name}</p>
-                    <p className="text-xl font-bold mb-4">{product.price.toLocaleString()} บาท</p>
-                    <button
-                      className="mt-auto bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-                      onClick={() => addToCart(product)}
-                    >
-                      เพิ่มลงตะกร้า
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )()}
+            
           </main>
         </div>
       </div>

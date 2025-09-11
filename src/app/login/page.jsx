@@ -3,10 +3,13 @@ import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Nav";
+import { signIn } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Login() {
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
@@ -96,20 +99,20 @@ export default function Login() {
 
               <div>
                 <label
-                  htmlFor="username"
+                  htmlFor="email"
                   className="block text-sm font-medium text-blue-950 mb-2"
                 >
-                  ชื่อผู้ใช้
+                  กรอกอีเมล
                 </label>
                 <input
-                  id="username"
-                  name="username"
-                  type="text"
+                  id="email"
+                  name="email"
+                  type="email"
                   required
-                  value={formData.username}
+                  value={formData.email}
                   onChange={handleChange}
                   className="w-full px-4 py-3  bg-white/10 backdrop-blur-sm border rounded-3xl border-blue-700  text-blue-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                  placeholder="กรอกชื่อผู้ใช้"
+                  placeholder="กรอกอีเมล"
                 />
               </div>
 
@@ -170,11 +173,13 @@ export default function Login() {
                         onClick={() => signIn("google")}
                         className="w-full flex items-center justify-center gap-2 border border-gray-300 p-2 rounded-lg hover:bg-gray-100 transition"
                       >
-                        สมัครด้วย Google
+                        เข้าสู่ระบบด้วย Google <Image src="/google.png" alt="Google Logo" width={20} height={20} />
                       </button>
             <div className="mt-6 text-center">
-              <p className="text-sm text-blue-900 text-right">สมัครสมาชิก</p>
-               <p className="text-sm text-blue-900 text-right">ลืมรหัสผ่าน</p>
+            
+              <Link href="/forgot-password">
+                <p className="text-sm text-blue-900 text-right">ลืมรหัสผ่าน</p>
+              </Link>
             </div>
           </div>
         </div>

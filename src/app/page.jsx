@@ -203,7 +203,7 @@ export default function Home() {
       <Navbar />
       <div className="min-h-screen bg-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-5 md:py-16  rounded-xl shadow-xl">
+          <div className=" bg-gradient-to-r from-blue-900 to-blue-800 text-white py-5 md:py-16  rounded-xl shadow-xl">
             <div className="container mx-auto px-4 text-center">
               <div className="flex justify-center mb-4">
                 <Image
@@ -220,7 +220,8 @@ export default function Home() {
             </div>
           </div>
           <br />
-          <div className="grid grid-cols-1 bg-white  rounded-xl p-6 md:flex items-center space-x-6 max-w-7xl mx-auto shadow">
+          
+          <div className=" grid grid-cols-1 bg-white  rounded-xl p-6 md:flex items-center space-x-6 max-w-7xl mx-auto shadow">
             {/* โลโก้ */}
             <img 
               src="/banner.png"
