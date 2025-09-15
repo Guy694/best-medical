@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import Img from "next/image";
 import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck ,Search} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Cookies from "js-cookie";
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -28,6 +29,13 @@ const Navbar = () => {
     setIsLangDropdownOpen(!isLangDropdownOpen);
   };
   const [cartCount, setCartCount] = useState(0);
+
+useEffect(() => {
+  const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+  // รวมจำนวนทั้งหมด
+  const total = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  setCartCount(total);
+}, []);
 
   const navItems = {
     th: {
@@ -191,7 +199,7 @@ const Navbar = () => {
             {/* Login Button */}
             <Link
               href={currentNav.login}
-              className="flex items-center bg-white text-grey-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
+              className="flex items-center  bg-white text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
             >
               <User className="h-4 w-4 mr-2" />
 
@@ -201,7 +209,7 @@ const Navbar = () => {
             {/* Register Button */}
             <a
               href={currentNav.register}
-              className="border  text-grey-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
+              className="border  text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
             >
 
               ลงทะเบียน
@@ -240,8 +248,17 @@ const Navbar = () => {
               >
                 สินค้าทั้งหมด
               </Link>
-              <div className=" absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
-                <Link
+             
+                  <div className="relative group">
+                <button
+                  className="px-3 py-2 rounded-md text-sm font-medium text-white hover:text-green-400"
+                >
+                  วิธีการสั่งซื้อ/ชำระเงิน
+                </button>
+
+                {/* Dropdown */}
+                <div className="absolute left-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
+                  <Link
                   href="/howtopay"
                   className={`block px-4 py-2 text-sm ${pathname === currentNav.howtopay ? "text-green-400 font-semibold" : "text-gray-700"
                     } hover:bg-gray-100`}
@@ -255,6 +272,7 @@ const Navbar = () => {
                 >
                   ตรวจสอบสถานะการสั่งซื้อ
                 </Link>
+                </div>
               </div>
               <div className="relative group">
                 <button
@@ -292,14 +310,14 @@ const Navbar = () => {
               <div className="border-t pt-10 mt-10 flex space-x-4">
                 <Link
                   href={currentNav.login}
-                  className="text-grey-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
+                  className="text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
                 >
                   <User className="h-4 w-4 mr-2" />
                   เข้าสู่ระบบ
                 </Link>
                 <Link
                   href={currentNav.register}
-                  className="text-grey-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
+                  className="text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
                 >
                   <ShieldCheck className="h-4 w-4 mr-2" />
                   ลงทะเบียน

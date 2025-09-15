@@ -8,9 +8,59 @@ import Image from "next/image";
 import { p } from "framer-motion/client";
 
 
+
 export default function Home() {
+
   const [loading, setLoading] = useState(true);
-    const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(0);
+  const [newproducts, setnewProducts] = useState([]);
+  const [category, setCategory] = useState([]);
+  const [error, setError] = useState(null);
+  const [promotion, setPromotion] = useState([]);
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/api/product/new'); // เรียก API
+        if (!res.ok) throw new Error('ไม่สามารถดึงข้อมูลสินค้าได้');
+        const data = await res.json();
+        setnewProducts(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function fetchCategory() {
+      try {
+        const res = await fetch('/api/categories'); // เรียก API
+        if (!res.ok) throw new Error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+        const data = await res.json();
+        setCategory(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    async function fetchPromotion() {
+      try {
+        const res = await fetch('/api/product/promotion'); // เรียก API
+        if (!res.ok) throw new Error('ไม่สามารถดึงข้อมูลสินค้าได้');
+        const data = await res.json();
+        setPromotion(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+    fetchCategory();
+    fetchPromotion();
+
+  }, []); // รันแค่ครั้งแรก
 
   const nextSlide = () => {
     setCurrent((prev) => (prev + 1) % products.length);
@@ -20,169 +70,7 @@ export default function Home() {
     setCurrent((prev) => (prev - 1 + products.length) % products.length);
   };
 
-  const bestsellerProducts = [
-    {
-      id: 1, name: "สินค้า 1", description: "รายละเอียดสินค้า 1", price: 1000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 2, name: "สินค้า 2", description: "รายละเอียดสินค้า 2", price: 2000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 3, name: "สินค้า 3", description: "รายละเอียดสินค้า 3", price: 3000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 4, name: "สินค้า 4", description: "รายละเอียดสินค้า 4", price: 4000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 5, name: "สินค้า 5", description: "รายละเอียดสินค้า 5", price: 5000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-  ];
 
-
-
-  const recomendProducts = [
-    {
-      id: 1, name: "สินค้า 1", description: "รายละเอียดสินค้า 1", price: 1000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 2, name: "สินค้า 2", description: "รายละเอียดสินค้า 2", price: 2000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 3, name: "สินค้า 3", description: "รายละเอียดสินค้า 3", price: 3000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-  ]
-
-
-  const promotionProducts = [
-    {
-      id: 1, name: "สินค้า 1", description: "รายละเอียดสินค้า 1", price: 1000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 2, name: "สินค้า 2", description: "รายละเอียดสินค้า 2", price: 2000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 3, name: "สินค้า 3", description: "รายละเอียดสินค้า 3", price: 3000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-  ]
-
-  const Allproduct = [
-    {
-      id: 1, name: "สินค้า 1", description: "รายละเอียดสินค้า 1", price: 1000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 2, name: "สินค้า 2", description: "รายละเอียดสินค้า 2", price: 2000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-    {
-      id: 3, name: "สินค้า 3", description: "รายละเอียดสินค้า 3", price: 3000, image: "/image.png", promotion: {
-        discount_type: "amount",
-        discount_value: 300,
-      },
-    },
-  ]
-
-
-  const products = [
-  {
-    id: 1,
-    category: "เครื่องวัดความดันโลหิต",
-    name: "JPhone 13 High Quality Value Buy Best Cam...",
-    price: 999,
-    oldPrice: null,
-    rating: 50,
-    image: "/image.png",
-  },
-  {
-    id: 2,
-    category: "เครื่องตรวจน้ำตาลในเลือด",
-    name: "WH-1000XM4 Wireless Headphones High Qua...",
-    price: 59,
-    oldPrice: 199,
-    rating: 100,
-    discount: 50,
-    image: "/image.png",
-  },
-  {
-    id: 3,
-    category: "เครื่องตรวจคลื่นไฟฟ้าหัวใจ (ECG)",
-    name: "S21 Laptop Ultra HD LED Screen Feature 2023...",
-    price: 1199,
-    oldPrice: null,
-    rating: 100,
-    image: "/image.png",
-  },
-  {
-    id: 4,
-    category: "เครื่องตรวจคลื่นสมอง (EEG)",
-    name: "Mini Polaroid Camera for Girls with Flash Li...",
-    price: 79,
-    oldPrice: null,
-    rating: 70,
-    image: "/image.png",
-  },
-  {
-    id: 5,
-    category: "เครื่องเอกซเรย์ (X-Ray)",
-    name: "AG OLED65CXPUA 4K Smart OLED TV New ...",
-    price: 2799,
-    oldPrice: null,
-    rating: 20,
-    image: "/image.png",
-  },
-];
-
-  const hasPromotionbestsellerProducts = bestsellerProducts.promotion && bestsellerProducts.promotion.discount_value > 0;
-  const finalPrice = hasPromotionbestsellerProducts
-    ? bestsellerProducts.promotion.discount_type === "amount"
-      ? bestsellerProducts.price - bestsellerProducts.promotion.discount_value
-      : bestsellerProducts.price - (bestsellerProducts.price * bestsellerProducts.promotion.discount_value) / 100
-    : bestsellerProducts.price;
-
-
-  const hasPromotionRecomendProducts = recomendProducts.promotion && recomendProducts.promotion.discount_value > 0;
-  const finalPriceRecomendProducts = hasPromotionRecomendProducts
-    ? recomendProducts.promotion.discount_type === "amount"
-      ? recomendProducts.price - recomendProducts.promotion.discount_value
-      : recomendProducts.price - (recomendProducts.price * recomendProducts.promotion.discount_value) / 100
-    : recomendProducts.price;
 
 
 
@@ -291,26 +179,30 @@ export default function Home() {
    <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
   <div className="flex justify-between items-center mb-6">
     <h2 className="text-2xl font-bold text-gray-700">หมวดหมู่สินค้า</h2>
+    <a href="categories" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
+      ดูหมวดหมู่สินค้าทั้งหมด
+    </a>
   </div>
 
  <div className="relative">
   <div className="flex gap-2 overflow-x-auto pb-4">
-    {products.map((product) => (
+    {category.map((category) => (
       <div
-        key={product.id}
+        key={category.id}
         className="min-w-[160px] md:min-w-[260px] p-3 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
       >
        
-        <div className="flex justify-center mb-2 md:mb-4">
+         <div className="flex justify-center mb-2 md:mb-4">
+  <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
           <Image
-            src={product.image}
-            alt={product.name}
+            src={category.cate_img}
+            alt={category.cate_name}
             width={120}
             height={120}
-            className="object-contain"
+             className="object-cover w-full h-full rounded-lg"
           />
-        </div>
-        <p className="text-xs md:text-lg uppercase mb-1 text-center bg-gradient-to-bl from-blue-900 to-blue-700 text-white font-bold rounded-b-2xl p-1">{product.category}</p>
+        </div>   </div>
+        <p className="text-xs md:text-lg uppercase mb-1 text-center bg-gradient-to-bl from-blue-900 to-blue-700 text-white font-bold rounded-b-2xl p-1">{category.cate_name}</p>
         <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
           <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
             <Eye size={40} />
@@ -328,14 +220,14 @@ export default function Home() {
   <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
   <div className="flex justify-between items-center mb-6">
     <h2 className="text-2xl font-bold text-gray-700">สินค้าเข้าใหม่</h2>
-    <a href="products" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
+    <a href="product" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
       ดูสินค้าทั้งหมด
     </a>
   </div>
 
  <div className="relative">
   <div className="flex gap-2 overflow-x-auto pb-4">
-    {products.map((product) => (
+  {Array.isArray(newproducts) && newproducts.map((product) => (
       <div
         key={product.id}
         className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
@@ -345,27 +237,31 @@ export default function Home() {
             {product.discount}%
           </span>
         )}
-        <div className="flex justify-center mb-2 md:mb-4">
-          <Image
-            src={product.image}
-            alt={product.name}
-            width={120}
-            height={120}
-            className="object-contain"
-          />
-        </div>
+  <div className="flex justify-center mb-2 md:mb-4">
+  <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
+    <Image
+      src={product.imageUrl}
+      alt={product.pro_name}
+      width={120}
+      height={120}
+      className="object-cover w-full h-full rounded-lg"
+    />
+  </div>
+</div>
         <p className="text-gray-800 text-xs uppercase mb-1">{product.category}</p>
-        <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{product.name}</h3>
+        <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{product.pro_name}</h3>
         <div className="mb-2">
           <span className="text-base text-gray-800 md:text-lg font-bold">{product.price} บาท</span>
           {product.oldPrice && (
             <span className="text-gray-800 line-through ml-2">${product.oldPrice}</span>
           )}
         </div>
-        <p className="text-xs text-green-600">({product.rating})</p>
+        <p className="text-xs text-green-600">(คงเหลือ {product.stock})</p>
         <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
-          <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
-            <Eye size={40} />
+            <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
+            <Link href={`/product/${product.id}`} passHref>
+              <Eye size={40} />
+            </Link>
           </button>
         </div>
       </div>
@@ -379,48 +275,56 @@ export default function Home() {
 <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
   <div className="flex justify-between items-center mb-6">
     <h2 className="text-2xl font-bold text-gray-700">สินค้าโปรโมชั่น</h2>
+    {promotion.length === 0 ? (
+      <div></div>
+    ) : (
     <a href="products" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
       ดูสินค้าทั้งหมด
     </a>
+    )}
   </div>
 
  <div className="relative">
   <div className="flex gap-2 overflow-x-auto pb-4">
-    {products.map((product) => (
-      <div
-        key={product.id}
-        className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
-      >
-        {product.discount && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-            {product.discount}%
-          </span>
-        )}
-        <div className="flex justify-center mb-2 md:mb-4">
-          <Image
-            src={product.image}
-            alt={product.name}
-            width={120}
-            height={120}
-            className="object-contain"
-          />
-        </div>
-        <p className="text-gray-800 text-xs uppercase mb-1">{product.category}</p>
-        <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{product.name}</h3>
-        <div className="mb-2">
-          <span className="text-base text-gray-800 md:text-lg font-bold">{product.price} บาท</span>
-          {product.oldPrice && (
-            <span className="text-gray-800 line-through ml-2">${product.oldPrice}</span>
+    {promotion.length === 0 ? (
+      <div className="w-full text-center text-gray-500 py-8">ยังไม่มีรายการโปรโมชัน</div>
+    ) : (
+      promotion.map((promotion) => (
+        <div
+          key={promotion.id}
+          className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
+        >
+          {promotion.discount && (
+            <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+              {promotion.discount}%
+            </span>
           )}
+          <div className="flex justify-center mb-2 md:mb-4">
+            <Image
+              src={promotion.imageUrl}
+              alt={promotion.name}
+              width={120}
+              height={120}
+              className="object-contain"
+            />
+          </div>
+          <p className="text-gray-800 text-xs uppercase mb-1">{promotion.category}</p>
+          <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{promotion.name}</h3>
+          <div className="mb-2">
+            <span className="text-base text-gray-800 md:text-lg font-bold">{promotion.price} บาท</span>
+            {promotion.oldPrice && (
+              <span className="text-gray-800 line-through ml-2">${promotion.oldPrice}</span>
+            )}
+          </div>
+          <p className="text-xs text-green-600">({promotion.stock})</p>
+          <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
+            <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
+              <Eye size={40} />
+            </button>
+          </div>
         </div>
-        <p className="text-xs text-green-600">({product.rating})</p>
-        <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
-          <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
-            <Eye size={40} />
-          </button>
-        </div>
-      </div>
-    ))}
+      ))
+    )}
   </div>
 </div>
 </section>
@@ -464,7 +368,7 @@ export default function Home() {
 
           <br />
           {/* รีวิวลูกค้า */}
-          <section className="py-16">
+          {/* <section className="py-16">
             <div className="max-w-7xl mx-auto text-center bg-white shadow rounded-2xl p-6">
               <h2 className="text-3xl font-bold mb-10 text-gray-700 p-6">เสียงจากลูกค้า</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -478,7 +382,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          </section>
+          </section> */}
 
         </div>
 

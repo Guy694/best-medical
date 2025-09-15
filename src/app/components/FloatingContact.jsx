@@ -25,10 +25,14 @@ export default function FloatingContact({
 
   return (
     <div
-      className="fixed right-4 top-1/2 -translate-y-1/2 z-50"
+      className="fixed right-4 top-1/2 -translate-y-1/2 z-50 flex items-center gap-2"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
+      {/* Always show label next to button */}
+      <span className="bg-amber-400 text-white px-4 py-1 rounded-4xl shadow text-md md:text-2xl font-semibold select-none">
+        ติดต่อเรา
+      </span>
       {/* Dropdown Panel */}
       <AnimatePresence>
         {open && (

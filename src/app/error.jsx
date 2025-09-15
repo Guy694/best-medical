@@ -8,7 +8,7 @@ export default function Error({ error, reset }) {
   }, [error]);
 
   return (
-     <div style={{ textAlign: 'center', padding: '4rem' }}>
+     <div style={{ textAlign: 'center', padding: '4rem' }} className='text-gray-700 space-y-4'>
       <h1 style={{ fontSize: '3rem' }}>เกิดข้อผิดพลาดในหน้านี้ 😥</h1>
       <p style={{ fontSize: '1.25rem' }}>{error.message}</p>
       <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" onClick={() => reset()}>ลองใหม่</button>

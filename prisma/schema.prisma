@@ -3,26 +3,31 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 generator erd {
   provider = "prisma-erd-generator"
   output   = "./prisma/erd.svg"
 }
 
+/* ========================
+   Users
+   ======================== */
 model User {
-  id        Int      @id @map("userId") @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(100)
   email     String   @unique @db.VarChar(100)
   password  String   @db.VarChar(255)
   phone     String?  @db.VarChar(20)
   address   String?
   role      UserRole @default(CUSTOMER)
-  createdAt DateTime @map("created_at") @default(now())
-  orders      Order[]
-  cartItems   CartItem[]
-  reviews     Review[]
+  createdAt DateTime @default(now())
+
+  orders    Order[]
+  cartItems CartItem[]
+  reviews   Review[]
 }
 
 enum UserRole {
@@ -31,62 +36,71 @@ enum UserRole {
   STAFF
 }
 
+/* ========================
+   Categories
+   ======================== */
 model Category {
-  id         Int        @id @map("categoryId") @default(autoincrement())
-  name       String     @db.VarChar(100)
-  parent_id  Int?
-  parent     Category?  @relation("CategoryToCategory", fields: [parent_id], references: [id])
-  children   Category[] @relation("CategoryToCategory")
-  products   Product[]
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar(100)
+  parentId  Int?
+  cate_img    String?  @db.Text
+  parent    Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryToCategory")
+  products  Product[]
 }
 
-
+/* ========================
+   Products
+   ======================== */
 model Product {
-  id          Int        @id @map("productId") @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   name        String     @db.VarChar(200)
   codename    String     @unique @db.VarChar(100)
   description String?
-  price       Decimal      @db.Decimal(10,2)
+  price       Decimal    @db.Decimal(10,2)
   stock       Int
   categoryId  Int
   category    Category   @relation(fields: [categoryId], references: [id])
-  imageUrl    String?    @map("image_url") @db.VarChar(255)
-  createdAt   DateTime   @map("created_at") @default(now())
-  promotions  Promotion[]  
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  waranty    Int?       
-  property   Json
-  reviews     Review[]
-  ProductPromotion ProductPromotion[]
+  imageUrl    String?    @db.VarChar(255)
+  createdAt   DateTime   @default(now())
+  warranty    Int?
+  property    Json
+
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  reviews           Review[]
+  productPromotions ProductPromotion[]
 }
 
 /* ========================
    Cart Items
    ======================== */
 model CartItem {
-  id        Int     @id @map("cart_id") @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   userId    Int
   productId Int
   quantity  Int
-  createdAt DateTime @map("created_at") @default(now())
+  createdAt DateTime @default(now())
 
-  user      User    @relation(fields: [userId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
 
-
+/* ========================
+   Orders
+   ======================== */
 model Order {
-  id              Int         @id @map("order_id") @default(autoincrement())
+  id              Int         @id @default(autoincrement())
   userId          Int
-  totalPrice      Decimal      @map("total_price") @db.Decimal(10,2)
+  totalPrice      Decimal     @db.Decimal(10,2)
   status          OrderStatus @default(PENDING)
-  shippingAddress String?     @map("shipping_address")
-  createdAt       DateTime    @map("created_at") @default(now())
-  user            User        @relation(fields: [userId], references: [id])
-  orderItems      OrderItem[]
-  payments        Payment[]
-  shipping        Shipping?
+  shippingAddress String?
+  createdAt       DateTime    @default(now())
+
+  user       User       @relation(fields: [userId], references: [id])
+  orderItems OrderItem[]
+  payments   Payment[]
+  shipping   Shipping?
 }
 
 enum OrderStatus {
@@ -97,52 +111,56 @@ enum OrderStatus {
   CANCELLED
 }
 
-
+/* ========================
+   Promotions
+   ======================== */
 model Promotion {
-  id          Int       @id @default(autoincrement())
-  name        String
-  discount    Float     // อาจเป็นเปอร์เซ็นต์หรือจำนวนเงิน
-  type        String    // เช่น 'percent' หรือ 'fixed'
-  startDate   DateTime
-  endDate     DateTime
-  products    ProductPromotion[]
+  id        Int       @id @default(autoincrement())
+  name      String
+  discount  Float
+  type      String    // percent | fixed
+  startDate DateTime
+  endDate   DateTime
 
-  Product Product[]
+  products  ProductPromotion[]
 }
+
 model ProductPromotion {
   id          Int       @id @default(autoincrement())
   productId   Int
   promotionId Int
+
   product     Product   @relation(fields: [productId], references: [id])
   promotion   Promotion @relation(fields: [promotionId], references: [id])
 }
+
 /* ========================
    Order Items
    ======================== */
 model OrderItem {
-  id        Int     @id @map("order_item_id") @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   orderId   Int
   productId Int
   quantity  Int
-  price     Decimal   @db.Decimal(10,2)
+  price     Decimal  @db.Decimal(10,2)
 
-  order     Order   @relation(fields: [orderId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
 
 /* ========================
    Payments
    ======================== */
 model Payment {
-  id        Int       @id @map("payment_id") @default(autoincrement())
-  orderId   Int
-  method    PaymentMethod
-  amount    Decimal     @db.Decimal(10,2)
-  status    PaymentStatus @default(PENDING)
-  slipUrl   String?   @map("slip_url") @db.VarChar(255)
-  paidAt    DateTime? @map("paid_at")
+  id      Int           @id @default(autoincrement())
+  orderId Int
+  method  PaymentMethod
+  amount  Decimal       @db.Decimal(10,2)
+  status  PaymentStatus @default(PENDING)
+  slipUrl String?       @db.VarChar(255)
+  paidAt  DateTime?
 
-  order     Order     @relation(fields: [orderId], references: [id])
+  order   Order         @relation(fields: [orderId], references: [id])
 }
 
 enum PaymentMethod {
@@ -161,16 +179,15 @@ enum PaymentStatus {
 /* ========================
    Shipping
    ======================== */
-
 model Shipping {
-  id            Int         @id @map("shipping_id") @default(autoincrement())
-  orderId       Int         @unique
-  trackingNumber String?    @map("tracking_number") @db.VarChar(100)
-  provider      String?     @db.VarChar(100)
-  status        ShippingStatus?
-  updatedAt     DateTime    @map("updated_at") @default(now())
+  id             Int            @id @default(autoincrement())
+  orderId        Int            @unique
+  trackingNumber String?        @db.VarChar(100)
+  provider       String?        @db.VarChar(100)
+  status         ShippingStatus?
+  updatedAt      DateTime       @default(now())
 
-  order         Order       @relation(fields: [orderId], references: [id])
+  order          Order          @relation(fields: [orderId], references: [id])
 }
 
 enum ShippingStatus {
@@ -183,39 +200,48 @@ enum ShippingStatus {
    Coupons
    ======================== */
 model Coupon {
-  id           Int      @id @map("coupon_id") @default(autoincrement())
-  code         String   @unique @db.VarChar(50)
+  id             Int      @id @default(autoincrement())
+  code           String   @unique @db.VarChar(50)
   discountPercent Int
-  expireDate   DateTime? @map("expire_date")
+  expireDate     DateTime?
 }
 
-
+/* ========================
+   Contact
+   ======================== */
 model Contact {
-  contactsID       Int      @id @default(autoincrement())
-  contacts_name    String
-  contacts_email   String
-  contacts_phone   String?
-  contacts_article String?
-  contacts_detail  String?
-  createdAt        DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  phone     String?
+  article   String?
+  detail    String?
+  createdAt DateTime @default(now())
 }
 
-model Articles {
-  articleID       Int      @id @default(autoincrement())
-  article_title   String
-  article_content String
-  article_author  String
-  article_banner  String
-  createdAt       DateTime @default(now())
+/* ========================
+   Articles
+   ======================== */
+model Article {
+  id       Int      @id @default(autoincrement())
+  title    String
+  content  String
+  author   String
+  banner   String
+  createdAt DateTime @default(now())
 }
 
+/* ========================
+   Reviews
+   ======================== */
 model Review {
-  id        Int      @id @map("review_id") @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   userId    Int
   productId Int
   rating    Int
   comment   String?
-  createdAt DateTime @map("created_at") @default(now())
-  user      User    @relation(fields: [userId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
