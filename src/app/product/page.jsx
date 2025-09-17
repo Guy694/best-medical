@@ -80,9 +80,9 @@ export default function ProductsPage() {
     <ul>
       {categories.map((category) => (
         <li key={category.id} className="mb-2">
-          <Link href={`/category/${encodeURIComponent(category.cate_name)}`} className="text-blue-600 hover:underline">
-            {category.cate_name}
-          </Link>
+          <Link href={`/category/${category.id}`} className="text-blue-600 hover:underline">
+        {category.cate_name}
+      </Link>
         </li>
       ))}
     </ul>

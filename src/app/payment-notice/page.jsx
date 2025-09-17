@@ -69,7 +69,7 @@ export default function payment_notice() {
                   />
                 </div>
                 <div>
-                  <label className="block font-medium mb-2">บัญชีธนาคาร <span className=' text-red-500 text-xl'>*</span></label>
+                  <label className="block font-medium mb-2 text-gray-700">บัญชีธนาคาร <span className=' text-red-500 text-xl'>*</span></label>
                   {banks.map((bank) => (
                     <label
                       key={bank.id}
@@ -85,7 +85,7 @@ export default function payment_notice() {
                         className="mr-3"
                       />
                       <img src={bank.logo} alt={bank.name} className="w-10 h-10 mr-3" />
-                      <div>
+                      <div className='text-gray-700'>
                         <p className="font-medium">{bank.name}</p>
                         <p>เลขที่บัญชี {bank.accountNumber}</p>
                         <p>ชื่อบัญชี {bank.accountName}</p>

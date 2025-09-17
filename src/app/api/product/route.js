@@ -9,7 +9,7 @@ export async function GET(req) {
       'SELECT * FROM product ORDER BY createdAt DESC'
     );
     await connection.end();
-    return new Response(JSON.stringify(rows), { status: 200 });
+    return new Response(JSON.stringify(rows), { status: 200,headers: { "Content-Type": "application/json" } });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }

@@ -4,42 +4,57 @@ import { useState, useEffect } from "react";
 import Navbar from "../components/Nav";
 import { image } from "framer-motion/client";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 
 
 const Checkout = () => {
+  const router = useRouter();
   const [cart, setCart] = useState([]);
-  const [shipping, setShipping] = useState("ems");  
-       const totalDelivery = cart.reduce((sum, item) => sum + (item.quantity * item.delivery || 0), 0);
-    const shippingOptions = [
+  const [shipping, setShipping] = useState("ems");
+  const totalDelivery = cart.reduce((sum, item) => sum + (item.quantity * item.delivery || 0), 0);
+  const shippingOptions = [
 
     { id: "ems", label: "ค่าบริการจัดส่ง", cost: totalDelivery },
     { id: "store", label: "รับสินค้าหน้าร้าน", cost: 0 },
   ];
   // รวมราคาสินค้าทั้งหมดในตะกร้า
- 
+
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-   const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)) + shippingOptions.find((s) => s.id === shipping).cost, 0);
+  const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)) + shippingOptions.find((s) => s.id === shipping).cost, 0);
+
+  
 
 
 
+  useEffect(() => {
+    const cartData = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+    setCart(cartData);
+  }, []);
+
+  const handleRemoveItem = (id) => {
+    const newCart = cart.filter(item => item.id !== id);
+    Cookies.set("cart", JSON.stringify(newCart), { expires: 7 });
+    setCart(newCart); // อัปเดต state
+  };
+
+    const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const res = await fetch('/api/cart/sendOrder', {
+      method: 'POST',
+      body: formData,
+    });
+    const result = await res.json();
+    if (result.orderId) {
+      setCart([]);
+      router.push(`/orderNumber/${result.orderId}`); // ไปหน้าแสดงข้อมูล
+    }
+  };
 
 
-useEffect(() => {
-  const cartData = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
-  setCart(cartData);
-}, []);
 
-const handleRemoveItem = (id) => {
-  const newCart = cart.filter(item => item.id !== id);
-  Cookies.set("cart", JSON.stringify(newCart), { expires: 7 });
-  setCart(newCart); // อัปเดต state
-};
-
-
-
-
- 
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -100,8 +115,8 @@ const handleRemoveItem = (id) => {
                     </div>
                   </div>
                   <div className="text-gray-700 text-right">ราคา: {(item.price * item.quantity).toLocaleString()} บาท
-                  <div className="text-gray-700 text-right">ค่าจัดส่ง: {(item.delivery * item.quantity).toLocaleString()} บาท
-                  </div>
+                    <div className="text-gray-700 text-right">ค่าจัดส่ง: {(item.delivery * item.quantity).toLocaleString()} บาท
+                    </div>
                   </div>
                 </div>
 
@@ -119,60 +134,49 @@ const handleRemoveItem = (id) => {
         </div>
 
         {cart.length > 0 && (
-        <div className="border p-4 bg-gray-50 rounded-2xl">
-          <h3 className="font-semibold mb-2">ยอดรวม</h3>
-          <div className="flex justify-between mb-2">
-            <span>ยอดรวม</span>
-            <span className="text-red-600 font-bold">{cartTotal.toLocaleString()} บาท</span>
-          </div>
-
-          <div className="mb-2">
-            <span className="font-semibold">การจัดส่ง</span>
-            <div className="mt-1">
-              {shippingOptions.map((option) => (
-                <label key={option.id} className="block">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    value={option.id}
-                    checked={shipping === option.id}
-                    onChange={(e) => setShipping(e.target.value)}
-                    className="mr-2"
-                  />
-                  {option.label}
-                  {option.cost > 0 && `: ${option.cost} ฿`}
-                </label>
-              ))}
+          <div className="border p-4 bg-gray-50 rounded-2xl">
+            <h3 className="font-semibold mb-2">ยอดรวม</h3>
+            <div className="flex justify-between mb-2">
+              <span>ยอดรวม</span>
+              <span className="text-red-600 font-bold">{cartTotal.toLocaleString()} บาท</span>
             </div>
+
+            <div className="mb-2">
+              <span className="font-semibold">การจัดส่ง</span>
+              <div className="mt-1">
+                {shippingOptions.map((option) => (
+                  <label key={option.id} className="block">
+                    <input
+                      type="radio"
+                      name="shipping"
+                      value={option.id}
+                      checked={shipping === option.id}
+                      onChange={(e) => setShipping(e.target.value)}
+                      className="mr-2"
+                    />
+                    {option.label}
+                    {option.cost > 0 && `: ${option.cost} ฿`}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-between font-bold text-red-600 mb-4">
+              <span>รวม</span>
+              <span>{total.toLocaleString()} ฿</span>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              <input type="hidden" name="cart" value={JSON.stringify(cart)} />
+              <input type="hidden" name="shipping" value={shipping} />
+              <label htmlFor="" className="text-gray-700">กรุณากรอกอีเมลเพื่อจัดส่งเลขคำสั่งซื้อ <span className="text-red-600">*</span></label>
+              <input type="text" name="order_email" placeholder="กรอกอีเมล" className="border p-2 w-full mb-2 rounded-3xl" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required />
+              <button type="submit" className="w-full bg-red-600 text-white py-2 mb-4 rounded-2xl hover:bg-red-800">
+                ดำเนินการสั่งซื้อ
+              </button>
+            </form>
+
           </div>
-
-          <div className="flex justify-between font-bold text-red-600 mb-4">
-            <span>รวม</span>
-            <span>{total.toLocaleString()} ฿</span>
-          </div>
-
-          <button className="w-full bg-red-600 text-white py-2 mb-4 พ-4 rounded-2xl hover:bg-red-800"
-            onClick={() => alert('ดำเนินการสั่งซื้อเรียบร้อย')}
-          >ดำเนินการสั่งซื้อ</button>
-
-          {/* Coupon */}
-          {/* <div>
-          <h4 className="font-semibold mb-1">คูปอง</h4>
-          <input
-            type="text"
-            placeholder="รหัสคูปอง"
-            value={coupon}
-            onChange={(e) => setCoupon(e.target.value)}
-            className="border p-2 w-full mb-2"
-          />
-          <button
-            onClick={handleCouponApply}
-            className="border px-4 py-2 w-full"
-          >
-            ใช้คูปอง
-          </button>
-        </div> */}
-        </div>
         )}
       </div> </div>
   );
