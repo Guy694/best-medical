@@ -194,13 +194,13 @@ export default function Home() {
        
          <div className="flex justify-center mb-2 md:mb-4">
   <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
-          <Image
-            src={category.cate_img}
-            alt={category.cate_name}
-            width={120}
-            height={120}
-             className="object-cover w-full h-full rounded-lg"
-          />
+            <Image
+              src={(category.cate_img || "").replace("172.16.107.247", "192.168.0.108")}
+              alt={category.cate_name}
+              width={120}
+              height={120}
+              className="object-cover w-full h-full rounded-lg"
+            />
         </div>   </div>
         <p className="text-xs md:text-lg uppercase mb-1 text-center bg-gradient-to-bl from-blue-900 to-blue-700 text-white font-bold rounded-b-2xl p-1">{category.cate_name}</p>
         <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
@@ -240,7 +240,7 @@ export default function Home() {
   <div className="flex justify-center mb-2 md:mb-4">
   <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
     <Image
-      src={product.imageUrl}
+      src={(product.imageUrl || "").replace("172.16.107.247", "192.168.0.108")}
       alt={product.pro_name}
       width={120}
       height={120}
@@ -301,7 +301,7 @@ export default function Home() {
           )}
           <div className="flex justify-center mb-2 md:mb-4">
             <Image
-              src={promotion.imageUrl}
+              src={(promotion.imageUrl || "").replace("172.16.107.247", "192.168.0.108")}
               alt={promotion.name}
               width={120}
               height={120}

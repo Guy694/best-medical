@@ -29,7 +29,7 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,19 +40,18 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        // เก็บ token และ user type ใน localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userType", data.userType);
-        localStorage.setItem("userData", JSON.stringify(data.userData));
-
-        // Redirect ตาม user type
-        if (data.userType === "admin") {
+        // เก็บข้อมูล user ใน localStorage
+        localStorage.setItem("user", JSON.stringify(data));
+        // Redirect ตาม role
+        if (data.role === "admin") {
           router.push("/admin/dashboard");
-        } else if (data.userType === "applicant") {
-          router.push("/applicant/dashboard");
+        } else if (data.role === "staff") {
+          router.push("/staff/dashboard");
+        } else {
+          router.push("/user/dashboard");
         }
       } else {
-        setError(data.message || "เข้าสู่ระบบไม่สำเร็จ");
+        setError(data.error || "เข้าสู่ระบบไม่สำเร็จ");
       }
     } catch (err) {
       setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
@@ -168,10 +167,10 @@ export default function Login() {
                 )}
               </button>
             </form>
-              <div className="my-4 text-center">หรือ</div>
+              <div className="my-4 text-center text-gray-700">หรือ</div>
                       <button
                         onClick={() => signIn("google")}
-                        className="w-full flex items-center justify-center gap-2 border border-gray-300 p-2 rounded-lg hover:bg-gray-100 transition"
+                        className="w-full text-gray-700 flex items-center justify-center gap-2 border border-gray-300 p-2 rounded-lg hover:bg-gray-100 transition"
                       >
                         เข้าสู่ระบบด้วย Google <Image src="/google.png" alt="Google Logo" width={20} height={20} />
                       </button>

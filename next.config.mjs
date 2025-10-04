@@ -4,8 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'http',
-        hostname: '172.16.107.247',
-        // ไม่ต้องใส่ port ถ้าเป็น 80
+        hostname: '192.168.0.108',
         pathname: '/best-medical/public/**',
       },
     ],

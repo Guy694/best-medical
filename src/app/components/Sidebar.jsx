@@ -6,68 +6,53 @@ import { Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
-export default function Sidebar({ role = "user" }) {
-  const menu = sidebarMenu[role] || [];
-  const [open, setOpen] = useState(false);
-  const [time, setTime] = useState(new Date());
+const sidebarLinks = [
+  { label: 'แดชบอร์ด', href: '/admin/dashboard', icon: <Menu className="w-5 h-5 mr-2" /> },
+  { label: 'จัดการสินค้า', href: '/admin/product', icon: <Menu className="w-5 h-5 mr-2" /> },
+  { label: 'จัดการผู้ใช้', href: '/admin/users', icon: <Menu className="w-5 h-5 mr-2" /> },
+  { label: 'ออเดอร์', href: '/admin/orders', icon: <Menu className="w-5 h-5 mr-2" /> },
+  { label: 'คูปอง', href: '/admin/coupons', icon: <Menu className="w-5 h-5 mr-2" /> },
+];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date()); // อัปเดตเวลาใหม่ทุกวินาที
-    }, 1000);
-
-    return () => clearInterval(timer); // ล้าง interval เมื่อ component หายไป
-  }, []);
-
+export default function Sidebar({ role = "user", sidebarOpen, setSidebarOpen }) {
+  const router = useRouter();
+  const [active, setActive] = useState(router?.pathname || "");
   return (
-    <>
-      <button
-        className="md:hidden p-4 text-gray-700"
-        onClick={() => setOpen(!open)}
-      >
-        <Menu size={24} />
-      </button>
-
-      <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white p-6 transition-transform z-40
-        ${
-          open ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:static md:block`}
-      >
-        <div className="text-2xl font-bold mb-4">ระบบระบสมัครงาน</div>
-        <div className="text-sm text-gray-400 mb-6">
-          <p className="text-white">ผู้ใช้ : นายชาคริต ทองนวล</p>s
-          <p className="text-white ">
-            ตำแหน่ง : {role === "admin" ? "ผู้ดูแลระบบ" : "ผู้ใช้ทั่วไป"}
-          </p>
-          <p className="text-white">
-            วันที่ : {new Date().toLocaleDateString()}
-          </p>
-          <p className="text-white">เวลา : {time.toLocaleTimeString()}</p>
+  <aside className={`fixed z-10 top-0 left-0 min-h-screen h-full w-64 bg-white shadow-2xl transition-transform duration-300 md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:w-64 md:block flex flex-col`}>
+      {/* Logo & Close */}
+      <div className="flex items-center justify-between p-4 border-b border-blue-800 md:hidden">
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Logo" className="w-10 h-10 rounded-full shadow" />
+          <span className="font-bold text-lg text-gray-800">Admin</span>
         </div>
-
-        <div className="bg-white bg-opacity-20 text-gray-800 font-bold py-2 px-4 rounded mb-4 w-full">
-          เมนู
-        </div>
-
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {menu.map((item, i) => (
-            <li key={i} style={{ marginBottom: "1rem" }}>
+        <button onClick={() => setSidebarOpen(false)} className="text-white hover:text-red-400 text-2xl">×</button>
+      </div>
+      {/* Logo desktop */}
+      <div className="hidden md:flex items-center gap-2 p-6 pb-2">
+        <img src="/logo.png" alt="Logo" className="w-10 h-10 rounded-full shadow" />
+  <span className="font-bold text-lg text-gray-800">Admin</span>
+      </div>
+      <nav className="p-6 pt-6 flex-1">
+        <ul className="space-y-4">
+          {sidebarLinks.map(link => (
+            <li key={link.href}>
               <Link
-                href={item.path}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  textDecoration: "none",
-                }}
+                href={link.href}
+                className={`flex items-center px-4 py-3 rounded-xl font-medium transition-all duration-150
+                  ${active === link.href ? 'bg-blue-100 text-blue-900 shadow' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-900'}`}
+                onClick={() => setActive(link.href)}
               >
-                <span style={{ marginRight: "0.5rem" }}>{item.icon}</span>
-                <span>{item.label}</span>
+                {link.icon}
+                {link.label}
               </Link>
             </li>
           ))}
         </ul>
-      </aside>
-    </>
+      </nav>
+      {/* Footer */}
+      <div className="p-4 text-xs text-gray-400 text-center opacity-70">
+       
+      </div>
+    </aside>
   );
 }
