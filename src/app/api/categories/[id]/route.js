@@ -6,7 +6,7 @@ export async function GET(req, context) {
     const { params } = await context; // ต้อง await context
     const connection = await mysql.createConnection(dbConfig);
     const [rows] = await connection.execute(
-      'SELECT * FROM `category` INNER join product ON category.id = product.categoryId WHERE category.id = ?',
+      'SELECT * FROM `category` INNER join product ON category.id = product.categoryId WHERE category.id = ? AND product.visible = 0',
       [params.id]
     );
     await connection.end();

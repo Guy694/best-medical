@@ -16,7 +16,7 @@ export default function paidstatus() {
           <div className="max-w-7xl mx-auto space-y-12">
             <section className="bg-whiterounded-lg shadow-md">
               <div className="header bg-gradient-to-bl from-blue-600 to-blue-900 p-4 rounded-t-3xl ">
-                  <h2 className="text-2xl font-semibold text-white p-6 text-center">แจ้งชำระเงิน</h2>
+                  <h2 className="text-2xl font-semibold text-white p-6 text-center">คำถามที่พบบ่อย</h2>
               </div>
               <div className="p-7">
               <ul className="space-y-4">

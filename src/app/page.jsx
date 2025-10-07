@@ -62,28 +62,8 @@ export default function Home() {
 
   }, []); // รันแค่ครั้งแรก
 
-  const nextSlide = () => {
-    setCurrent((prev) => (prev + 1) % products.length);
-  };
-
-  const prevSlide = () => {
-    setCurrent((prev) => (prev - 1 + products.length) % products.length);
-  };
 
 
-
-
-
-
-  const articles = [
-    { id: 1, article_title: "บทความสุขภาพ 1", article_content: "สรุปเนื้อหาบทความสุขภาพ 1", article_banner: "/image.png" },
-    { id: 2, article_title: "บทความสุขภาพ 2", article_content: "สรุปเนื้อหาบทความสุขภาพ 2", article_banner: "/image.png" },
-    { id: 3, article_title: "บทความสุขภาพ 3", article_content: "สรุปเนื้อหาบทความสุขภาพ 3", article_banner: "/image.png" },
-    { id: 4, article_title: "บทความสุขภาพ 4", article_content: "สรุปเนื้อหาบทความสุขภาพ 4", article_banner: "/image.png" },
-    { id: 5, article_title: "บทความสุขภาพ 5", article_content: "สรุปเนื้อหาบทความสุขภาพ 5", article_banner: "/image.png" },
-    { id: 6, article_title: "บทความสุขภาพ 6", article_content: "สรุปเนื้อหาบทความสุขภาพ 6", article_banner: "/image.png" },
-    { id: 7, article_title: "บทความสุขภาพ 7", article_content: "สรุปเนื้อหาบทความสุขภาพ 7", article_banner: "/image.png" },
-  ]
 
   return (
 
@@ -195,7 +175,7 @@ export default function Home() {
          <div className="flex justify-center mb-2 md:mb-4">
   <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
             <Image
-              src={(category.cate_img || "").replace("172.16.107.247", "192.168.0.108")}
+              src={(category.cate_img || "")}
               alt={category.cate_name}
               width={120}
               height={120}
@@ -301,7 +281,7 @@ export default function Home() {
           )}
           <div className="flex justify-center mb-2 md:mb-4">
             <Image
-              src={(promotion.imageUrl || "").replace("172.16.107.247", "192.168.0.108")}
+              src={(promotion.imageUrl || "").replace("172.16.107.247", "192.168.1.144")}
               alt={promotion.name}
               width={120}
               height={120}

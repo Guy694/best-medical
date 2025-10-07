@@ -29,9 +29,15 @@ export default function Register() {
         <Navbar />
           <div className="min-h-screen bg-gray-50">
              <div className="max-w-7xl mx-auto px-4 py-8"></div>
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md justify-center mx-auto mt-10">
+      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md justify-center mx-auto mt-10 text-gray-700">
         <h1 className="text-2xl font-bold mb-6 text-center">สมัครสมาชิก</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input
+            type="text"
+            placeholder="ชื่อ-นามสกุล"
+            className="border border-gray-300 p-2 rounded-lg"
+  ย          required
+          />
           <input
             type="email"
             placeholder="Email"
@@ -45,6 +51,12 @@ export default function Register() {
             placeholder="รหัสผ่าน"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="border border-gray-300 p-2 rounded-lg"
+            required
+          />
+          <input
+            type="password"
+            placeholder="ยืนยันรหัสผ่าน"
             className="border border-gray-300 p-2 rounded-lg"
             required
           />

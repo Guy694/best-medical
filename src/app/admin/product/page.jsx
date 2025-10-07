@@ -3,6 +3,7 @@ import Navbar from '@/app/components/Nav';
 import Sidebar from '@/app/components/Sidebar';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
 
 export default function Productmanagement() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -28,12 +29,30 @@ export default function Productmanagement() {
   const handleDelete = async (id) => {
     if (!confirm('ต้องการลบสินค้านี้ใช่หรือไม่?')) return;
     try {
-      const res = await fetch(`/api/product/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/product/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setProducts(products.filter(p => p.id !== id));
       }
     } catch (err) {}
   };
+
+
+  const handleToggleVisible = async (id, currentVisible) => {
+  try {
+    const res = await fetch(`/api/admin/product/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visible: currentVisible ? 0 : 1 }),
+    });
+    if (res.ok) {
+      setProducts(products =>
+        products.map(p =>
+          p.id === id ? { ...p, visible: currentVisible ? 0 : 1 } : p
+        )
+      );
+    }
+  } catch (err) {}
+};
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -64,8 +83,8 @@ export default function Productmanagement() {
                   <th className='py-2 px-4 text-left'>#</th>
                      <th className='py-2 px-4 text-left'>รูปสินค้า</th>
                   <th className='py-2 px-4 text-left'>ชื่อสินค้า</th>
-               
                   <th className='py-2 px-4 text-left'>ราคา</th>
+                  <th className='py-2 px-4 text-left'>การมองเห็น</th>
                   <th className='py-2 px-4 text-left'>จัดการ</th>
                 </tr>
               </thead>
@@ -83,6 +102,19 @@ export default function Productmanagement() {
                       </td>
                       <td className="py-2 px-4">{product.pro_name || product.name}</td>
                       <td className="py-2 px-4">{product.price} บาท</td>
+                      <td className="py-2 px-4">
+  <button
+    onClick={() => handleToggleVisible(product.id, product.visible)}
+    title={product.visible ? "ซ่อนสินค้า" : "แสดงสินค้า"}
+    className="focus:outline-none"
+  >
+    {product.visible ? (
+      <EyeSlashIcon className="w-6 h-6 text-gray-400 hover:text-green-600" />
+    ) : (
+      <EyeIcon className="w-6 h-6 text-green-600 hover:text-gray-400" />
+    )}
+  </button>
+</td>
                       <td className="py-2 px-4 flex gap-2">
                         <Link href={`/admin/product/edit/${product.id}`} className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">แก้ไข</Link>
                         <button onClick={() => handleDelete(product.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">ลบ</button>

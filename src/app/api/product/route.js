@@ -6,7 +6,7 @@ export async function GET(req) {
   try {
     const connection = await mysql.createConnection(dbConfig);
     const [rows] = await connection.execute(
-      'SELECT * FROM product ORDER BY createdAt DESC'
+      'SELECT * FROM product WHERE visible = 0 ORDER BY createdAt DESC'
     );
     await connection.end();
     return new Response(JSON.stringify(rows), { status: 200,headers: { "Content-Type": "application/json" } });

@@ -35,7 +35,7 @@ export async function GET(req) {
   try {
     const connection = await mysql.createConnection(dbConfig);
     const [rows] = await connection.execute(
-      'SELECT * FROM Product ORDER BY createdAt DESC LIMIT 10'
+      'SELECT * FROM Product WHERE visible = 0 ORDER BY createdAt DESC LIMIT 10'
     );
     await connection.end();
     return new Response(JSON.stringify(rows), { status: 200 });

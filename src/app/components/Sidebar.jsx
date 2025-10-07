@@ -9,9 +9,9 @@ import { useState, useEffect } from "react";
 const sidebarLinks = [
   { label: 'แดชบอร์ด', href: '/admin/dashboard', icon: <Menu className="w-5 h-5 mr-2" /> },
   { label: 'จัดการสินค้า', href: '/admin/product', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'จัดการผู้ใช้', href: '/admin/users', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'ออเดอร์', href: '/admin/orders', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'คูปอง', href: '/admin/coupons', icon: <Menu className="w-5 h-5 mr-2" /> },
+  { label: 'จัดการสิทธิ์พนักงาน', href: '/admin/user/staff', icon: <Menu className="w-5 h-5 mr-2" /> },
+  { label: 'จัดการรายการลูกค้า', href: '/admin/user/customer', icon: <Menu className="w-5 h-5 mr-2" /> },
+  { label: 'จัดการออเดอร์', href: '/admin/orders', icon: <Menu className="w-5 h-5 mr-2" /> },
 ];
 
 export default function Sidebar({ role = "user", sidebarOpen, setSidebarOpen }) {
