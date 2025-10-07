@@ -5,24 +5,35 @@ import bcrypt from "bcryptjs";
 import Navbar from "../components/Nav";
 
 export default function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+ const [form, setForm] = useState({
+   name: "",
+   email: "",
+   password: "",
+   confirmPassword: "",
+ });
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  setForm((prev) => ({ ...prev, [name]: value }));
+};
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const hashedPassword = bcrypt.hashSync(password, 10);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (form.password !== form.confirmPassword) {
+    alert("รหัสผ่านไม่ตรงกัน");
+    return;
+  }
+  const hashedPassword = bcrypt.hashSync(form.password, 10);
 
-    // เรียก API เพื่อสร้าง user
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password: hashedPassword }),
-    });
+  const res = await fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: form.email, password: hashedPassword }),
+  });
 
-    if (res.ok) {
-      signIn("credentials", { email, password });
-    }
-  };
+  if (res.ok) {
+    signIn("credentials", { email: form.email, password: form.password });
+  }
+};
 
   return (
     <div className="bg-white">
@@ -34,43 +45,50 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
+            name="name"
             placeholder="ชื่อ-นามสกุล"
-            className="border border-gray-300 p-2 rounded-lg"
-  ย          required
+            value={form.name}
+            onChange={handleChange}
+            className="border border-gray-300 p-2 rounded-lg" required
           />
           <input
             type="email"
+            name="email"
             placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={form.email}
+            onChange={handleChange}
             className="border border-gray-300 p-2 rounded-lg"
             required
           />
           <input
             type="password"
+            name="password"
             placeholder="รหัสผ่าน"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={form.password}
+            onChange={handleChange}
             className="border border-gray-300 p-2 rounded-lg"
             required
           />
           <input
             type="password"
+            name="confirmPassword"
             placeholder="ยืนยันรหัสผ่าน"
+            value={form.confirmPassword}
+            onChange={handleChange}
             className="border border-gray-300 p-2 rounded-lg"
             required
           />
           <button type="submit" className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition">
-            สมัครด้วย Email
+            สมัครสมาชิก
           </button>
         </form>
-        <div className="my-4 text-center">หรือ</div>
+        {/* <div className="my-4 text-center">หรือ</div>
         <button
           onClick={() => signIn("google")}
           className="w-full flex items-center justify-center gap-2 border border-gray-300 p-2 rounded-lg hover:bg-gray-100 transition"
         >
           สมัครด้วย Google
-        </button>
+        </button> */}
       </div>
     </div></div>
   );

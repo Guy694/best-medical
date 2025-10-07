@@ -167,13 +167,13 @@ export default function Login() {
                 )}
               </button>
             </form>
-              <div className="my-4 text-center text-gray-700">หรือ</div>
+              {/* <div className="my-4 text-center text-gray-700">หรือ</div>
                       <button
                         onClick={() => signIn("google")}
                         className="w-full text-gray-700 flex items-center justify-center gap-2 border border-gray-300 p-2 rounded-lg hover:bg-gray-100 transition"
                       >
                         เข้าสู่ระบบด้วย Google <Image src="/google.png" alt="Google Logo" width={20} height={20} />
-                      </button>
+                      </button> */}
             <div className="mt-6 text-center">
             
               <Link href="/forgot-password">
