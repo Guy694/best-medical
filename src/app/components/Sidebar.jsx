@@ -19,7 +19,7 @@ export default function Sidebar({ role = "user", sidebarOpen, setSidebarOpen }) 
   const router = useRouter();
   const [active, setActive] = useState(router?.pathname || "");
   return (
-  <aside className={`fixed z-10 top-0 left-0 min-h-screen h-full w-64 bg-white shadow-2xl transition-transform duration-300 md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:w-64 md:block flex flex-col`}>
+  <aside className={`fixed z-40 top-0 left-0 min-h-screen h-full w-64 bg-white shadow-2xl transition-transform duration-300 md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:w-64 md:block flex flex-col`}>
       {/* Logo & Close */}
       <div className="flex items-center justify-between p-4 border-b border-blue-800 md:hidden">
         <div className="flex items-center gap-2">
