@@ -35,3 +35,20 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }
+
+
+export async function GET(req) {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute(
+      'SELECT * FROM product ORDER BY visible ASC'
+    );
+    await connection.end();
+    return new Response(JSON.stringify(rows), { status: 200,headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+}
+
+
+

@@ -8,12 +8,13 @@ export async function POST(req) {
     const cart = JSON.parse(body.get('cart'));
     const shipping = body.get('shipping');
     const order_email = body.get('order_email');
+    const totalPrice = body.get('totalPrice');
 
     // สร้างเลขคำสั่งซื้อ
     const orderId = 'ORD' + Date.now();
 
     // รวมราคาสินค้าทั้งหมด
-    const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) + shipping.cost;
+    // const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) + shipping.cost;
 
     // บันทึกข้อมูลลง MySQL (เพิ่มฟิลด์ total)
     const connection = await mysql.createConnection(dbConfig);

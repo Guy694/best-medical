@@ -49,6 +49,7 @@ const Checkout = () => {
     const result = await res.json();
     if (result.orderId) {
       setCart([]);
+      Cookies.set("cart", JSON.stringify([]), { expires: 7 });
       router.push(`/orderNumber/${result.orderId}`); // ไปหน้าแสดงข้อมูล
     }
   };
@@ -167,6 +168,7 @@ const Checkout = () => {
             </div>
 
             <form onSubmit={handleSubmit}>
+              <input type="hidden" name="totalPrice" value={total} />
               <input type="hidden" name="cart" value={JSON.stringify(cart)} />
               <input type="hidden" name="shipping" value={shipping} />
               <label htmlFor="" className="text-gray-700">กรุณากรอกอีเมลเพื่อจัดส่งเลขคำสั่งซื้อ <span className="text-red-600">*</span></label>

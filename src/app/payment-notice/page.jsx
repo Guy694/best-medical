@@ -32,7 +32,9 @@ export default function payment_notice() {
                   <label className="block text-gray-700 font-medium mb-1">เลขที่ใบสั่งซื้อ <span className=' text-red-500 text-xl'>*</span></label>
                   <input
                     type="text"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    name="order_code"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-700"
                     placeholder="เลขที่ใบสั่งซื้อ"
                   />
                 </div>
@@ -40,23 +42,19 @@ export default function payment_notice() {
                   <label className="block text-gray-700 font-medium mb-1">ชื่อ-นามสกุล <span className=' text-red-500 text-xl'>*</span></label>
                   <input
                     type="text"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    name="fullName"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-700"
                     placeholder="กรอกชื่อ-นามสกุล"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">อีเมล <span className=' text-red-500 text-xl'>*</span></label>
-                  <input
-                    type="email"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    placeholder="กรอกอีเมล"
                   />
                 </div>
                 <div>
                   <label className="block text-gray-700 font-medium mb-1">เบอร์โทรศัพท์ <span className=' text-red-500 text-xl'>*</span></label>
                   <input
-                    type="email"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    type="text"
+                    name="phone"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-700"
                     placeholder="กรอกเบอร์โทรศัพท์"
                   />
                 </div>
@@ -64,7 +62,9 @@ export default function payment_notice() {
                   <label className="block text-gray-700 font-medium mb-1">จำนวนเงิน <span className=' text-red-500 text-xl'>*</span></label>
                   <input
                     type="number"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    name="amount"
+                    required
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-700"
                     placeholder="กรอกจำนวนเงินที่โอน"
                   />
                 </div>
@@ -98,7 +98,7 @@ export default function payment_notice() {
                   <label className="block text-gray-700 font-medium mb-1">หลักฐานการโอน <span className=' text-red-500 text-xl'>*</span></label>
                   <input
                     type="file"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-700"
                   />
                 </div>
                 <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
@@ -108,8 +108,9 @@ export default function payment_notice() {
                     </label>
                     <input
                       type="date"
-                      id="firstName"
-                      className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      name='paidAtdate'
+                      required
+                      className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-gray-700"
                     />
                   </div>
 
@@ -119,7 +120,8 @@ export default function payment_notice() {
                     </label>
                     <input
                       type="time"
-                      id="lastName"
+                      name='paidAttime'
+                      required
                       className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                     />
                   </div>

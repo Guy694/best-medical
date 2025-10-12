@@ -36,7 +36,7 @@ export default function OrderNumber() {
           <div className="max-w-7xl mx-auto space-y-12 justify-center text-center ">
             {order ? (
               <section className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-semibold text-red-600 mb-4">{order.order_id}</h2>
+                <h2 className="text-2xl font-semibold text-red-600 mb-4">{order.order_code}</h2>
                 <h4 className="text-gray-800 mb-4">คำสั่งซื้อวันที่ {formatThaiDate(order.created_at)}</h4>
                 <h4 className="text-gray-700"><span className='text-red-600 font-bold'>หมายเหตุ : </span>กรุณาบันทึกหน้าจอเพื่อเป็นหลักฐานในการสั่งซื้อและใช้เลขคำสั่งซื้อในการชำระสินค้า</h4>
                 <h4 className="text-gray-700">ระบบได้ดำเนินการส่งเลขคำสั่งซื้อไปยัง E-mail ของท่านแล้วเพื่อสำรองข้อมูลในกรณีเกิดข้อผิดพลาด</h4>

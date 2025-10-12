@@ -13,7 +13,7 @@ export default function Productmanagement() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch('/api/product');
+        const res = await fetch('/api/admin/product');
         const data = await res.json();
         setProducts(data);
       } catch (err) {

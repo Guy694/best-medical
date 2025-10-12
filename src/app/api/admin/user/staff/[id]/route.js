@@ -4,8 +4,8 @@ import { dbConfig } from '@/app/lib/db';
 
 export async function GET(req, context) {
   try {
-    const { params } = await context;
-    const id = params.id;
+   const params = await context.params;
+const id = params.id;
     const connection = await mysql.createConnection(dbConfig);
     const [rows] = await connection.execute('SELECT id, name, email, phone, address, role FROM user WHERE id = ?', [id]);
     await connection.end();
@@ -21,8 +21,8 @@ export async function GET(req, context) {
 
 export async function DELETE(req, context) {
   try {
-    const { params } = await context;
-    const id = params.id;
+   const params = await context.params;
+const id = params.id;
     const connection = await mysql.createConnection(dbConfig);
     await connection.execute('DELETE FROM user WHERE id = ?', [id]);
     await connection.end();
@@ -34,8 +34,8 @@ export async function DELETE(req, context) {
 
 export async function PUT(req, context) {
   try {
-    const { params } = await context;
-    const id = params.id;
+  const params = await context.params;
+const id = params.id;
     const { name, email, password, phone, address, role } = await req.json();
     const connection = await mysql.createConnection(dbConfig);
     await connection.execute(
