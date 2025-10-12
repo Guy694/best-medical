@@ -1,6 +1,6 @@
-
 import mysql from 'mysql2/promise';
 import { dbConfig } from '@/app/lib/db';
+import bcrypt from 'bcryptjs';
 
 export async function GET(req, context) {
   try {
@@ -34,13 +34,15 @@ const id = params.id;
 
 export async function PUT(req, context) {
   try {
-  const params = await context.params;
-const id = params.id;
+    const params = await context.params;
+    const id = params.id;
     const { name, email, password, phone, address, role } = await req.json();
+    // hash password ก่อนอัปเดต
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
     const connection = await mysql.createConnection(dbConfig);
     await connection.execute(
       'UPDATE user SET name = ?, email = ?, password = ?, phone = ?, address = ?, role = ? WHERE id = ?',
-      [name, email, password, phone, address, role, id]
+      [name, email, hashedPassword || password, phone, address, role, id]
     );
     await connection.end();
     return new Response(JSON.stringify({ message: "อัปเดตพนักงานเรียบร้อย" }), { status: 200 });

@@ -1,5 +1,6 @@
 import mysql from 'mysql2/promise';
 import { dbConfig } from '@/app/lib/db';
+import bcrypt from 'bcryptjs';
 
 export async function GET(req) {
   try {
@@ -20,10 +21,12 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const { name, email, password, phone, address, role } = await req.json();
+    // hash password ก่อนบันทึก
+    const hashedPassword = await bcrypt.hash(password, 10);
     const connection = await mysql.createConnection(dbConfig);
     const [result] = await connection.execute(
       'INSERT INTO user (name, email, password, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, password, phone, address, role]
+      [name, email, hashedPassword, phone, address, role]
     );
     await connection.end();
     return new Response(JSON.stringify({ id: result.insertId, name, email, phone, address, role }), { status: 201 });

@@ -3,7 +3,6 @@ import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Nav";
-import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -40,15 +39,21 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
+        // ตรวจสอบสถานะการยืนยันอีเมล
+        if (!data.verified) {
+          setError("กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ");
+          return;
+        }
+        
         // เก็บข้อมูล user ใน localStorage
         localStorage.setItem("user", JSON.stringify(data));
         // Redirect ตาม role
-        if (data.role === "admin") {
+        if (data.role === "ADMIN") {
           router.push("/admin/dashboard");
-        } else if (data.role === "staff") {
+        } else if (data.role === "STAFF") {
           router.push("/staff/dashboard");
         } else {
-          router.push("/user/dashboard");
+          router.push("/user/homepage");
         }
       } else {
         setError(data.error || "เข้าสู่ระบบไม่สำเร็จ");

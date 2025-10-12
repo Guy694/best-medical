@@ -2,37 +2,49 @@ import mysql from 'mysql2/promise';
 import { dbConfig } from '@/app/lib/db';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 export async function POST(req) {
   try {
     const { name, email, password } = await req.json();
+
+    // เข้ารหัสรหัสผ่าน
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // สร้างโค้ดยืนยัน
     const verifyToken = crypto.randomBytes(24).toString('hex');
 
     // บันทึกข้อมูลลง MySQL
     const connection = await mysql.createConnection(dbConfig);
+    
+    // ตรวจสอบอีเมลซ้ำ
+    const [existingUser] = await connection.execute('SELECT id FROM user WHERE email = ?', [email]);
+    if (existingUser.length > 0) {
+      await connection.end();
+      return new Response(JSON.stringify({ error: "อีเมลนี้ถูกใช้งานแล้ว" }), { status: 400 });
+    }
     await connection.execute(
       'INSERT INTO user (name, email, password, verify_token, verified) VALUES (?, ?, ?, ?, 0)',
-      [name, email, password, verifyToken]
+      [name, email, hashedPassword, verifyToken]
     );
     await connection.end();
 
     // สร้าง URL สำหรับยืนยัน
-    const verifyUrl = `https://your-domain.com/api/verify?token=${verifyToken}`;
+    const verifyUrl = `http://192.168.0.108:3000/api/verify?token=${verifyToken}`;
 
     // ส่งอีเมลยืนยัน
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'your-email@gmail.com', // เปลี่ยนเป็นอีเมลของคุณ
-        pass: 'your-app-password',    // ใช้ App Password จาก Google
+        user: 'chakrit694@gmail.com', // เปลี่ยนเป็นอีเมลของคุณ
+        pass: 'nqjo cxbr howx mnvr',    // ใช้ App Password จาก Google
+        
       },
       tls: { rejectUnauthorized: false }
     });
 
     await transporter.sendMail({
-      from: 'your-email@gmail.com',
+      from: 'chakrit694@gmail.com',
       to: email,
       subject: 'ยืนยันการสมัครสมาชิก',
       html: `<p>ขอบคุณที่สมัครสมาชิก กรุณาคลิก <a href="${verifyUrl}">ที่นี่</a> เพื่อยืนยันอีเมลของคุณ</p>`

@@ -1,39 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState,useEffect } from "react";
 import Img from "next/image";
 import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck ,Search} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
-
-const getRole = () => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-    if (user) {
-      try {
-        return JSON.parse(user).role;
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
-};
-
-const getUser = () => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-    if (user) {
-      try {
-        return JSON.parse(user);
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
-};
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -41,8 +13,6 @@ const Navbar = () => {
   const [language, setLanguage] = useState("th");
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isEtcOpen, setIsEtcOpen] = useState(false);
-  const [role, setRole] = useState(null);
-  const [user, setUser] = useState(null);
 
   const toggleEtc = () => setIsEtcOpen(!isEtcOpen);
 
@@ -60,17 +30,12 @@ const Navbar = () => {
   };
   const [cartCount, setCartCount] = useState(0);
 
-  useEffect(() => {
-    const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
-    // รวมจำนวนทั้งหมด
-    const total = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-    setCartCount(total);
-  }, []);
-
-  useEffect(() => {
-    setRole(getRole());
-    setUser(getUser());
-  }, []);
+useEffect(() => {
+  const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+  // รวมจำนวนทั้งหมด
+  const total = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  setCartCount(total);
+}, []);
 
   const navItems = {
     th: {
@@ -88,54 +53,10 @@ const Navbar = () => {
 
   const currentNav = navItems[language];
 
-  // เมนูสำหรับแต่ละ role
-  const customerMenu = (
-    <>
-      <Link href={currentNav.home}>หน้าหลัก</Link>
-      <Link href={currentNav.product}>สินค้าทั้งหมด</Link>
-      <Link href={currentNav.howtopay}>วิธีการสั่งซื้อ/ชำระเงิน</Link>
-      <Link href={currentNav.payment_notice}>แจ้งชำระเงิน</Link>
-      <Link href={currentNav.article}>บทความและข่าวสาร</Link>
-      <Link href={currentNav.contact}>ติดต่อเรา</Link>
-    </>
-  );
-
-  const staffMenu = (
-    <>
-      <Link href="/staff/dashboard">แดชบอร์ดพนักงาน</Link>
-      <Link href="/admin/user/staff">จัดการพนักงาน</Link>
-      <Link href={currentNav.product}>สินค้าทั้งหมด</Link>
-      <Link href={currentNav.article}>บทความและข่าวสาร</Link>
-      <Link href={currentNav.contact}>ติดต่อเรา</Link>
-    </>
-  );
-
-  const adminMenu = (
-    <>
-      <Link href="/admin/dashboard">แดชบอร์ดแอดมิน</Link>
-      <Link href="/admin/user/staff">จัดการพนักงาน</Link>
-      <Link href="/admin/user/customer">จัดการลูกค้า</Link>
-      <Link href={currentNav.product}>สินค้าทั้งหมด</Link>
-      <Link href={currentNav.article}>บทความและข่าวสาร</Link>
-      <Link href={currentNav.contact}>ติดต่อเรา</Link>
-    </>
-  );
-
-  // เลือกเมนูตาม role
-  let menu;
-  if (role === "ADMIN") menu = adminMenu;
-  else if (role === "STAFF") menu = staffMenu;
-  else menu = customerMenu;
-
-  // ฟังก์ชัน logout
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
-    setRole(null);
-    window.location.href = "/login";
-  };
-
   return (
+
+
+    
     <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-lg shadow-blue-600 sticky top-0 z-30  rounded-b-3xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6 xl:px-12">
         <br />
@@ -275,37 +196,27 @@ const Navbar = () => {
 
           {/* Right Side - Language, Login */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* แสดงปุ่ม login/register เฉพาะถ้ายังไม่ได้ login */}
-            {!user ? (
-              <>
-                {/* Login Button */}
-                <Link
-                  href={currentNav.login}
-                  className="flex items-center  bg-white text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  เข้าสู่ระบบ
-                </Link>
+            {/* Language Selector */}
 
-                {/* Register Button */}
-                <a
-                  href={currentNav.register}
-                  className="border  text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
-                >
-                  ลงทะเบียน
-                </a>
-              </>
-            ) : (
-              <>
-                <span className="text-white font-semibold px-4">{user.name}</span>
-                <button 
-                  onClick={handleLogout} 
-                  className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
-                >
-                  ออกจากระบบ
-                </button>
-              </>
-            )}
+
+            {/* Login Button */}
+            <Link
+              href={currentNav.login}
+              className="flex items-center  bg-white text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
+            >
+              <User className="h-4 w-4 mr-2" />
+
+              เข้าสู่ระบบ
+            </Link>
+
+            {/* Register Button */}
+            <a
+              href={currentNav.register}
+              className="border  text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors"
+            >
+
+              ลงทะเบียน
+            </a>
           </div>
 
           {/* Mobile menu button */}
@@ -400,34 +311,20 @@ const Navbar = () => {
               </Link>
               {/* Auth Buttons Mobile */}
               <div className="border-t pt-10 mt-10 flex space-x-4">
-                {!user ? (
-                  <>
-                    <Link
-                      href={currentNav.login}
-                      className="text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      เข้าสู่ระบบ
-                    </Link>
-                    <Link
-                      href={currentNav.register}
-                      className="text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
-                    >
-                      <ShieldCheck className="h-4 w-4 mr-2" />
-                      ลงทะเบียน
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-white font-semibold px-4">{user.name}</span>
-                    <button 
-                      onClick={handleLogout} 
-                      className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
-                    >
-                      ออกจากระบบ
-                    </button>
-                  </>
-                )}
+                <Link
+                  href={currentNav.login}
+                  className="text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  เข้าสู่ระบบ
+                </Link>
+                <Link
+                  href={currentNav.register}
+                  className="text-gray-700 px-4 py-2 bg-white rounded-md text-sm font-medium hover:bg-green-400 transition-colors flex items-center"
+                >
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  ลงทะเบียน
+                </Link>
               </div>
             </div>
           </div>

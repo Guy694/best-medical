@@ -13,6 +13,24 @@ const Checkout = () => {
   const router = useRouter();
   const [cart, setCart] = useState([]);
   const [shipping, setShipping] = useState("ems");
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    const cartData = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+    setCart(cartData);
+    
+    // ดึงอีเมลผู้ใช้จาก localStorage ถ้ามีการเข้าสู่ระบบ
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        setUserEmail(userData.email || "");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+
   const totalDelivery = cart.reduce((sum, item) => sum + (item.quantity * item.delivery || 0), 0);
   const shippingOptions = [
 
@@ -172,7 +190,16 @@ const Checkout = () => {
               <input type="hidden" name="cart" value={JSON.stringify(cart)} />
               <input type="hidden" name="shipping" value={shipping} />
               <label htmlFor="" className="text-gray-700">กรุณากรอกอีเมลเพื่อจัดส่งเลขคำสั่งซื้อ <span className="text-red-600">*</span></label>
-              <input type="text" name="order_email" placeholder="กรอกอีเมล" className="border p-2 w-full mb-2 rounded-3xl" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required />
+              <input 
+                type="text" 
+                name="order_email" 
+                placeholder="กรอกอีเมล" 
+                className="border p-2 w-full mb-2 rounded-3xl" 
+                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                required 
+              />
               <button type="submit" className="w-full bg-red-600 text-white py-2 mb-4 rounded-2xl hover:bg-red-800">
                 ดำเนินการสั่งซื้อ
               </button>
