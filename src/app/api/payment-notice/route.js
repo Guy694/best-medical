@@ -1,8 +1,56 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/app/lib/db';
+import { writeFile } from 'fs/promises';
+import path from 'path';
 
 export async function POST(request) {
   try {
+    // Check if request is FormData (file upload) or JSON
+    const contentType = request.headers.get('content-type');
+    let formData;
+    let transferSlipFile = null;
+    let transferSlipPath = null;
+
+    if (contentType && contentType.includes('multipart/form-data')) {
+      // Handle FormData (with file upload)
+      const formDataRequest = await request.formData();
+      
+      formData = {
+        order_code: formDataRequest.get('order_code'),
+        fullName: formDataRequest.get('fullName'),
+        order_email: formDataRequest.get('order_email'),
+        totalPrice: formDataRequest.get('totalPrice'),
+        transfer_date: formDataRequest.get('transfer_date'),
+        transfer_time: formDataRequest.get('transfer_time'),
+        bank_account: formDataRequest.get('bank_account'),
+        transfer_slip: formDataRequest.get('transfer_slip')
+      };
+
+      // Handle file upload
+      transferSlipFile = formDataRequest.get('transfer_slip_file');
+      
+      if (transferSlipFile && transferSlipFile.size > 0) {
+        // Create unique filename
+        const timestamp = Date.now();
+        const originalName = transferSlipFile.name;
+        const extension = path.extname(originalName);
+        const fileName = `payment_slip_${timestamp}${extension}`;
+        
+        // Save file to public/payments directory
+        const bytes = await transferSlipFile.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        
+        transferSlipPath = path.join(process.cwd(), 'public/payments', fileName);
+        await writeFile(transferSlipPath, buffer);
+        
+        // Store relative path for database
+        transferSlipPath = `/payments/${fileName}`;
+      }
+    } else {
+      // Handle JSON request (backward compatibility)
+      formData = await request.json();
+    }
+
     const {
       order_code,
       fullName,
@@ -12,7 +60,7 @@ export async function POST(request) {
       transfer_time,
       bank_account,
       transfer_slip
-    } = await request.json();
+    } = formData;
 
     // Validate required fields
     if (!order_code || !fullName || !order_email || !totalPrice || !transfer_date || !transfer_time) {
@@ -100,6 +148,7 @@ export async function POST(request) {
         paidAdate = ?,
         paidAtime = ?,
         transfer_slip = ?,
+        transfer_slip_file = ?,
         bank_account = ?
       WHERE orderCode = ?
     `;
@@ -108,6 +157,7 @@ export async function POST(request) {
       transfer_date,
       transfer_time,
       transfer_slip || null,
+      transferSlipPath || null, // Save file path
       bank_account || null,
       order_code
     ]);
@@ -115,8 +165,8 @@ export async function POST(request) {
     // Log payment notification
     const logQuery = `
       INSERT INTO payment_notifications 
-      (order_id, order_code, customer_name, customer_email, amount, transfer_date, transfer_time, bank_account, transfer_slip, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      (order_id, order_code, customer_name, customer_email, amount, transfer_date, transfer_time, bank_account, transfer_slip, transfer_slip_file, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     try {
@@ -129,7 +179,8 @@ export async function POST(request) {
         transfer_date,
         transfer_time,
         bank_account || null,
-        transfer_slip || null
+        transfer_slip || null,
+        transferSlipPath || null // Save file path in log too
       ]);
     } catch (logError) {
       // ถ้า table payment_notifications ไม่มี ก็ไม่ต้อง error

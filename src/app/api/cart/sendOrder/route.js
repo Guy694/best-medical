@@ -1,5 +1,4 @@
-import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 import nodemailer from 'nodemailer';
 
 export async function POST(req) {
@@ -17,12 +16,11 @@ export async function POST(req) {
     // const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) + shipping.cost;
 
     // บันทึกข้อมูลลง MySQL (เพิ่มฟิลด์ total)
-    const connection = await mysql.createConnection(dbConfig);
-    await connection.execute(
+    await pool.execute(
       'INSERT INTO `order` (order_code, order_email, shipping, items, totalPrice, createdAt) VALUES (?, ?, ?, ?, ?, NOW())',
       [orderId,order_email,shipping,JSON.stringify(cart),totalPrice]
     );
-    await connection.end();
+
 
      const transporter = nodemailer.createTransport({
       service: 'gmail',

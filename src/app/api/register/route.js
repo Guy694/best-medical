@@ -1,5 +1,4 @@
-import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
@@ -15,19 +14,16 @@ export async function POST(req) {
     const verifyToken = crypto.randomBytes(24).toString('hex');
 
     // บันทึกข้อมูลลง MySQL
-    const connection = await mysql.createConnection(dbConfig);
     
     // ตรวจสอบอีเมลซ้ำ
-    const [existingUser] = await connection.execute('SELECT id FROM user WHERE email = ?', [email]);
+    const [existingUser] = await pool.execute('SELECT id FROM user WHERE email = ?', [email]);
     if (existingUser.length > 0) {
-      await connection.end();
       return new Response(JSON.stringify({ error: "อีเมลนี้ถูกใช้งานแล้ว" }), { status: 400 });
     }
-    await connection.execute(
+    await pool.execute(
       'INSERT INTO user (name, email, password, verify_token, verified) VALUES (?, ?, ?, ?, 0)',
       [name, email, hashedPassword, verifyToken]
     );
-    await connection.end();
 
     // สร้าง URL สำหรับยืนยัน
     const verifyUrl = `http://192.168.0.108:3000/api/verify?token=${verifyToken}`;

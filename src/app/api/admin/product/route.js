@@ -1,5 +1,4 @@
-import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 import { writeFile } from "fs/promises";
 import path from "path";
 
@@ -24,12 +23,10 @@ export async function POST(req) {
       imageUrl = `/pdimage/${filename}`;
     }
 
-    const connection = await mysql.createConnection(dbConfig);
-    const [result] = await connection.execute(
+    const [result] = await pool.execute(
       'INSERT INTO product (pro_name, codename, price, description, stock, categoryId, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [pro_name, codename, price, description, stock, categoryId, imageUrl]
     );
-    await connection.end();
     return new Response(JSON.stringify({ id: result.insertId, pro_name, codename, price, description, stock, categoryId, imageUrl }), { status: 201 });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
@@ -39,11 +36,9 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
-    const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute(
+    const [rows] = await pool.execute(
       'SELECT * FROM product ORDER BY visible ASC'
     );
-    await connection.end();
     return new Response(JSON.stringify(rows), { status: 200,headers: { "Content-Type": "application/json" } });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });

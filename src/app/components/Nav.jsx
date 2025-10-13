@@ -251,13 +251,13 @@ const Navbar = () => {
                     >
                       บทความและข่าวสาร
                     </Link>
-                    <Link
+                    {/* <Link
                       href="/qa"
                       className={`block px-4 py-2 text-sm ${pathname === currentNav.qa ? "text-green-400 font-semibold" : "text-gray-700"
                         } hover:bg-gray-100`}
                     >
                       คำถามที่พบบ่อย (FAQ)
-                    </Link>
+                    </Link> */}
                   </div>
                 </div>
 
@@ -400,13 +400,13 @@ const Navbar = () => {
                   >
                     บทความและข่าวสาร
                   </Link>
-                  <Link
+                  {/* <Link
                     href="/qa"
                     className={`block px-4 py-2 text-sm ${pathname === currentNav.qa ? "text-green-400 font-semibold" : "text-gray-700"
                       } hover:bg-gray-100`}
                   >
                     คำถามที่พบบ่อย (FAQ)
-                  </Link>
+                  </Link> */}
                 </div>
               </div>
               <Link

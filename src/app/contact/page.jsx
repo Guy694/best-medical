@@ -5,11 +5,11 @@ import Navbar from "../components/Nav";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
-    contacts_name: "",
-    contacts_email: "",
-    contacts_phone: "",
-    contacts_article: "",
-    contacts_detail: "",
+    name: "",
+    email: "",
+    phone: "",
+    article: "",
+    detail: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
@@ -35,7 +35,7 @@ export default function Contact() {
 
     if (res.ok) {
       setSubmitMessage("ส่งข้อความเรียบร้อยแล้ว เราจะติดต่อกลับโดยเร็วที่สุด");
-      setFormData({ contacts_name: "", contacts_email: "", contacts_phone: "", contacts_article: "", contacts_detail: "" }); // reset form
+      setFormData({ name: "", email: "", phone: "", article: "", detail: "" }); // reset form
     } else {
       setSubmitMessage("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     }
@@ -211,8 +211,8 @@ export default function Contact() {
                       </label>
                       <input
                         type="text"
-                        name="contacts_name"
-                        value={formData.contacts_name}
+                        name="name"
+                        value={formData.name}
                         onChange={handleInputChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -226,8 +226,8 @@ export default function Contact() {
                       </label>
                       <input
                         type="email"
-                        name="contacts_email"
-                        value={formData.contacts_email}
+                        name="email"
+                        value={formData.email}
                         onChange={handleInputChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -243,8 +243,8 @@ export default function Contact() {
                       </label>
                       <input
                         type="tel"
-                        name="contacts_phone"
-                        value={formData.contacts_phone}
+                        name="phone"
+                        value={formData.phone}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="08X-XXX-XXXX"
@@ -256,8 +256,8 @@ export default function Contact() {
                         หัวข้อ *
                       </label>
                       <select
-                        name="contacts_article"
-                        value={formData.contacts_article}
+                        name="article"
+                        value={formData.article}
                         onChange={handleInputChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -277,8 +277,8 @@ export default function Contact() {
                       ข้อความ *
                     </label>
                     <textarea
-                      name="contacts_detail"
-                      value={formData.contacts_detail}
+                      name="detail"
+                      value={formData.detail}
                       onChange={handleInputChange}
                       required
                       rows={5}

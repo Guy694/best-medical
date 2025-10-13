@@ -1,14 +1,13 @@
-import mysql from 'mysql2/promise';
-const [rows] = await pool.execute(sql);
+import pool from '@/app/lib/db';
 
 export async function GET(req, context) {
   try {
-const params = await context.params;
-const orderId = params.orderId;
-   const [rows] = await pool.execute(
-  'SELECT * FROM `order` WHERE order_code = ?',
-  [orderId]
-);
+    const params = await context.params;
+    const orderId = params.orderId;
+    const [rows] = await pool.execute(
+      'SELECT * FROM `order` WHERE order_code = ?',
+      [orderId]
+    );
     if (rows.length === 0) {
       return new Response(JSON.stringify({ error: "ไม่พบคำสั่งซื้อ" }), { status: 404 });
     }

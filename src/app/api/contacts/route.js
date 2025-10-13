@@ -1,37 +1,56 @@
-import { PrismaClient } from "@prisma/client";
+import { NextResponse } from 'next/server';
+import { query } from '@/app/lib/db';
 
-const prisma = new PrismaClient();
-
-export async function POST(req) {
+export async function POST(request) {
   try {
-    const data = await req.json();
-    const { contacts_name, contacts_email, contacts_phone, contacts_article, contacts_detail } = data;
+    const { name, email, phone, article, detail } = await request.json();
 
-    const newContact = await prisma.contact.create({
-      data: {
-        contacts_name,
-        contacts_email,
-        contacts_phone,
-        contacts_article,
-        contacts_detail,
-      },
+    // Validate required fields
+    if (!name || !email || !article || !detail) {
+      return NextResponse.json(
+        { error: 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน' },
+        { status: 400 }
+      );
+    }
+
+    // Insert contact data
+    const insertQuery = `
+      INSERT INTO contact (name, email, phone, article, detail, createdAt)
+      VALUES (?, ?, ?, ?, ?, NOW())
+    `;
+
+    const result = await query(insertQuery, [
+      name,
+      email,
+      phone || null,
+      article,
+      detail
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      message: 'บันทึกข้อความเรียบร้อยแล้ว',
+      id: result.insertId
     });
 
-    return new Response(
-      JSON.stringify({ message: "บันทึกสำเร็จ", contact: newContact }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
   } catch (error) {
-    console.error("DB Error:", error);
-    return new Response(
-      JSON.stringify({ message: "เกิดข้อผิดพลาด", error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+    console.error('Error saving contact:', error);
+    return NextResponse.json(
+      { error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const contacts = await query('SELECT * FROM contact ORDER BY createdAt DESC');
+    return NextResponse.json(contacts);
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    return NextResponse.json(
+      { error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' },
+      { status: 500 }
     );
   }
 }

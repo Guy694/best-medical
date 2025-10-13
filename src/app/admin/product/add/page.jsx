@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from '@/app/components/Nav';
 import Sidebar from '@/app/components/Sidebar';
 import { useRouter } from "next/navigation";
@@ -16,7 +16,21 @@ export default function AddProduct() {
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [categories, setCategories] = useState([]);
   const router = useRouter();
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/admin/categories');
+        const data = await res.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     if (e.target.name === "imageUrl") {
@@ -83,7 +97,20 @@ export default function AddProduct() {
               </div>
               <div>
                 <label className="block mb-1 text-gray-700">หมวดหมู่</label>
-                <input type="text" name="categoryId" value={form.categoryId} onChange={handleChange} required className="w-full border rounded px-3 py-2 text-gray-700" />
+                <select
+                  name="categoryId"
+                  value={form.categoryId}
+                  onChange={handleChange}
+                  required
+                  className="w-full border rounded px-3 py-2 text-gray-700"
+                >
+                  <option value="">เลือกหมวดหมู่</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.cate_name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block mb-1 text-gray-700">รูปภาพ (ไฟล์)</label>

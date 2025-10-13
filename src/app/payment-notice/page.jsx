@@ -15,6 +15,7 @@ export default function PaymentNotice() {
     bank_account: '',
     transfer_slip: ''
   });
+  const [transferSlipFile, setTransferSlipFile] = useState(null);
   
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -32,11 +33,19 @@ export default function PaymentNotice() {
   ];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type, files } = e.target;
+    
+    if (type === 'file') {
+      if (name === 'transfer_slip_file') {
+        setTransferSlipFile(files[0] || null);
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    
     // Clear error when user starts typing
     if (error) setError('');
   };
@@ -47,15 +56,25 @@ export default function PaymentNotice() {
     setError('');
 
     try {
+      // Create FormData to handle file upload
+      const formDataToSend = new FormData();
+      
+      // Add all form fields
+      Object.keys(formData).forEach(key => {
+        formDataToSend.append(key, formData[key]);
+      });
+      
+      // Add bank account
+      formDataToSend.append('bank_account', selectedBank);
+      
+      // Add file if selected
+      if (transferSlipFile) {
+        formDataToSend.append('transfer_slip_file', transferSlipFile);
+      }
+
       const response = await fetch('/api/payment-notice', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          bank_account: selectedBank
-        }),
+        body: formDataToSend, // Send FormData instead of JSON
       });
 
       const data = await response.json();
@@ -72,6 +91,7 @@ export default function PaymentNotice() {
           bank_account: '',
           transfer_slip: ''
         });
+        setTransferSlipFile(null); // Reset file input
       } else {
         setError(data.error || 'เกิดข้อผิดพลาดในการแจ้งชำระเงิน');
       }
@@ -248,16 +268,52 @@ export default function PaymentNotice() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    หลักฐานการโอน (เลขที่อ้างอิง)
+                    หลักฐานการโอน
                   </label>
-                  <input
-                    type="text"
-                    name="transfer_slip"
-                    value={formData.transfer_slip}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="เลขที่อ้างอิงหรือรหัสการโอน (ถ้ามี)"
-                  />
+                  
+                  {/* File upload section */}
+                  <div className="mb-4">
+                    <label className="block text-sm text-gray-600 mb-2">
+                      แนบไฟล์หลักฐานการโอน (รูปภาพ)
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                      <input
+                        type="file"
+                        name="transfer_slip_file"
+                        accept="image/*"
+                        onChange={handleChange}
+                        className="hidden"
+                        id="transfer_slip_file"
+                      />
+                      <label
+                        htmlFor="transfer_slip_file"
+                        className="cursor-pointer flex flex-col items-center"
+                      >
+                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                        <span className="text-sm text-gray-600">
+                          {transferSlipFile ? transferSlipFile.name : 'คลิกเพื่อเลือกไฟล์หรือลากไฟล์มาวาง'}
+                        </span>
+                        <span className="text-xs text-gray-500 mt-1">
+                          รองรับไฟล์ JPG, PNG, GIF (ขนาดไม่เกิน 5MB)
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Reference number input */}
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      เลขที่อ้างอิง (ถ้ามี)
+                    </label>
+                    <input
+                      type="text"
+                      name="transfer_slip"
+                      value={formData.transfer_slip}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="เลขที่อ้างอิงหรือรหัสการโอน (ถ้ามี)"
+                    />
+                  </div>
                 </div>
 
                 <button

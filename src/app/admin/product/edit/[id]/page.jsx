@@ -6,6 +6,7 @@ import { useRouter,useParams } from "next/navigation";
 
 export default function EditProduct() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({
     pro_name: "",
     price: "",
@@ -21,27 +22,36 @@ export default function EditProduct() {
   const id = params.id;
 
   useEffect(() => {
-    async function fetchProduct() {
+    async function fetchData() {
       if (!id) return;
       setLoading(true);
       try {
-        const res = await fetch(`/api/admin/product/${id}`);
-        const data = await res.json();
+        // Fetch product data and categories in parallel
+        const [productRes, categoriesRes] = await Promise.all([
+          fetch(`/api/admin/product/${id}`),
+          fetch('/api/admin/categories')
+        ]);
+        
+        const productData = await productRes.json();
+        const categoriesData = await categoriesRes.json();
+        
         setForm({
-          pro_name: data.pro_name || data.name || "",
-          price: data.price || "",
-          description: data.description || "",
-          stock: data.stock || "",
-          categoryId: data.categoryId || "",
-          imageUrl: data.imageUrl || ""
+          pro_name: productData.pro_name || productData.name || "",
+          price: productData.price || "",
+          description: productData.description || "",
+          stock: productData.stock || "",
+          categoryId: productData.categoryId || "",
+          imageUrl: productData.imageUrl || ""
         });
+        
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } catch (err) {
         setError("ไม่พบข้อมูลสินค้า");
       } finally {
         setLoading(false);
       }
     }
-    fetchProduct();
+    fetchData();
   }, [id]);
 
   const handleChange = (e) => {
@@ -99,7 +109,20 @@ export default function EditProduct() {
               </div>
               <div>
                 <label className="block mb-1 text-gray-700">หมวดหมู่</label>
-                <input type="text" name="categoryId" value={form.categoryId} onChange={handleChange} required className="w-full border rounded px-3 py-2 text-gray-700" />
+                <select
+                  name="categoryId"
+                  value={form.categoryId}
+                  onChange={handleChange}
+                  required
+                  className="w-full border rounded px-3 py-2 text-gray-700"
+                >
+                  <option value="">เลือกหมวดหมู่</option>
+                  {categories.map((category) => (
+                    <option key={category.categoryId} value={category.categoryId}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block mb-1 text-gray-700">รูปภาพ (URL)</label>

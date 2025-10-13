@@ -54,6 +54,9 @@
     formData.append("cate_name", form.cate_name);
     if (file) {
       formData.append("cate_img", file);
+    } else {
+      // ถ้าไม่แนบไฟล์ใหม่ ให้ใช้รูปเดิม
+      formData.append("cate_img", form.cate_img);
     }
     const res = await fetch(`/api/admin/categories/${id}`, {
       method: "PUT",

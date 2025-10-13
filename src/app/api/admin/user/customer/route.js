@@ -1,13 +1,11 @@
 import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 
 export async function GET(req) {
   try {
-    const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute(
+    const [rows] = await pool.execute(
       "SELECT name, email, password, phone, address, role FROM user WHERE role = 'CUSTOMER' ORDER BY createdAt DESC"
     );
-    await connection.end();
     return new Response(JSON.stringify(rows), {
       status: 200,
       headers: { "Content-Type": "application/json" }

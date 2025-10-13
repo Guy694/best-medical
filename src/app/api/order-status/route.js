@@ -16,21 +16,19 @@ export async function GET(request) {
     // Query order details with customer information
     const orderQuery = `
       SELECT 
-        o.id as order_id,
-        o.orderCode as order_code,
+        o.order_id,
+        o.order_code,
         o.totalPrice as total_amount,
         o.status,
         o.createdAt as created_at,
         o.shippingAddress as shipping_address,
-        o.paymentMethod as payment_method,
-        o.trackingNumber as tracking_number,
-        u.firstname,
-        u.lastname,
+        o.order_code as tracking_number,
+        u.name,
         u.email,
         u.phone
       FROM \`order\` o
-      LEFT JOIN users u ON o.userId = u.id
-      WHERE o.orderCode = ?
+      LEFT JOIN \`user\` u ON o.order_email = u.email
+      WHERE o.order_code = ?
     `;
 
     const orders = await query(orderQuery, [orderCode]);
@@ -52,7 +50,7 @@ export async function GET(request) {
         p.name as product_name,
         p.image as product_image
       FROM orderitem oi
-      LEFT JOIN products p ON oi.productId = p.id
+      LEFT JOIN product p ON oi.productId = p.id
       WHERE oi.orderId = ?
     `;
 

@@ -1,6 +1,5 @@
-import mysql from 'mysql2/promise';
 import pool from '@/app/lib/db';
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export async function POST(req) {
@@ -11,19 +10,32 @@ export async function POST(req) {
 
     let cate_img = null;
     if (file && typeof file !== "string") {
+      console.log("File received:", file.name, file.size);
       const buffer = Buffer.from(await file.arrayBuffer());
       const filename = Date.now() + "_" + file.name;
-      const filepath = path.join(process.cwd(), "public", "categoryimg", filename);
+      const folderPath = path.join(process.cwd(), "public", "categoryimg");
+      const filepath = path.join(folderPath, filename);
+      
+      console.log("Saving to:", filepath);
+      
+      // สร้างโฟลเดอร์ถ้ายังไม่มี
+      try {
+        await mkdir(folderPath, { recursive: true });
+      } catch (error) {
+        // โฟลเดอร์มีอยู่แล้ว
+      }
+      
       await writeFile(filepath, buffer);
       cate_img = `/categoryimg/${filename}`;
+      console.log("File saved successfully:", cate_img);
+    } else {
+      console.log("No file received or file is string");
     }
 
-  ฃ
-    await connection.execute(
+    await pool.execute(
       "INSERT INTO category (cate_name, cate_img) VALUES (?, ?)",
       [cate_name, cate_img]
     );
-    await connection.end();
 
     return new Response(JSON.stringify({ message: "เพิ่มหมวดหมู่สำเร็จ" }), { status: 201 });
   } catch (error) {
@@ -34,12 +46,10 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
-    const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute(
+    const [rows] = await pool.execute(
       'SELECT * FROM category ORDER BY id ASC'
     );
-    await connection.end();
-    return new Response(JSON.stringify(rows), { status: 200,headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify(rows), { status: 200, headers: { "Content-Type": "application/json" } });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }

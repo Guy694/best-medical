@@ -29,9 +29,7 @@ export default function AddProduct() {
     setError("");
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
+      formData.append("cate_name", form.cate_name);
       if (imageFile) {
         formData.append("cate_img", imageFile);
       }

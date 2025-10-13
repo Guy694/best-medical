@@ -1,5 +1,4 @@
-import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 
 export async function GET(req) {
   try {
@@ -21,15 +20,11 @@ export async function GET(req) {
       });
     }
 
-    const connection = await mysql.createConnection(dbConfig);
-    
     // ตรวจสอบและอัปเดตสถานะยืนยัน
-    const [result] = await connection.execute(
+    const [result] = await pool.execute(
       'UPDATE user SET verified = 1, verify_token = NULL WHERE verify_token = ? AND verified = 0',
       [token]
     );
-
-    await connection.end();
 
     if (result.affectedRows === 0) {
       return new Response(`
