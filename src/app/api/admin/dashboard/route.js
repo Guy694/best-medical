@@ -1,33 +1,30 @@
-import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const year = searchParams.get('year') || new Date().getFullYear();
     
-    const connection = await mysql.createConnection(dbConfig);
-    
     // ยอดขายทั้งหมดในปีที่เลือก
-    const [totalOrdersResult] = await connection.execute(
+    const [totalOrdersResult] = await pool.execute(
       'SELECT COUNT(*) as total FROM `order` WHERE status = "COMPLETED" AND YEAR(createdAt) = ?',
       [year]
     );
     
     // ยอดขายทั้งหมดเป็นเงิน
-    const [totalRevenueResult] = await connection.execute(
+    const [totalRevenueResult] = await pool.execute(
       'SELECT COALESCE(SUM(totalPrice), 0) as total FROM `order` WHERE status = "COMPLETED" AND YEAR(createdAt) = ?',
       [year]
     );
     
     // รายการรอจัดส่ง
-    const [pendingOrdersResult] = await connection.execute(
+    const [pendingOrdersResult] = await pool.execute(
       'SELECT COUNT(*) as total FROM `order` WHERE status = "PENDING" AND YEAR(createdAt) = ?',
       [year]
     );
     
     // ข้อมูลรายเดือน
-    const [monthlyDataResult] = await connection.execute(`
+    const [monthlyDataResult] = await pool.execute(`
       SELECT 
         MONTH(createdAt) as month,
         COUNT(*) as orders,
@@ -39,7 +36,7 @@ export async function GET(req) {
     `, [year]);
     
     // รายการออร์เดอร์ล่าสุด 5 รายการ
-    const [recentOrdersResult] = await connection.execute(`
+    const [recentOrdersResult] = await pool.execute(`
       SELECT 
         order_id,
         order_code,
@@ -52,8 +49,6 @@ export async function GET(req) {
       ORDER BY createdAt DESC 
       LIMIT 5
     `, [year]);
-    
-    await connection.end();
     
     // สร้างข้อมูลรายเดือน (12 เดือน)
     const monthlyData = Array.from({ length: 12 }, (_, index) => {

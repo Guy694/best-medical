@@ -6,33 +6,16 @@ import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck ,Searc
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
+import { sessionManager, useSession } from "../lib/sessionTimeout";
 
 const getRole = () => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-    if (user) {
-      try {
-        return JSON.parse(user).role;
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
+  const user = sessionManager.getSession();
+  return user && !sessionManager.isSessionExpired() ? user.role : null;
 };
 
 const getUser = () => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-    if (user) {
-      try {
-        return JSON.parse(user);
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
+  const user = sessionManager.getSession();
+  return user && !sessionManager.isSessionExpired() ? user : null;
 };
 
 const Navbar = () => {
@@ -43,6 +26,7 @@ const Navbar = () => {
   const [isEtcOpen, setIsEtcOpen] = useState(false);
   const [role, setRole] = useState(null);
   const [user, setUser] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(30);
 
   const toggleEtc = () => setIsEtcOpen(!isEtcOpen);
 
@@ -70,6 +54,26 @@ const Navbar = () => {
   useEffect(() => {
     setRole(getRole());
     setUser(getUser());
+
+    // Initialize session management
+    sessionManager.initializeSession();
+    sessionManager.setupActivityListeners();
+
+    // Update remaining time every minute
+    const timeInterval = setInterval(() => {
+      const remaining = sessionManager.getRemainingTime();
+      setRemainingTime(remaining);
+      
+      // Warning when 5 minutes remaining
+      if (remaining === 5) {
+        alert('เซสชันของคุณจะหมดอายุใน 5 นาที');
+      }
+    }, 60000); // Check every minute
+
+    return () => {
+      clearInterval(timeInterval);
+      sessionManager.stopSessionMonitoring();
+    };
   }, []);
 
   const navItems = {
@@ -129,10 +133,7 @@ const Navbar = () => {
 
   // ฟังก์ชัน logout
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
-    setRole(null);
-    window.location.href = "/login";
+    sessionManager.logout();
   };
 
   return (

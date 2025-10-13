@@ -1,14 +1,12 @@
 
 import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 
 export async function GET(req, context) {
   try {
     const { params } = await context;
     const id = params.id;
-    const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute('SELECT * FROM product WHERE id = ?', [id]);
-    await connection.end();
+    const [rows] = await pool.execute('SELECT * FROM product WHERE id = ?', [id]);
     if (rows.length === 0) {
       return new Response(JSON.stringify({ error: "ไม่พบข้อมูลสินค้า" }), { status: 404 });
     }
@@ -22,9 +20,7 @@ export async function DELETE(req, context) {
   try {
     const { params } = await context;
     const id = params.id;
-    const connection = await mysql.createConnection(dbConfig);
-    await connection.execute('DELETE FROM product WHERE id = ?', [id]);
-    await connection.end();
+    await pool.execute('DELETE FROM product WHERE id = ?', [id]);
     return new Response(JSON.stringify({ message: "ลบสินค้าเรียบร้อย" }), { status: 200 });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
@@ -36,10 +32,9 @@ export async function PUT(req, context) {
     const { params } = await context;
     const id = params.id;
     const body = await req.json();
-    const connection = await mysql.createConnection(dbConfig);
     // ถ้ามีเฉพาะ visible
     if (body.hasOwnProperty('visible')) {
-      await connection.execute(
+      await pool.execute(
         'UPDATE product SET visible = ? WHERE id = ?',
         [body.visible, id]
       );

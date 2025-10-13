@@ -1,11 +1,8 @@
-import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 
 export async function GET(req) {
   try {
-    const connection = await mysql.createConnection(dbConfig);
-
-    const [rows] = await connection.execute(`
+    const [rows] = await pool.execute(`
       SELECT 
         o.order_id,
         o.order_code,
@@ -23,7 +20,6 @@ export async function GET(req) {
       ORDER BY o.createdAt DESC
     `);
 
-    await connection.end();
     return new Response(JSON.stringify(rows), {
       status: 200,
       headers: { "Content-Type": "application/json" }
@@ -45,12 +41,10 @@ export async function PUT(req) {
       });
     }
 
-    const connection = await mysql.createConnection(dbConfig);
-    
     // ถ้าเปลี่ยนสถานะเป็น PAID ให้ตัด stock
     if (status === 'PAID') {
       // ดึงข้อมูล order เพื่อเอา items
-      const [orderData] = await connection.execute(
+      const [orderData] = await pool.execute(
         'SELECT items FROM `order` WHERE order_id = ?',
         [order_id]
       );
@@ -67,7 +61,7 @@ export async function PUT(req) {
             typeof item.product_id !== 'undefined' && item.product_id !== null &&
             typeof item.quantity !== 'undefined' && item.quantity !== null
           ) {
-            await connection.execute(
+            await pool.execute(
               'UPDATE product SET stock = stock - ? WHERE id = ? AND stock >= ?',
               [item.quantity, item.product_id, item.quantity]
             );
@@ -79,12 +73,10 @@ export async function PUT(req) {
     }
     
     // อัปเดตสถานะ order
-    await connection.execute(
+    await pool.execute(
       'UPDATE `order` SET status = ? WHERE order_id = ?',
       [status, order_id]
     );
-    
-    await connection.end();
     
     return new Response(JSON.stringify({ message: 'Order updated successfully' }), {
       status: 200,

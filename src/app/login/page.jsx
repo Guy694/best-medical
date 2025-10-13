@@ -1,10 +1,11 @@
 "use client";
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Nav";
 import Image from "next/image";
 import Link from "next/link";
+import { sessionManager } from "../lib/sessionTimeout";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,21 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const user = sessionManager.getSession();
+    if (user && !sessionManager.isSessionExpired()) {
+      // User is already logged in and session is valid
+      if (user.role === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else if (user.role === "STAFF") {
+        router.push("/staff/dashboard");
+      } else {
+        router.push("/user/homepage");
+      }
+    }
+  }, [router]);
 
   const handleChange = (e) => {
     setFormData({
@@ -45,8 +61,9 @@ export default function Login() {
           return;
         }
         
-        // เก็บข้อมูล user ใน localStorage
-        localStorage.setItem("user", JSON.stringify(data));
+        // เก็บข้อมูล user ใน localStorage พร้อม session management
+        sessionManager.setSession(data);
+        
         // Redirect ตาม role
         if (data.role === "ADMIN") {
           router.push("/admin/dashboard");

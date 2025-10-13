@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 import { writeFile } from "fs/promises";
 import path from "path";
 
@@ -18,7 +18,7 @@ export async function POST(req) {
       cate_img = `/categoryimg/${filename}`;
     }
 
-    const connection = await mysql.createConnection(dbConfig);
+  ฃ
     await connection.execute(
       "INSERT INTO category (cate_name, cate_img) VALUES (?, ?)",
       [cate_name, cate_img]

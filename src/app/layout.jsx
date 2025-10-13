@@ -1,10 +1,12 @@
 import Footter from "./components/Footter";
 import Navbar from "./components/Nav";
-import Sidebar from "./components/sidebar";
+import Sidebar from "./components/Sidebar";
 import "./globals.css";
 import { Prompt } from "next/font/google";
 import CookieBanner from "./components/cookiebanner";
 import FloatingContact from "./components/FloatingContact";
+import SessionTimeout from "./components/SessionTimeout";
+import Providers from "./components/Providers";
 
 const prompt = Prompt({
   subsets: ["latin","thai"], // รองรับภาษาไทย
@@ -52,22 +54,24 @@ export default function RootLayout({ children }) {
   return (
     <html lang="th">
       <body className={prompt.className}>
-  <div className="flex flex-col min-h-screen">
-    {/* <Sidebar /> */}
-    {/* <Navbar /> */}
-    <main className="flex-1 bg-gray-100">
-      {children}
-    </main>
-    <Footter />
-  </div>
-  <FloatingContact
-  facebookUrl="https://www.facebook.com/profile.php?id=100070566921817"
-  lineUrl="https://line.me/ti/p/bestmedical"
-  label="ติดต่อผ่านโซเชียล"
-/>
-  <CookieBanner />
-</body>
-      
+        <Providers>
+          <div className="flex flex-col min-h-screen">
+            {/* <Sidebar /> */}
+            {/* <Navbar /> */}
+            <main className="flex-1 bg-gray-100">
+              {children}
+            </main>
+            <Footter />
+          </div>
+          <FloatingContact
+            facebookUrl="https://www.facebook.com/profile.php?id=100070566921817"
+            lineUrl="https://line.me/ti/p/bestmedical"
+            label="ติดต่อผ่านโซเชียล"
+          />
+          <CookieBanner />
+          <SessionTimeout />
+        </Providers>
+      </body>
     </html>
   );
 }

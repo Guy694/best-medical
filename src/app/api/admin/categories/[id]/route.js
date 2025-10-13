@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 import { writeFile } from "fs/promises";
 import path from "path";
 
@@ -7,9 +7,7 @@ export async function GET(req, context) {
     try {
         const params = await context.params;
         const id = params.id;
-        const connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute('SELECT * FROM category WHERE id = ?', [id]);
-        await connection.end();
+        const [rows] = await pool.execute('SELECT * FROM category WHERE id = ?', [id]);
         if (rows.length === 0) {
             return new Response(JSON.stringify({ error: "ไม่พบข้อมูลหมวดหมู่" }), { status: 404 });
         }
@@ -23,9 +21,7 @@ export async function DELETE(req, context) {
     try {
         const params = await context.params;
         const id = params.id;
-        const connection = await mysql.createConnection(dbConfig);
-        await connection.execute('DELETE FROM category WHERE id = ?', [id]);
-        await connection.end();
+        await pool.execute('DELETE FROM category WHERE id = ?', [id]);
         return new Response(JSON.stringify({ message: "ลบหมวดหมู่เรียบร้อย" }), { status: 200 });
     } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
@@ -51,8 +47,7 @@ export async function PUT(req, context) {
             cate_img = file; // กรณีไม่ได้อัปโหลดใหม่ ให้ใช้ path เดิม
         }
 
-        const connection = await mysql.createConnection(dbConfig);
-        await connection.execute(
+        await pool.execute(
             'UPDATE category SET cate_name = ?, cate_img = ? WHERE id = ?',
             [
                 cate_name,
@@ -61,7 +56,6 @@ export async function PUT(req, context) {
             ]
         );
 
-        await connection.end();
         return new Response(JSON.stringify({ message: "อัปเดตหมวดหมู่เรียบร้อย" }), { status: 200 });
     } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });

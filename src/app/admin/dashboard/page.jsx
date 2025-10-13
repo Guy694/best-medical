@@ -3,8 +3,13 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/app/components/Nav';
 import Sidebar from '@/app/components/Sidebar';
 import { TrendingUp, ShoppingCart, Package, DollarSign, Calendar, Filter } from 'lucide-react';
+import { sessionManager } from '@/app/lib/sessionTimeout';
+import { useRouter } from 'next/navigation';
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [dashboardData, setDashboardData] = useState({
@@ -14,27 +19,72 @@ export default function AdminDashboard() {
     monthlyData: [],
     recentOrders: []
   });
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Check authentication
+  useEffect(() => {
+    const userData = sessionManager.getSession();
+    
+    if (!userData || sessionManager.isSessionExpired()) {
+      router.push('/login');
+      return;
+    }
+
+    if (userData.role !== 'ADMIN') {
+      // Redirect based on actual role
+      if (userData.role === 'STAFF') {
+        router.push('/staff/dashboard');
+      } else {
+        router.push('/user/homepage');
+      }
+      return;
+    }
+
+    setUser(userData);
+    setLoading(false);
+  }, [router]);
+
+  // Fetch dashboard data
+  useEffect(() => {
+    if (!loading && user) {
+      fetchDashboardData();
+    }
+  }, [selectedYear, loading, user]);
 
   // สร้างปีให้เลือกย้อนหลัง 5 ปี
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [selectedYear]);
-
   const fetchDashboardData = async () => {
-    setLoading(true);
+    setDataLoading(true);
     try {
       const res = await fetch(`/api/admin/dashboard?year=${selectedYear}`);
       const data = await res.json();
-      setDashboardData(data);
+      if (res.ok) {
+        setDashboardData(data);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">กำลังตรวจสอบการเข้าสู่ระบบ...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, redirect will happen automatically
+  if (!user) {
+    return null;
+  }
 
   const months = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -81,7 +131,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {loading ? (
+            {dataLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="mt-4 text-gray-600">กำลังโหลดข้อมูล...</p>
@@ -198,7 +248,7 @@ export default function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {loading ? (
+                          {dataLoading ? (
                             <tr>
                               <td colSpan="5" className="px-3 md:px-6 py-4 text-center text-gray-500">
                                 กำลังโหลดข้อมูล...

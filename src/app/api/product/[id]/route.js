@@ -1,15 +1,12 @@
-import mysql from 'mysql2/promise';
-import { dbConfig } from '@/app/lib/db';
+import pool from '@/app/lib/db';
 
 export async function GET(req, context) {
   try {
     const { params } = context;
-    const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute(
+    const [rows] = await pool.execute(
       'SELECT * FROM Product INNER JOIN Category ON Product.categoryId = Category.id WHERE Product.id = ?',
       [params.id]
     );
-    await connection.end();
     if (rows.length === 0) {
       return new Response(JSON.stringify({ error: "Product not found" }), { status: 404 });
     }
