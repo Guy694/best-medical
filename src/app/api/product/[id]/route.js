@@ -4,7 +4,7 @@ export async function GET(req, context) {
   try {
     const { params } = context;
     const [rows] = await pool.execute(
-      'SELECT * FROM Product INNER JOIN Category ON Product.categoryId = Category.id WHERE Product.id = ?',
+      'SELECT * FROM product INNER JOIN category ON product.categoryId = category.id WHERE product.id = ?',
       [params.id]
     );
     if (rows.length === 0) {

@@ -47,14 +47,31 @@ export async function GET(request) {
       SELECT 
         oi.quantity,
         oi.price,
-        p.name as product_name,
-        p.image as product_image
+        p.pro_name as product_name,
+        p.imageUrl as product_image
       FROM orderitem oi
       LEFT JOIN product p ON oi.productId = p.id
       WHERE oi.orderId = ?
     `;
 
     const items = await query(itemsQuery, [order.order_id]);
+
+    // Query order status history for timeline
+    const historyQuery = `
+      SELECT 
+        id,
+        status,
+        previous_status,
+        changed_by,
+        tracking_number,
+        shipping_company,
+        note
+      FROM order_status_history
+      WHERE order_id = ?
+      ORDER BY changed_by ASC
+    `;
+
+    const history = await query(historyQuery, [order.order_id]);
 
     // Calculate status information
     const statusInfo = getStatusInfo(order.status);
@@ -64,7 +81,8 @@ export async function GET(request) {
       order: {
         ...order,
         items,
-        statusInfo
+        statusInfo,
+        history
       }
     });
 

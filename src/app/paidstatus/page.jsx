@@ -1,6 +1,7 @@
 // src/app/paidstatus/page.jsx
 "use client";
 import Navbar from './../components/Nav';
+import OrderTimeline from '../components/OrderTimeline';
 import { useState } from "react";
 import { Package, Truck, CheckCircle, XCircle, Clock, CreditCard, MapPin, Phone, Mail, Calendar } from 'lucide-react';
 
@@ -48,66 +49,6 @@ export default function PaidStatus() {
     return <Clock className="w-6 h-6 text-gray-400" />;
   };
 
-  const StatusTimeline = ({ status }) => {
-    const steps = [
-      { step: 1, title: 'รอดำเนินการ', description: 'ได้รับคำสั่งซื้อแล้ว' },
-      { step: 2, title: 'ชำระเงินแล้ว', description: 'ยืนยันการชำระเงิน' },
-      { step: 3, title: 'กำลังจัดส่ง', description: 'สินค้าออกจากคลัง' },
-      { step: 4, title: 'สำเร็จ', description: 'ได้รับสินค้าแล้ว' }
-    ];
-
-    const currentStep = orderData?.statusInfo?.step || 0;
-    const isCancelled = status === 'CANCELLED';
-
-    return (
-      <div className="w-full py-6">
-        <div className="flex items-center justify-between">
-          {steps.map((stepItem, index) => (
-            <div key={stepItem.step} className="flex flex-col items-center flex-1">
-              <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${
-                isCancelled 
-                  ? 'border-red-200 bg-red-50' 
-                  : stepItem.step <= currentStep 
-                    ? 'border-green-500 bg-green-50' 
-                    : 'border-gray-300 bg-gray-50'
-              }`}>
-                {getStepIcon(stepItem.step, currentStep, status)}
-              </div>
-              <div className="mt-2 text-center">
-                <div className={`text-sm font-medium ${
-                  isCancelled 
-                    ? 'text-red-600' 
-                    : stepItem.step <= currentStep 
-                      ? 'text-green-600' 
-                      : 'text-gray-500'
-                }`}>
-                  {stepItem.title}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {stepItem.description}
-                </div>
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`hidden md:block absolute top-6 left-1/2 w-full h-0.5 ${
-                  isCancelled 
-                    ? 'bg-red-200' 
-                    : stepItem.step < currentStep 
-                      ? 'bg-green-500' 
-                      : 'bg-gray-300'
-                }`} style={{ 
-                  marginLeft: `${(100 / steps.length) / 2}%`,
-                  width: `${100 / steps.length}%`,
-                  zIndex: -1
-                }} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-
   return (
     <div>
       <Navbar />
@@ -137,7 +78,7 @@ export default function PaidStatus() {
                     type="text"
                     value={orderCode}
                     onChange={(e) => setOrderCode(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="text-gray-700 w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="กรอกเลขที่ใบสั่งซื้อ เช่น ORD-2024-001"
                   />
                 </div>
@@ -194,9 +135,12 @@ export default function PaidStatus() {
                 </div>
 
                 {/* Timeline */}
-                <div className="p-6 border-b relative">
+                <div className="p-6 border-b">
                   <h4 className="text-lg font-semibold text-gray-800 mb-4">ติดตามสถานะ</h4>
-                  <StatusTimeline status={orderData.status} />
+                  <OrderTimeline 
+                    currentStatus={orderData.status} 
+                    history={orderData.history || []} 
+                  />
                 </div>
 
                 {/* Order Details */}

@@ -143,7 +143,7 @@ const Navbar = () => {
         {/* แสดง search และ cart เฉพาะสำหรับ customer/guest เท่านั้น */}
         {role !== "ADMIN" && role !== "STAFF" && (
           <div className="relative flex justify-end items-center pr-3 space-x-4">
-            <form action="">
+            {/* <form action="">
               <div className="relative">
                 <input
                   type="text"
@@ -152,7 +152,7 @@ const Navbar = () => {
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2  text-gray-400 w-5 h-5" />
               </div>
-            </form>
+            </form> */}
             <Link href="/cart" className="text-white relative">
               <ShoppingCart className="h-7 w-7 text-white" />
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">

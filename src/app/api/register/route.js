@@ -26,7 +26,7 @@ export async function POST(req) {
     );
 
     // สร้าง URL สำหรับยืนยัน
-    const verifyUrl = `http://192.168.0.108:3000/api/verify?token=${verifyToken}`;
+    const verifyUrl = `http://199.21.175.91/api/verify?token=${verifyToken}`;
 
     // ส่งอีเมลยืนยัน
     const transporter = nodemailer.createTransport({

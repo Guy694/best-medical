@@ -37,7 +37,7 @@ export async function POST(req) {
       from: 'chakrit694@gmail.com',
       to: order_email,
       subject: 'บริษัท เบสท เมดิคอล จำกัด เลขคำสั่งซื้อของคุณ',
-      text: `ขอบคุณที่สั่งซื้อ! เลขคำสั่งซื้อของคุณคือ ${orderId} สามารถตรวจสอบสถานะได้ที่ https://best-medical.vercel.app/track-order/${orderId}`,
+      text: `ขอบคุณที่สั่งซื้อ! เลขคำสั่งซื้อของคุณคือ ${orderId} สามารถตรวจสอบสถานะได้ที่ http://199.21.175.91/track-order/${orderId}`,
     });
 
 

@@ -74,7 +74,7 @@ export async function POST(request) {
     const orderQuery = `
       SELECT 
         o.id as order_id,
-        o.orderCode,
+        o.order_code,
         o.totalPrice as order_total,
         o.status,
         u.firstname,
@@ -82,7 +82,7 @@ export async function POST(request) {
         u.email
       FROM \`order\` o
       LEFT JOIN users u ON o.userId = u.id
-      WHERE o.orderCode = ?
+      WHERE o.order_code = ?
     `;
 
     const orders = await query(orderQuery, [order_code]);

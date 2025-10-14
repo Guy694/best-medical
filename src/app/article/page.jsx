@@ -88,29 +88,74 @@ export default function ArticlesPage() {
     <div>
       <Navbar />
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-16">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                บทความและข่าวสาร
-              </h1>
-              <p className="text-xl text-blue-100 mb-8">
-                ติดตามข่าวสารและความรู้เกี่ยวกับสุขภาพและเวชภัณฑ์
-              </p>
-              
-              {/* Search Bar */}
-              <div className="max-w-2xl mx-auto relative">
-                <input
-                  type="text"
-                  placeholder="ค้นหาบทความ..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-6 py-4 rounded-full text-gray-800 text-lg focus:outline-none focus:ring-4 focus:ring-blue-300"
-                />
-                <Search className="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
+        {/* Banner Image Section */}
+        <div className="relative bg-gradient-to-r from-blue-900 to-blue-700 overflow-hidden pb-32">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}></div>
+          </div>
+
+          {/* Banner Image (ถ้ามี) หรือใช้ gradient */}
+          <div className="absolute inset-0 bg-cover bg-center" 
+               style={{
+                 backgroundImage: 'linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(29, 78, 216, 0.8) 100%)',
+               }}>
+          </div>
+
+          {/* Content Overlay */}
+          <div className="relative pt-16 pb-8">
+            <div className="max-w-6xl mx-auto px-4 w-full">
+              <div className="text-center text-white">
+                <div className="inline-block mb-4">
+                  <span className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium">
+                    📚 ความรู้และบทความ
+                  </span>
+                </div>
+                <h1 className="text-5xl md:text-6xl font-bold mb-4 drop-shadow-lg">
+                  บทความและข่าวสาร
+                </h1>
+                <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
+                  ติดตามข่าวสารและความรู้เกี่ยวกับสุขภาพและเวชภัณฑ์
+                </p>
+                
+                {/* Search Bar */}
+                <div className="max-w-2xl mx-auto relative mb-8">
+                  <input
+                    type="text"
+                    placeholder="ค้นหาบทความ..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-white/95 backdrop-blur-sm px-6 py-4 pr-14 rounded-full text-gray-800 text-lg focus:outline-none focus:ring-4 focus:ring-white/50 shadow-xl"
+                  />
+                  <Search className="absolute right-6 top-1/2 transform -translate-y-1/2 text-blue-600" size={24} />
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <div className="text-3xl font-bold">{articles.length}</div>
+                    <div className="text-sm text-blue-100">บทความทั้งหมด</div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <div className="text-3xl font-bold">{categories.length}</div>
+                    <div className="text-sm text-blue-100">หมวดหมู่</div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <div className="text-3xl font-bold">24/7</div>
+                    <div className="text-sm text-blue-100">อัพเดตข่าวสาร</div>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Wave Separator */}
+          <div className="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full h-24">
+              <path d="M0 0L60 10C120 20 240 40 360 46.7C480 53 600 47 720 43.3C840 40 960 40 1080 46.7C1200 53 1320 67 1380 73.3L1440 80V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V0Z" fill="#F9FAFB"/>
+            </svg>
           </div>
         </div>
 
@@ -169,27 +214,46 @@ export default function ArticlesPage() {
             <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredArticles.map((article) => (
-                  <article key={article.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                    {article.banner && (
-                      <div className="relative h-48 overflow-hidden">
+                  <article key={article.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
+                    {/* Article Image */}
+                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50">
+                      {article.banner ? (
                         <img
                           src={article.banner}
                           alt={article.title}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }}
                         />
+                      ) : null}
+                      {/* Placeholder when no image */}
+                      <div 
+                        className={`absolute inset-0 flex items-center justify-center ${article.banner ? 'hidden' : 'flex'}`}
+                        style={{display: article.banner ? 'none' : 'flex'}}
+                      >
+                        <div className="text-center">
+                          <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                            </svg>
+                          </div>
+                          <p className="text-sm text-gray-400 font-medium">บทความ</p>
+                        </div>
                       </div>
-                    )}
-                    
-                    <div className="p-6">
+                      {/* Category Badge on Image */}
                       {article.category && (
-                        <div className="mb-3">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <div className="absolute top-3 left-3">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm text-blue-800 shadow-sm">
                             <Tag size={12} className="mr-1" />
                             {article.category}
                           </span>
                         </div>
                       )}
-                      
+                    </div>
+                    
+                    <div className="p-6">
                       <h2 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2 hover:text-blue-600 transition-colors">
                         <Link href={`/article/${article.id}`}>
                           {article.title}

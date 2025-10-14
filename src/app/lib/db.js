@@ -1,20 +1,19 @@
-// import mysql from "mysql2/promise";
-
-// export const dbConfig = mysql.createPool({
-//   host: process.env.DB_HOST,
-//   user: process.env.DB_USER,
-//   password: process.env.DB_PASS,
-//   database: process.env.DB_NAME,
-// });
-
 import mysql from 'mysql2/promise';
 
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
+  port: parseInt(process.env.DB_PORT) || 3306,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
 };
+
+console.log('Database Config:', {
+  host: dbConfig.host,
+  user: dbConfig.user,
+  port: dbConfig.port,
+  database: dbConfig.database
+});
 
 // สร้าง connection pool
 const pool = mysql.createPool(dbConfig);
