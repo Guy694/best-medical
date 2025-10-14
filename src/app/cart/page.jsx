@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "../components/Nav";
-import { image } from "framer-motion/client";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ShoppingCart, Trash2, Package, Mail, ArrowLeft, Truck, Store } from "lucide-react";
 
 
 
@@ -76,12 +76,27 @@ const Checkout = () => {
 
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <Navbar
-      />
-      <br />
-      <div className="max-w-7xl mx-auto p-6 bg-white text-gray-800 shadow-md rounded-3xl">
-        <h2 className="text-xl font-bold mb-4">ตะกร้าสินค้า</h2>
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-blue-50 to-purple-100">
+      <Navbar />
+      
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl shadow-lg">
+              <ShoppingCart className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
+              ตะกร้าสินค้า
+            </h1>
+          </div>
+          <p className="text-gray-600 ml-1">จัดการสินค้าในตะกร้าของคุณ</p>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Cart Items Section */}
+          <div className="lg:col-span-2">
+            <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-3xl p-6 border border-white/50">
 
         {/* Product List */}
         {/* {cartproducts.map((product) => (
@@ -113,101 +128,164 @@ const Checkout = () => {
       ))} */}
 
         {cart.length === 0 ? (
-          <p className="text-gray-600 justify-center items-center text-center">ตะกร้าสินค้าว่างเปล่า</p>
-        ) : (
-          <ul>
-            {cart.map((item, idx) => (
-              <li key={idx}>
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center">
-                    <img src={item.image || "/image.png"} alt={item.name} className="w-24 h-24 object-cover mr-4" />
-                    <div>
-                      <h3 className="font-semibold">{item.name}</h3>
-                      <p className="text-gray-600">ราคา: {item.price.toLocaleString()} ฿</p>
-                      <p className="text-gray-600">จำนวน: {item.quantity}</p>
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="bg-red-600 p-1 px-4 rounded-2xl text-white hover:bg-red-800"
-                      >
-                        ลบ
-                      </button>
-                    </div>
-                  </div>
-                  <div className="text-gray-700 text-right">ราคา: {(item.price * item.quantity).toLocaleString()} บาท
-                    <div className="text-gray-700 text-right">ค่าจัดส่ง: {(item.delivery * item.quantity).toLocaleString()} บาท
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="flex gap-4 mb-4">
-          <a href="/product" className="px-4 py-2 text-center bg-amber-500 rounded-2xl text-white">← เลือกซื้อสินค้าต่อ</a>
-
-        </div>
-
-        {cart.length > 0 && (
-          <div className="border p-4 bg-gray-50 rounded-2xl">
-            <h3 className="font-semibold mb-2">ยอดรวม</h3>
-            <div className="flex justify-between mb-2">
-              <span>ยอดรวม</span>
-              <span className="text-red-600 font-bold">{cartTotal.toLocaleString()} บาท</span>
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mb-4">
+              <ShoppingCart className="w-16 h-16 text-gray-400" />
             </div>
+            <p className="text-lg text-gray-500 font-medium mb-6">ตะกร้าสินค้าว่างเปล่า</p>
+            <Link href="/product" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-700 to-blue-900 text-white font-semibold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+              <ArrowLeft className="w-5 h-5" />
+              เลือกซื้อสินค้า
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {cart.map((item, idx) => (
+              <div key={idx} className="bg-gradient-to-r from-white to-gray-50 rounded-2xl p-4 shadow-md hover:shadow-lg transition-shadow border border-gray-100">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <img 
+                    src={item.image || "/image.png"} 
+                    alt={item.name} 
+                    className="w-full md:w-28 h-28 object-cover rounded-xl border-2 border-gray-200" 
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-start gap-2 mb-2">
+                      <Package className="w-5 h-5 text-purple-500 mt-1 flex-shrink-0" />
+                      <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <p className="text-gray-600">
+                        ราคา: <span className="font-bold text-pink-600">{item.price.toLocaleString()} ฿</span>
+                      </p>
+                      <p className="text-gray-600">
+                        จำนวน: <span className="font-bold text-gray-800">{item.quantity} ชิ้น</span>
+                      </p>
+                      <p className="text-gray-600">
+                        ค่าจัดส่ง: <span className="font-bold text-blue-600">{(item.delivery * item.quantity).toLocaleString()} ฿</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end justify-between">
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 mb-1">รวม</p>
+                      <p className="text-2xl font-bold text-pink-600">
+                        {(item.price * item.quantity).toLocaleString()} ฿
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveItem(item.id)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      ลบ
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+              
+              {cart.length > 0 && (
+                <div className="mt-6">
+                  <Link href="/product" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    <ArrowLeft className="w-5 h-5" />
+                    เลือกซื้อสินค้าต่อ
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
 
-            <div className="mb-2">
-              <span className="font-semibold">การจัดส่ง</span>
-              <div className="mt-1">
-                {shippingOptions.map((option) => (
-                  <label key={option.id} className="block">
-                    <input
-                      type="radio"
-                      name="shipping"
-                      value={option.id}
-                      checked={shipping === option.id}
-                      onChange={(e) => setShipping(e.target.value)}
-                      className="mr-2"
-                    />
-                    {option.label}
-                    {option.cost > 0 && `: ${option.cost} ฿`}
-                  </label>
-                ))}
+        {/* Summary Section */}
+        {cart.length > 0 && (
+          <div className="lg:col-span-1">
+          <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-3xl p-6 border border-white/50 sticky top-24">
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <div className="p-2 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg">
+                <ShoppingCart className="w-5 h-5 text-white" />
+              </div>
+              สรุปคำสั่งซื้อ
+            </h3>
+            
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between text-gray-700">
+                <span>ยอดรวมสินค้า</span>
+                <span className="font-bold text-pink-600">{cartTotal.toLocaleString()} ฿</span>
+              </div>
+
+              <div className="border-t pt-3">
+                <span className="font-semibold text-gray-800 mb-3 block">วิธีการจัดส่ง</span>
+                <div className="space-y-2">
+                  {shippingOptions.map((option) => (
+                    <label key={option.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200">
+                      <input
+                        type="radio"
+                        name="shipping"
+                        value={option.id}
+                        checked={shipping === option.id}
+                        onChange={(e) => setShipping(e.target.value)}
+                        className="w-4 h-4 accent-pink-500"
+                      />
+                      <div className="flex items-center gap-2 flex-1">
+                        {option.id === "ems" ? (
+                          <Truck className="w-5 h-5 text-blue-500" />
+                        ) : (
+                          <Store className="w-5 h-5 text-green-500" />
+                        )}
+                        <span className="text-gray-700">{option.label}</span>
+                      </div>
+                      {option.cost > 0 && (
+                        <span className="text-blue-600 font-bold">{option.cost} ฿</span>
+                      )}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-between font-bold text-red-600 mb-4">
-              <span>รวม</span>
-              <span>{total.toLocaleString()} ฿</span>
+            <div className="border-t pt-4 mb-6">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-bold text-gray-800">ยอดรวมทั้งหมด</span>
+                <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                  {total.toLocaleString()} ฿
+                </span>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <input type="hidden" name="totalPrice" value={total} />
               <input type="hidden" name="cart" value={JSON.stringify(cart)} />
               <input type="hidden" name="shipping" value={shipping} />
-              <label htmlFor="" className="text-gray-700">กรุณากรอกอีเมลเพื่อจัดส่งเลขคำสั่งซื้อ <span className="text-red-600">*</span></label>
-              <input 
-                type="text" 
-                name="order_email" 
-                placeholder="กรอกอีเมล" 
-                className="border p-2 w-full mb-2 rounded-3xl" 
-                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
-                value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
-                required 
-              />
-              <button type="submit" className="w-full bg-red-600 text-white py-2 mb-4 rounded-2xl hover:bg-red-800">
+              
+              <div>
+                <label className="flex items-center gap-2 text-gray-700 font-medium mb-2">
+                  <Mail className="w-5 h-5 text-blue-500" />
+                  กรุณากรอกอีเมลเพื่อจัดส่งเลขคำสั่งซื้อ <span className="text-pink-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="order_email" 
+                  placeholder="example@email.com" 
+                  className="border border-gray-300 p-3 w-full rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-all" 
+                  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  required 
+                />
+              </div>
+              
+              <button type="submit" className="w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
                 ดำเนินการสั่งซื้อ
               </button>
             </form>
 
           </div>
+          </div>
         )}
-      </div> </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

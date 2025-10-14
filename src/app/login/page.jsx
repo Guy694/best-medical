@@ -2,6 +2,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import Navbar from "../components/Nav";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,6 +15,7 @@ export default function Login() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   // Check if user is already logged in
@@ -83,124 +85,150 @@ export default function Login() {
   };
 
   return (
-    <div>
+    <div className="bg-white min-h-screen">
       <Navbar />
-      <div className="min-h-screen bg-gray-100 flex items-start justify-center p-4">
-        <div className="max-w-lg w-full space-y-8">
-        
-          {/* Login Form */}
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20">
-               <div className="text-center">
-            <div className="mx-auto h-12 w-12 bg-white rounded-full flex items-center justify-center mb-4">
-              <svg
-                className="h-8 w-8 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="max-w-md mx-auto">
+            {/* Header Section */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+                <ShieldCheck className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">เข้าสู่ระบบ</h1>
+              <p className="text-gray-600">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
             </div>
-            <h2 className="text-3xl font-bold text-gray-700">เข้าสู่ระบบ</h2>
-            <p className="mt-2 text-gray-600">
-              กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ
-            </p>
-          </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <div className="bg-red-500 backdrop-blur-sm border border-red-500/50 text-red-100 px-4 py-3 rounded-lg">
-                  {error}
-                </div>
-              )}
 
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-blue-950 mb-2"
-                >
-                  กรอกอีเมล
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3  bg-white/10 backdrop-blur-sm border rounded-3xl border-blue-700  text-blue-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                  placeholder="กรอกอีเมล"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-blue-900 mb-2"
-                >
-                  รหัสผ่าน
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-blue-700 rounded-3xl text-blue-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                  placeholder="กรอกรหัสผ่าน"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
-              >
-                {loading ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    กำลังเข้าสู่ระบบ...
-                  </>
-                ) : (
-                  "เข้าสู่ระบบ"
+            {/* Form Card */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <div className="p-8">
+                {error && (
+                  <div className="mb-6 p-4 rounded-xl flex items-start gap-3 bg-red-50 border border-red-200">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-red-700">{error}</span>
+                  </div>
                 )}
-              </button>
-            </form>
-              {/* <div className="my-4 text-center text-gray-700">หรือ</div>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Email Field */}
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      อีเมล <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-700"
+                        placeholder="example@email.com"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Field */}
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                      รหัสผ่าน <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-700"
+                        placeholder="กรอกรหัสผ่าน"
+                      />
                       <button
-                        onClick={() => signIn("google")}
-                        className="w-full text-gray-700 flex items-center justify-center gap-2 border border-gray-300 p-2 rounded-lg hover:bg-gray-100 transition"
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       >
-                        เข้าสู่ระบบด้วย Google <Image src="/google.png" alt="Google Logo" width={20} height={20} />
-                      </button> */}
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Forgot Password Link */}
+                  <div className="flex items-center justify-end">
+                    <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition">
+                      ลืมรหัสผ่าน?
+                    </Link>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed font-medium shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span>กำลังเข้าสู่ระบบ...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-5 h-5" />
+                        <span>เข้าสู่ระบบ</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {/* Divider */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-gray-500">ยังไม่มีบัญชี?</span>
+                  </div>
+                </div>
+
+                {/* Register Link */}
+                <div className="text-center">
+                  <button
+                    onClick={() => router.push("/register")}
+                    className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition"
+                  >
+                    สมัครสมาชิกที่นี่
+                  </button>
+                </div>
+              </div>
+
+              {/* Footer Note */}
+              <div className="bg-gray-50 px-8 py-4 border-t border-gray-100">
+                <p className="text-xs text-gray-600 text-center">
+                  🔒 ข้อมูลของคุณได้รับการปกป้องด้วยระบบความปลอดภัยที่ทันสมัย
+                </p>
+              </div>
+            </div>
+
+            {/* Additional Info */}
             <div className="mt-6 text-center">
-            
-              <Link href="/forgot-password">
-                <p className="text-sm text-blue-900 text-right">ลืมรหัสผ่าน</p>
-              </Link>
+              <p className="text-sm text-gray-500">
+                ต้องการความช่วยเหลือ?{" "}
+                <Link href="/contact" className="text-blue-600 hover:underline">
+                  ติดต่อเรา
+                </Link>
+              </p>
             </div>
           </div>
         </div>
