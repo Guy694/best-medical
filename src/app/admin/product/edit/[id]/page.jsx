@@ -35,17 +35,31 @@ export default function EditProduct() {
         const productData = await productRes.json();
         const categoriesData = await categoriesRes.json();
         
+        console.log("Product Data:", productData);
+        console.log("Categories Data:", categoriesData);
+        
         setForm({
           pro_name: productData.pro_name || productData.name || "",
           price: productData.price || "",
           description: productData.description || "",
           stock: productData.stock || "",
-          categoryId: productData.categoryId || "",
+          categoryId: String(productData.categoryId || ""),
           imageUrl: productData.imageUrl || ""
         });
         
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        // Handle different API response formats
+        let categoriesArray = [];
+        if (Array.isArray(categoriesData)) {
+          categoriesArray = categoriesData;
+        } else if (categoriesData.categories && Array.isArray(categoriesData.categories)) {
+          categoriesArray = categoriesData.categories;
+        } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
+          categoriesArray = categoriesData.data;
+        }
+        
+        setCategories(categoriesArray);
       } catch (err) {
+        console.error("Fetch error:", err);
         setError("ไม่พบข้อมูลสินค้า");
       } finally {
         setLoading(false);
@@ -117,12 +131,25 @@ export default function EditProduct() {
                   className="w-full border rounded px-3 py-2 text-gray-700"
                 >
                   <option value="">เลือกหมวดหมู่</option>
-                  {categories.map((category) => (
-                    <option key={category.categoryId} value={category.categoryId}>
-                      {category.name}
-                    </option>
-                  ))}
+                  {categories.length > 0 ? (
+                    categories.map((category, index) => (
+                      <option 
+                        key={category.id || index} 
+                        value={category.id}
+                      >
+                        {category.cate_name || category.name || `หมวดหมู่ ${category.id}`}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>กำลังโหลดหมวดหมู่...</option>
+                  )}
                 </select>
+                {categories.length === 0 && !loading && (
+                  <p className="text-sm text-red-500 mt-1">ไม่พบหมวดหมู่</p>
+                )}
+                {categories.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">พบ {categories.length} หมวดหมู่</p>
+                )}
               </div>
               <div>
                 <label className="block mb-1 text-gray-700">รูปภาพ (URL)</label>

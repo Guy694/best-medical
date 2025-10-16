@@ -106,7 +106,7 @@ const Navbar = () => {
 
   const staffMenu = (
     <>
-      <Link href="/staff/dashboard">แดชบอร์ดพนักงาน</Link>
+      <Link href="/admin/dashboard">แดชบอร์ดพนักงาน</Link>
       <Link href="/admin/user/staff">จัดการพนักงาน</Link>
       <Link href={currentNav.product}>สินค้าทั้งหมด</Link>
       <Link href={currentNav.article}>บทความและข่าวสาร</Link>

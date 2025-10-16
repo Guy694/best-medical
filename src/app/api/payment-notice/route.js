@@ -73,15 +73,14 @@ export async function POST(request) {
     // Check if order exists and get order details
     const orderQuery = `
       SELECT 
-        o.id as order_id,
+        o.order_id,
         o.order_code,
         o.totalPrice as order_total,
         o.status,
-        u.firstname,
-        u.lastname,
+        u.name As firstname,
         u.email
-      FROM \`order\` o
-      LEFT JOIN users u ON o.userId = u.id
+    FROM \`order\` o
+          LEFT JOIN user u ON o.order_email = u.email
       WHERE o.order_code = ?
     `;
 
@@ -97,7 +96,7 @@ export async function POST(request) {
     const order = orders[0];
 
     // Check if customer name matches
-    const customerFullName = `${order.firstname} ${order.lastname}`.trim();
+    const customerFullName = `${order.firstname}`.trim();
     if (customerFullName !== fullName.trim()) {
       return NextResponse.json(
         { error: 'ชื่อลูกค้าไม่ตรงกับในระบบ' },

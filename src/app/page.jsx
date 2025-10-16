@@ -69,17 +69,28 @@ export default function Home() {
 
     <div>
       <Navbar />
-      <div className="min-h-screen bg-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+        {/* Decorative background patterns */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
           <div className=" bg-gradient-to-r from-blue-900 to-blue-800 text-white py-5 md:py-16  rounded-xl shadow-xl">
             <div className="container mx-auto px-4 text-center">
               <div className="flex justify-center mb-4">
                 <Image
                   src="/logo.png"
                   alt="โลโก้"
-                  width={120} 
-                  height={120}
-                  className="w-24 h-24 md:w-48 md:h-48"
+                  width={180}
+                  height={60}
+                  className="w-44 h-16 md:w-64 md:h-20 object-contain"
                 />
               </div>
               <h1 className="text-2xl md:text-4xl font-bold mb-2">บริษัท เบสท เมดิคอล จำกัด</h1>
@@ -365,7 +376,6 @@ export default function Home() {
           </section> */}
 
         </div>
-
       </div>
 
     </div>

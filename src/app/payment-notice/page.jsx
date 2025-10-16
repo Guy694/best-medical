@@ -106,8 +106,21 @@ export default function PaymentNotice() {
   if (success) {
     return (
       <div>
-        <Navbar />
-        <div className='min-h-screen bg-gray-50'>
+       <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen relative overflow-hidden">
+      {/* Decorative background patterns */}
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
+      
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+      
+      {/* Content */}
+      <div className="relative z-10">
+      <Navbar />
+      <div className='min-h-screen'>
           <div className="max-w-4xl mx-auto px-4 py-8">
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               <div className="bg-gradient-to-r from-green-600 to-green-900 p-8 text-center">
@@ -138,12 +151,26 @@ export default function PaymentNotice() {
           </div>
         </div>
       </div>
+
+    </div>
+      </div>
     );
   }
   return (
-    <div>
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen relative overflow-hidden">
+      {/* Decorative background patterns */}
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
+      
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+      
+      {/* Content */}
+      <div className="relative z-10">
       <Navbar />
-      <div className='min-h-screen bg-gray-50'>
         <div className="max-w-6xl mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold text-blue-900 text-center mb-8">
             แจ้งชำระเงิน

@@ -1,6 +1,7 @@
 import pool from '@/app/lib/db';
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { existsSync } from "fs";
 
 export async function POST(req) {
   try {
@@ -10,24 +11,34 @@ export async function POST(req) {
 
     let cate_img = null;
     if (file && typeof file !== "string") {
-      console.log("File received:", file.name, file.size);
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const filename = Date.now() + "_" + file.name;
-      const folderPath = path.join(process.cwd(), "public", "categoryimg");
-      const filepath = path.join(folderPath, filename);
-      
-      console.log("Saving to:", filepath);
-      
-      // สร้างโฟลเดอร์ถ้ายังไม่มี
       try {
-        await mkdir(folderPath, { recursive: true });
-      } catch (error) {
-        // โฟลเดอร์มีอยู่แล้ว
+        console.log("File received:", file.name, file.size);
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const filename = Date.now() + "_" + file.name;
+        const folderPath = path.join(process.cwd(), "public", "categoryimg");
+        const filepath = path.join(folderPath, filename);
+        
+        console.log("Saving to:", filepath);
+        
+        // สร้างโฟลเดอร์ถ้ายังไม่มี
+        if (!existsSync(folderPath)) {
+          console.log("Creating folder:", folderPath);
+          await mkdir(folderPath, { recursive: true });
+        }
+        
+        await writeFile(filepath, buffer);
+        cate_img = `/categoryimg/${filename}`;
+        console.log("File saved successfully:", cate_img);
+      } catch (fileError) {
+        console.error("Category image upload error:", fileError);
+        console.error("Error details:", {
+          message: fileError.message,
+          code: fileError.code,
+          path: fileError.path
+        });
+        // ถ้าอัปโหลดไฟล์ไม่สำเร็จ ให้ดำเนินการต่อโดยไม่มีรูป
+        cate_img = null;
       }
-      
-      await writeFile(filepath, buffer);
-      cate_img = `/categoryimg/${filename}`;
-      console.log("File saved successfully:", cate_img);
     } else {
       console.log("No file received or file is string");
     }
@@ -37,9 +48,16 @@ export async function POST(req) {
       [cate_name, cate_img]
     );
 
-    return new Response(JSON.stringify({ message: "เพิ่มหมวดหมู่สำเร็จ" }), { status: 201 });
+    return new Response(JSON.stringify({ 
+      message: "เพิ่มหมวดหมู่สำเร็จ",
+      warning: cate_img ? null : 'Image upload failed - category created without image'
+    }), { status: 201 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error("Category creation error:", error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }), { status: 500 });
   }
 }
 

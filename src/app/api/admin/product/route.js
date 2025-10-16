@@ -1,6 +1,7 @@
 import pool from '@/app/lib/db';
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { existsSync } from "fs";
 
 export async function POST(req) {
   try {
@@ -16,20 +17,63 @@ export async function POST(req) {
     const imageFile = formData.get("image");
     let imageUrl = null;
     if (imageFile && typeof imageFile !== "string") {
-      const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const filename = Date.now() + "_" + imageFile.name;
-      const filepath = path.join(process.cwd(), "public", "pdimage", filename);
-      await writeFile(filepath, buffer);
-      imageUrl = `/pdimage/${filename}`;
+      try {
+        const buffer = Buffer.from(await imageFile.arrayBuffer());
+        const filename = Date.now() + "_" + imageFile.name;
+        const folderPath = path.join(process.cwd(), "public", "pdimage");
+        const filepath = path.join(folderPath, filename);
+        
+        // สร้างโฟลเดอร์ถ้ายังไม่มี
+        if (!existsSync(folderPath)) {
+          console.log("Creating folder:", folderPath);
+          await mkdir(folderPath, { recursive: true });
+        }
+        
+        console.log("Saving file to:", filepath);
+        await writeFile(filepath, buffer);
+        imageUrl = `/pdimage/${filename}`;
+        console.log("File saved successfully:", imageUrl);
+      } catch (fileError) {
+        console.error("File upload error:", fileError);
+        console.error("Error details:", {
+          message: fileError.message,
+          code: fileError.code,
+          path: fileError.path
+        });
+        // ถ้าอัปโหลดไฟล์ไม่สำเร็จ ให้ดำเนินการต่อโดยไม่มีรูป
+        imageUrl = null;
+      }
     }
 
     const [result] = await pool.execute(
       'INSERT INTO product (pro_name, codename, price, description, stock, categoryId, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [pro_name, codename, price, description, stock, categoryId, imageUrl]
     );
-    return new Response(JSON.stringify({ id: result.insertId, pro_name, codename, price, description, stock, categoryId, imageUrl }), { status: 201 });
+    
+    console.log("Product inserted successfully:", { 
+      id: result.insertId, 
+      pro_name, 
+      imageUrl,
+      imageUploaded: imageUrl ? 'Yes' : 'No'
+    });
+    
+    return new Response(JSON.stringify({ 
+      id: result.insertId, 
+      pro_name, 
+      codename, 
+      price, 
+      description, 
+      stock, 
+      categoryId, 
+      imageUrl,
+      warning: imageUrl ? null : 'Image upload failed - product created without image'
+    }), { status: 201 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error("Product creation error:", error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }), { status: 500 });
   }
 }
 

@@ -62,7 +62,7 @@ export default function FloatingContact({
                 </div>
               </a>
 
-              <a
+              {/* <a
                 href={lineUrl}
                 target="_blank"
                 rel="noreferrer noopener"
@@ -75,7 +75,7 @@ export default function FloatingContact({
                   <span className="text-sm font-semibold text-green-700">LINE Official</span>
                   <span className="text-xs text-gray-500">เพิ่มเพื่อน/แชตเลย</span>
                 </div>
-              </a>
+              </a> */}
             </div>
           </motion.div>
         )}

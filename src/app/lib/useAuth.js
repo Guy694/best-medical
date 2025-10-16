@@ -37,7 +37,7 @@ export function useAuth(requiredRole = null) {
         if (userData.role === 'ADMIN') {
           router.push('/admin/dashboard');
         } else if (userData.role === 'STAFF') {
-          router.push('/staff/dashboard');
+          router.push('/admin/dashboard');
         } else {
           router.push('/user/homepage');
         }
@@ -115,7 +115,7 @@ export function useRequireAuth(requiredRole = null) {
       if (userData.role === 'ADMIN') {
         router.push('/admin/dashboard');
       } else if (userData.role === 'STAFF') {
-        router.push('/staff/dashboard');
+        router.push('/admin/dashboard');
       } else {
         router.push('/user/homepage');
       }

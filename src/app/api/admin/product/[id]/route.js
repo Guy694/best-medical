@@ -32,15 +32,16 @@ export async function PUT(req, context) {
     const { params } = await context;
     const id = params.id;
     const body = await req.json();
+    
     // ถ้ามีเฉพาะ visible
-    if (body.hasOwnProperty('visible')) {
+    if (body.hasOwnProperty('visible') && Object.keys(body).length === 1) {
       await pool.execute(
         'UPDATE product SET visible = ? WHERE id = ?',
         [body.visible, id]
       );
     } else {
       // อัปเดตข้อมูลสินค้าอื่นๆ
-      await connection.execute(
+      await pool.execute(
         'UPDATE product SET pro_name = ?, price = ?, description = ?, stock = ?, categoryId = ?, imageUrl = ? WHERE id = ?',
         [
           body.pro_name ?? null,
@@ -53,9 +54,10 @@ export async function PUT(req, context) {
         ]
       );
     }
-    await connection.end();
+    
     return new Response(JSON.stringify({ message: "อัปเดตสินค้าเรียบร้อย" }), { status: 200 });
   } catch (error) {
+    console.error("PUT Error:", error);
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }

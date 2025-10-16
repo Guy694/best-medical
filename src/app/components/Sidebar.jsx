@@ -2,58 +2,110 @@
 // components/Sidebar.js
 import Link from "next/link";
 import { sidebarMenu } from "./sidebarmenu";
-import { Menu } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  FolderTree, 
+  Package, 
+  FileText, 
+  Users, 
+  UserCheck, 
+  ShoppingCart,
+  X 
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
-const sidebarLinks = [
-  { label: 'แดชบอร์ด', href: '/admin/dashboard', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'จัดการหมวดหมู่', href: '/admin/categories', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'จัดการสินค้า', href: '/admin/product', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'จัดการบทความ', href: '/admin/articles', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'จัดการสิทธิ์พนักงาน', href: '/admin/user/staff', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'จัดการรายการลูกค้า', href: '/admin/user/customer', icon: <Menu className="w-5 h-5 mr-2" /> },
-  { label: 'จัดการออเดอร์', href: '/admin/orders', icon: <Menu className="w-5 h-5 mr-2" /> },
-];
+// กำหนดเมนูตาม role
+const getMenuByRole = (role) => {
+  const adminMenu = [
+    { label: 'แดชบอร์ด', href: '/admin/dashboard', icon: <LayoutDashboard className="w-5 h-5 mr-2" />, color: 'blue' },
+    { label: 'จัดการหมวดหมู่', href: '/admin/categories', icon: <FolderTree className="w-5 h-5 mr-2" />, color: 'purple' },
+    { label: 'จัดการสินค้า', href: '/admin/product', icon: <Package className="w-5 h-5 mr-2" />, color: 'green' },
+    { label: 'จัดการบทความ', href: '/admin/articles', icon: <FileText className="w-5 h-5 mr-2" />, color: 'orange' },
+    { label: 'จัดการสิทธิ์พนักงาน', href: '/admin/user/staff', icon: <UserCheck className="w-5 h-5 mr-2" />, color: 'red' },
+    { label: 'จัดการรายการลูกค้า', href: '/admin/user/customer', icon: <Users className="w-5 h-5 mr-2" />, color: 'indigo' },
+    { label: 'จัดการออเดอร์', href: '/admin/orders', icon: <ShoppingCart className="w-5 h-5 mr-2" />, color: 'teal' },
+  ];
 
-export default function Sidebar({ role = "user", sidebarOpen, setSidebarOpen }) {
+  const staffMenu = [
+    { label: 'แดชบอร์ด', href: '/admin/dashboard', icon: <LayoutDashboard className="w-5 h-5 mr-2" />, color: 'blue' },
+    { label: 'จัดการหมวดหมู่', href: '/admin/categories', icon: <FolderTree className="w-5 h-5 mr-2" />, color: 'purple' },
+    { label: 'จัดการสินค้า', href: '/admin/product', icon: <Package className="w-5 h-5 mr-2" />, color: 'green' },
+    { label: 'จัดการบทความ', href: '/admin/articles', icon: <FileText className="w-5 h-5 mr-2" />, color: 'orange' },
+    { label: 'จัดการรายการลูกค้า', href: '/admin/user/customer', icon: <Users className="w-5 h-5 mr-2" />, color: 'indigo' },
+    { label: 'จัดการออเดอร์', href: '/admin/orders', icon: <ShoppingCart className="w-5 h-5 mr-2" />, color: 'teal' },
+  ];
+
+  return role === 'admin' ? adminMenu : staffMenu;
+};
+
+export default function Sidebar({ role = "admin", sidebarOpen, setSidebarOpen }) {
   const router = useRouter();
   const [active, setActive] = useState(router?.pathname || "");
+  const menuLinks = getMenuByRole(role);
+
   return (
-  <aside className={`fixed z-40 top-0 left-0 min-h-screen h-full w-64 bg-white shadow-2xl transition-transform duration-300 md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:w-64 md:block flex flex-col`}>
-      {/* Logo & Close */}
-      <div className="flex items-center justify-between p-4 border-b border-blue-800 md:hidden">
-        <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Logo" className="w-10 h-10 rounded-full shadow" />
-          <span className="font-bold text-lg text-gray-800">Admin</span>
+    <aside className={`fixed z-40 top-0 left-0 min-h-screen h-full w-64 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 shadow-2xl transition-transform duration-300 md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:w-64 md:block flex flex-col`}>
+      {/* Logo & Close - Mobile */}
+      <div className="flex items-center justify-between p-4 border-b border-blue-700 md:hidden">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center">
+            <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+          </div>
+          <div>
+            <span className="font-bold text-lg text-white">Admin Panel</span>
+            <p className="text-xs text-blue-200">{role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'}</p>
+          </div>
         </div>
-        <button onClick={() => setSidebarOpen(false)} className="text-white hover:text-red-400 text-2xl">×</button>
+        <button 
+          onClick={() => setSidebarOpen(false)} 
+          className="text-white hover:text-red-400 hover:bg-white/10 rounded-lg p-1 transition-all"
+        >
+          <X className="w-6 h-6" />
+        </button>
       </div>
-      {/* Logo desktop */}
-      <div className="hidden md:flex items-center gap-2 p-6 pb-2">
-        <img src="/logo.png" alt="Logo" className="w-10 h-10 rounded-full shadow" />
-  <span className="font-bold text-lg text-gray-800">Admin</span>
+
+      {/* Logo - Desktop */}
+      <div className="hidden md:flex items-center gap-3 p-6 pb-4 border-b border-blue-700">
+        <div className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center">
+          <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+        </div>
+        <div>
+          <span className="font-bold text-xl text-white">Admin Panel</span>
+          <p className="text-xs text-blue-200">{role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'}</p>
+        </div>
       </div>
-      <nav className="p-6 pt-6 flex-1">
-        <ul className="space-y-4">
-          {sidebarLinks.map(link => (
+
+      {/* Navigation */}
+      <nav className="p-4 flex-1 overflow-y-auto">
+        <ul className="space-y-2">
+          {menuLinks.map(link => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className={`flex items-center px-4 py-3 rounded-xl font-medium transition-all duration-150
-                  ${active === link.href ? 'bg-blue-100 text-blue-900 shadow' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-900'}`}
+                className={`flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200 group
+                  ${active === link.href 
+                    ? 'bg-white text-blue-900 shadow-lg transform scale-105' 
+                    : 'text-white hover:bg-white/10 hover:translate-x-1'
+                  }`}
                 onClick={() => setActive(link.href)}
               >
-                {link.icon}
-                {link.label}
+                <span className={active === link.href ? `text-${link.color}-600` : 'text-white group-hover:text-blue-200'}>
+                  {link.icon}
+                </span>
+                <span className="text-sm">{link.label}</span>
               </Link>
             </li>
           ))}
         </ul>
       </nav>
+
       {/* Footer */}
-      <div className="p-4 text-xs text-gray-400 text-center opacity-70">
-       
+      <div className="p-4 border-t border-blue-700">
+        <div className="text-xs text-blue-200 text-center">
+          <p className="font-semibold">Best Medical</p>
+          <p className="opacity-70">© 2025 All Rights Reserved</p>
+        </div>
       </div>
     </aside>
   );

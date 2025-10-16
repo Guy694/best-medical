@@ -33,7 +33,7 @@ export default function AdminDashboard() {
     if (userData.role !== 'ADMIN') {
       // Redirect based on actual role
       if (userData.role === 'STAFF') {
-        router.push('/staff/dashboard');
+        router.push('/admin/dashboard');
       } else {
         router.push('/user/homepage');
       }
