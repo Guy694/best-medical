@@ -23,6 +23,8 @@ export async function GET(request) {
         o.createdAt as created_at,
         o.shippingAddress as shipping_address,
         o.order_code as tracking_number,
+        o.fullname,
+        o.order_phone,
         u.name,
         u.email,
         u.phone

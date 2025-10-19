@@ -9,10 +9,11 @@ export default function PaymentNotice() {
     order_code: '',
     fullName: '',
     order_email: '',
+    order_phone: '',
     totalPrice: '',
     transfer_date: '',
     transfer_time: '',
-    bank_account: '',
+    shippingAddress: '',
     transfer_slip: ''
   });
   const [transferSlipFile, setTransferSlipFile] = useState(null);
@@ -64,8 +65,7 @@ export default function PaymentNotice() {
         formDataToSend.append(key, formData[key]);
       });
       
-      // Add bank account
-      formDataToSend.append('bank_account', selectedBank);
+  
       
       // Add file if selected
       if (transferSlipFile) {
@@ -85,10 +85,11 @@ export default function PaymentNotice() {
           order_code: '',
           fullName: '',
           order_email: '',
+          order_phone: '',
           totalPrice: '',
           transfer_date: '',
           transfer_time: '',
-          bank_account: '',
+          shippingAddress: '',
           transfer_slip: ''
         });
         setTransferSlipFile(null); // Reset file input
@@ -243,6 +244,44 @@ export default function PaymentNotice() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
+                    เบอร์โทรติดต่อ <span className='text-red-500'>*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="order_phone"
+                    value={formData.order_phone}
+                    onChange={handleChange}
+                    required
+                    pattern="[0-9]{10}"
+                    maxLength="10"
+                    className="text-gray-700 w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0812345678"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    กรอกเบอร์โทรศัพท์ 10 หลัก
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
+                    ที่อยู่การจัดส่ง <span className='text-red-500'>*</span>
+                  </label>
+                  <textarea
+                    name="shippingAddress"
+                    value={formData.shippingAddress}
+                    onChange={handleChange}
+                    required
+                    rows="3"
+                    className="text-gray-700 w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    placeholder="กรุณากรอกที่อยู่สำหรับจัดส่งสินค้า"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    กรุณากรอกที่อยู่ให้ครบถ้วนเพื่อความถูกต้องในการจัดส่ง
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">
                     จำนวนเงินที่โอน <span className='text-red-500'>*</span>
                   </label>
                   <input
@@ -325,21 +364,6 @@ export default function PaymentNotice() {
                         </span>
                       </label>
                     </div>
-                  </div>
-
-                  {/* Reference number input */}
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">
-                      เลขที่อ้างอิง (ถ้ามี)
-                    </label>
-                    <input
-                      type="text"
-                      name="transfer_slip"
-                      value={formData.transfer_slip}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="เลขที่อ้างอิงหรือรหัสการโอน (ถ้ามี)"
-                    />
                   </div>
                 </div>
 

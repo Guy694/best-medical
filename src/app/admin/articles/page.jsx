@@ -1,7 +1,5 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useSession } from "next-auth/react";
-import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Nav';
 import Sidebar from '../../components/Sidebar';
 import { 
@@ -10,8 +8,6 @@ import {
 } from 'lucide-react';
 
 export default function AdminArticlesPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -33,19 +29,8 @@ export default function AdminArticlesPage() {
   const [bannerPreview, setBannerPreview] = useState('');
 
   useEffect(() => {
-    if (status === "loading") return;
-    
-    console.log("Session status:", status);
-    console.log("Session data:", session);
-    console.log("User role:", session?.user?.role);
-    
-    // if (!session || session.user?.role !== 'ADMIN') {
-    //   console.log("Redirecting to login - No session or not admin");
-    //   router.push('/login');
-    //   return;
-    // }
     fetchArticles();
-  }, [session, status, router]);
+  }, []);
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -107,11 +92,27 @@ export default function AdminArticlesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validation
+    if (!formData.title.trim()) {
+      alert('กรุณากรอกชื่อบทความ');
+      return;
+    }
+    if (!formData.content.trim()) {
+      alert('กรุณากรอกเนื้อหาบทความ');
+      return;
+    }
+
+    setUploading(true);
+    
     let bannerUrl = editingArticle?.banner || '';
     if (bannerFile) {
       const uploadedUrl = await uploadBanner();
       if (uploadedUrl) {
         bannerUrl = uploadedUrl;
+      } else {
+        alert('การอัปโหลดรูปภาพล้มเหลว');
+        setUploading(false);
+        return;
       }
     }
 
@@ -128,6 +129,8 @@ export default function AdminArticlesPage() {
       
       const method = editingArticle ? 'PUT' : 'POST';
 
+      console.log('Saving article:', { method, url, articleData });
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -136,19 +139,33 @@ export default function AdminArticlesPage() {
         body: JSON.stringify(articleData),
       });
 
+      // เช็คว่า response เป็น JSON หรือไม่
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        alert('เกิดข้อผิดพลาด: Server ตอบกลับไม่ถูกต้อง (ไม่ใช่ JSON)');
+        return;
+      }
+
       const data = await response.json();
       
-      if (data.success) {
+      console.log('Save response:', data);
+      
+      if (response.ok && data.success) {
         await fetchArticles();
         resetForm();
         setShowModal(false);
         alert(editingArticle ? 'แก้ไขบทความสำเร็จ' : 'สร้างบทความสำเร็จ');
       } else {
-        alert('เกิดข้อผิดพลาด: ' + data.message);
+        alert('เกิดข้อผิดพลาด: ' + (data.message || data.error || 'Unknown error'));
+        console.error('Save error:', data);
       }
     } catch (error) {
       console.error('Error saving article:', error);
-      alert('เกิดข้อผิดพลาดในการบันทึก');
+      alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -168,23 +185,41 @@ export default function AdminArticlesPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบบทความนี้?')) return;
+    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบบทความนี้? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
 
+    setLoading(true);
     try {
+      console.log('Deleting article:', id);
+      
       const response = await fetch(`/api/articles/${id}`, {
         method: 'DELETE',
       });
 
+      // เช็คว่า response เป็น JSON หรือไม่
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        alert('เกิดข้อผิดพลาด: Server ตอบกลับไม่ถูกต้อง (ไม่ใช่ JSON)');
+        return;
+      }
+
       const data = await response.json();
-      if (data.success) {
+      
+      console.log('Delete response:', data);
+      
+      if (response.ok && data.success) {
         await fetchArticles();
         alert('ลบบทความสำเร็จ');
       } else {
-        alert('เกิดข้อผิดพลาด: ' + data.message);
+        alert('เกิดข้อผิดพลาด: ' + (data.message || data.error || 'Unknown error'));
+        console.error('Delete error:', data);
       }
     } catch (error) {
       console.error('Error deleting article:', error);
-      alert('เกิดข้อผิดพลาดในการลบ');
+      alert('เกิดข้อผิดพลาดในการลบ: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -192,20 +227,43 @@ export default function AdminArticlesPage() {
     const newStatus = article.status === 'published' ? 'draft' : 'published';
     
     try {
+      console.log('Toggling status:', { articleId: article.id, currentStatus: article.status, newStatus });
+      
       const response = await fetch(`/api/articles/${article.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ 
+          status: newStatus,
+          title: article.title,
+          content: article.content
+        }),
       });
 
+      // เช็คว่า response เป็น JSON หรือไม่
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        alert('เกิดข้อผิดพลาด: Server ตอบกลับไม่ถูกต้อง (ไม่ใช่ JSON)');
+        return;
+      }
+
       const data = await response.json();
-      if (data.success) {
+      
+      console.log('Toggle status response:', data);
+      
+      if (response.ok && data.success) {
         await fetchArticles();
+        alert(`เปลี่ยนสถานะเป็น "${newStatus === 'published' ? 'เผยแพร่' : 'แบบร่าง'}" สำเร็จ`);
+      } else {
+        alert('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ: ' + (data.message || data.error || 'Unknown error'));
+        console.error('Toggle status error:', data);
       }
     } catch (error) {
       console.error('Error toggling status:', error);
+      alert('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ: ' + error.message);
     }
   };
 
@@ -240,29 +298,40 @@ export default function AdminArticlesPage() {
   };
 
   if (status === "loading") {
-    return <div className="min-h-screen flex items-center justify-center">
+    return <div className="text-gray- min-h-screen flex items-center justify-center">
       <div className="text-xl">กำลังโหลด...</div>
     </div>;
   }
 
-  if (!session || session.user?.role !== 'admin') {
-    console.log("Rendering null - No session or not admin");
-    return null;
-  }
+ 
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-100">
       <Navbar />
       <div className="flex">
-        <Sidebar />
-        <div className="flex-1 ml-64 p-8">
-          <div className="max-w-7xl mx-auto">
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>
+        )}
+        {/* Main content */}
+        <div className="flex-1 min-w-0 p-4 md:p-6">
+          <div className="max-w-full mx-auto bg-white shadow-md rounded-lg p-4 md:p-6 mt-4">
+            {/* Hamburger for mobile */}
+            <button className="md:hidden mb-4 px-3 py-2 bg-gray-200 rounded-lg" onClick={() => setSidebarOpen(true)}>
+              <span className="block w-6 h-0.5 bg-gray-700 mb-1"></span>
+              <span className="block w-6 h-0.5 bg-gray-700 mb-1"></span>
+              <span className="block w-6 h-0.5 bg-gray-700"></span>
+            </button>
+
             {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">จัดการบทความ</h1>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+              <h1 className="text-xl md:text-2xl font-semibold text-gray-800">จัดการบทความ</h1>
               <button
                 onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Plus size={20} />
                 เพิ่มบทความใหม่
@@ -270,9 +339,9 @@ export default function AdminArticlesPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-              <div className="flex flex-wrap gap-4">
-                <div className="flex-1 min-w-64">
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                     <input
@@ -291,7 +360,7 @@ export default function AdminArticlesPage() {
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">สถานะทั้งหมด</option>
-                  <option value="draft">แบบร่าง</option>
+                  {/* <option value="draft">แบบร่าง</option> */}
                   <option value="published">เผยแพร่</option>
                   <option value="scheduled">ตั้งเวลา</option>
                 </select>
@@ -299,27 +368,36 @@ export default function AdminArticlesPage() {
             </div>
 
             {/* Articles Table */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              {loading ? (
-                <div className="p-8 text-center">กำลังโหลด...</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+            <div className="overflow-x-auto -mx-4 md:mx-0">
+              <div className="min-w-full inline-block align-middle">
+                {loading ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                      กำลังโหลดข้อมูล...
+                    </div>
+                  </div>
+                ) : filteredArticles.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    ไม่พบบทความ
+                  </div>
+                ) : (
+                  <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           บทความ
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           หมวดหมู่
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           สถานะ
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           วันที่
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           การดำเนินการ
                         </th>
                       </tr>
@@ -403,14 +481,8 @@ export default function AdminArticlesPage() {
                       ))}
                     </tbody>
                   </table>
-                </div>
-              )}
-
-              {filteredArticles.length === 0 && !loading && (
-                <div className="p-8 text-center text-gray-500">
-                  ไม่พบบทความ
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -418,7 +490,7 @@ export default function AdminArticlesPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="text-gray-700 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
@@ -472,7 +544,7 @@ export default function AdminArticlesPage() {
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -485,7 +557,7 @@ export default function AdminArticlesPage() {
                   type="text"
                   value={formData.category}
                   onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="เช่น สุขภาพ, เวชภัณฑ์"
                 />
               </div>
@@ -499,7 +571,7 @@ export default function AdminArticlesPage() {
                   value={formData.excerpt}
                   onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="สรุปย่อของบทความ (ถ้าไม่ระบุจะใช้ 200 ตัวอักษรแรกของเนื้อหา)"
                 />
               </div>
@@ -514,7 +586,7 @@ export default function AdminArticlesPage() {
                   value={formData.content}
                   onChange={(e) => setFormData({...formData, content: e.target.value})}
                   rows={10}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -527,9 +599,9 @@ export default function AdminArticlesPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="draft">แบบร่าง</option>
+                    {/* <option value="draft">แบบร่าง</option> */}
                     <option value="published">เผยแพร่ทันที</option>
                     <option value="scheduled">ตั้งเวลาเผยแพร่</option>
                   </select>
@@ -545,7 +617,7 @@ export default function AdminArticlesPage() {
                       type="datetime-local"
                       value={formData.published_at}
                       onChange={(e) => setFormData({...formData, published_at: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 )}

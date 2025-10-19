@@ -97,10 +97,10 @@ export async function POST(request) {
       content,
       excerpt,
       banner,
-      author_id,
+      author_id = '1',
       status = 'published',
       published_at,
-      tags,
+ 
       category
     } = await request.json();
 
@@ -117,8 +117,8 @@ export async function POST(request) {
     const insertQuery = `
       INSERT INTO articles (
         title, content, excerpt, banner, author_id, status, 
-        published_at, tags, category, createdAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        published_at, category, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     const [result] = await pool.execute(insertQuery, [
@@ -129,7 +129,7 @@ export async function POST(request) {
       author_id,
       status,
       published_at || (status === 'published' ? new Date() : null),
-      tags || null,
+    
       category || null
     ]);
 
@@ -159,7 +159,7 @@ export async function PUT(request) {
       banner,
       status,
       published_at,
-      tags,
+   
       category
     } = await request.json();
 
@@ -181,7 +181,6 @@ export async function PUT(request) {
         banner = ?, 
         status = ?,
         published_at = ?,
-        tags = ?,
         category = ?
       WHERE id = ?
     `;
@@ -193,7 +192,7 @@ export async function PUT(request) {
       banner || null,
       status,
       published_at,
-      tags || null,
+  
       category || null,
       id
     ]);

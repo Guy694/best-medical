@@ -22,8 +22,7 @@ export async function POST(request) {
         totalPrice: formDataRequest.get('totalPrice'),
         transfer_date: formDataRequest.get('transfer_date'),
         transfer_time: formDataRequest.get('transfer_time'),
-        bank_account: formDataRequest.get('bank_account'),
-        transfer_slip: formDataRequest.get('transfer_slip')
+        shippingAddress: formDataRequest.get('shippingAddress')
       };
 
       // Handle file upload
@@ -55,15 +54,15 @@ export async function POST(request) {
       order_code,
       fullName,
       order_email,
+      order_phone,
       totalPrice,
       transfer_date,
       transfer_time,
-      bank_account,
-      transfer_slip
+      shippingAddress
     } = formData;
 
     // Validate required fields
-    if (!order_code || !fullName || !order_email || !totalPrice || !transfer_date || !transfer_time) {
+    if (!order_code || !fullName || !order_email || !order_phone || !totalPrice || !transfer_date || !transfer_time || !shippingAddress) {
       return NextResponse.json(
         { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
         { status: 400 }
@@ -144,27 +143,29 @@ export async function POST(request) {
       UPDATE \`order\` 
       SET 
         status = 'PAID',
-        paidAdate = ?,
-        paidAtime = ?,
-        transfer_slip = ?,
+        fullName = ?,
+        order_phone = ?,
+        paidAtdate = ?,
+        paidAttime = ?,
         transfer_slip_file = ?,
-        bank_account = ?
-      WHERE orderCode = ?
+        shippingAddress = ?
+      WHERE order_code = ?
     `;
 
     await query(updateQuery, [
+      fullName,
+      order_phone,
       transfer_date,
       transfer_time,
-      transfer_slip || null,
       transferSlipPath || null, // Save file path
-      bank_account || null,
+      shippingAddress,
       order_code
     ]);
 
     // Log payment notification
     const logQuery = `
       INSERT INTO payment_notifications 
-      (order_id, order_code, customer_name, customer_email, amount, transfer_date, transfer_time, bank_account, transfer_slip, transfer_slip_file, created_at)
+      (order_id, order_code, customer_name, customer_email, customer_phone, amount, transfer_date, transfer_time, transfer_slip_file, shipping_address, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
@@ -174,12 +175,12 @@ export async function POST(request) {
         order_code,
         fullName,
         order_email,
+        order_phone,
         totalPrice,
         transfer_date,
         transfer_time,
-        bank_account || null,
-        transfer_slip || null,
-        transferSlipPath || null // Save file path in log too
+        transferSlipPath || null, // Save file path in log too
+        shippingAddress
       ]);
     } catch (logError) {
       // ถ้า table payment_notifications ไม่มี ก็ไม่ต้อง error

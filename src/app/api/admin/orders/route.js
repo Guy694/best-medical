@@ -1,4 +1,5 @@
 import pool from '@/app/lib/db';
+import { NextResponse } from 'next/server';
 
 export async function GET(req) {
   try {
@@ -6,11 +7,13 @@ export async function GET(req) {
       SELECT 
         o.order_id,
         o.order_code,
+        o.fullName,
         o.order_email,
+        o.order_phone,
         o.totalPrice,
         o.status,
         o.shippingAddress,
-        o.slipUrl,
+        o.transfer_slip_file,
         o.items,
         o.paidAtdate,
         o.paidAttime,
@@ -20,13 +23,12 @@ export async function GET(req) {
       ORDER BY o.createdAt DESC
     `);
 
-    return new Response(JSON.stringify(rows), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
+    console.log('Fetched orders:', rows.length);
+
+    return NextResponse.json(rows);
   } catch (error) {
     console.error('Orders API Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return NextResponse.json({ error: error.message, details: error.stack }, { status: 500 });
   }
 }
 
@@ -35,10 +37,7 @@ export async function PUT(req) {
     const { order_id, status } = await req.json();
     
     if (!order_id || !status) {
-      return new Response(JSON.stringify({ error: 'Missing order_id or status' }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      });
+      return NextResponse.json({ error: 'Missing order_id or status' }, { status: 400 });
     }
 
     // ถ้าเปลี่ยนสถานะเป็น PAID ให้ตัด stock
@@ -78,12 +77,9 @@ export async function PUT(req) {
       [status, order_id]
     );
     
-    return new Response(JSON.stringify({ message: 'Order updated successfully' }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
+    return NextResponse.json({ message: 'Order updated successfully', success: true });
   } catch (error) {
     console.error('Update Order Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

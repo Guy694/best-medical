@@ -306,6 +306,15 @@ const Navbar = () => {
               </>
             ) : (
               <>
+                {role === "CUSTOMER" && (
+                  <Link
+                    href="/user/history"
+                    className="flex items-center bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-300 shadow-lg"
+                  >
+                    <Briefcase className="h-4 w-4 mr-2" />
+                    ประวัติสั่งซื้อ
+                  </Link>
+                )}
                 <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
                   <User className="h-4 w-4 mr-2 text-white" />
                   <span className="text-white font-medium text-sm">{user.name}</span>
@@ -456,6 +465,15 @@ const Navbar = () => {
                   </>
                 ) : (
                   <>
+                    {role === "CUSTOMER" && (
+                      <Link
+                        href="/user/history"
+                        className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300"
+                      >
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        ประวัติสั่งซื้อ
+                      </Link>
+                    )}
                     <div className="flex items-center justify-center bg-white/10 backdrop-blur-sm px-4 py-3 rounded-lg border border-white/20">
                       <User className="h-4 w-4 mr-2 text-white" />
                       <span className="text-white font-medium">{user.name}</span>

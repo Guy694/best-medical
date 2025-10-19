@@ -155,7 +155,7 @@ export default function PaidStatus() {
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center">
                           <span className="text-gray-600 w-20">ชื่อ:</span>
-                          <span className="text-gray-800">{orderData.firstname} {orderData.lastname}</span>
+                          <span className="text-gray-800">{orderData.fullname}</span>
                         </div>
                         <div className="flex items-center">
                           <Mail className="w-4 h-4 mr-2 text-gray-400" />
@@ -163,7 +163,7 @@ export default function PaidStatus() {
                         </div>
                         <div className="flex items-center">
                           <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                          <span className="text-gray-800">{orderData.phone}</span>
+                          <span className="text-gray-800">{orderData.order_phone}</span>
                         </div>
                       </div>
                     </div>
@@ -205,6 +205,9 @@ export default function PaidStatus() {
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <p className="text-gray-700">{orderData.shipping_address}</p>
                       </div>
+                      <div className="mt-2 text-xs text-red-500">
+                       หมายเหตุ: แจ้งเปลี่ยนที่อยู่ ติดต่อแอดมิน
+                    </div>
                     </div>
                   )}
 

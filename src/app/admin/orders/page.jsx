@@ -29,9 +29,18 @@ export default function OrdersManagement() {
     try {
       const res = await fetch('/api/admin/orders');
       const data = await res.json();
-      setOrders(data);
+      // ตรวจสอบว่า data เป็น array หรือไม่
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else if (data.orders && Array.isArray(data.orders)) {
+        setOrders(data.orders);
+      } else {
+        console.error('Invalid data format:', data);
+        setOrders([]);
+      }
     } catch (err) {
       console.error('Error fetching orders:', err);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -173,7 +182,7 @@ export default function OrdersManagement() {
                             <td className='py-3 px-3 md:px-4 text-sm font-medium text-blue-600'>{order.order_code}</td>
                             <td className='py-3 px-3 md:px-4 text-sm text-gray-900'>
                               <div>
-                                <div className="font-medium">{order.order_name || 'ไม่ระบุ'}</div>
+                                <div className="font-medium">{order.fullName || 'ไม่ระบุ'}</div>
                                 <div className="text-gray-500 text-xs">{order.order_email}</div>
                               </div>
                             </td>
@@ -200,7 +209,7 @@ export default function OrdersManagement() {
                                   value={order.status}
                                   onChange={(e) => updateOrderStatus(order.order_id, e.target.value)}
                                   disabled={updating}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  className="text-gray-700 text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                   {statusOptions.map(status => (
                                     <option key={status.value} value={status.value}>
@@ -246,8 +255,8 @@ export default function OrdersManagement() {
                     <Eye className="h-4 w-4 mr-2" />
                     ข้อมูลลูกค้า
                   </h3>
-                  <div className="space-y-2 text-sm">
-                    <div><span className="font-medium">ชื่อ:</span> {selectedOrder.order_name || 'ไม่ระบุ'}</div>
+                  <div className="text-gray-700 space-y-2 text-sm">
+                    <div><span className="font-medium">ชื่อ:</span> {selectedOrder.fullName || 'ไม่ระบุ'}</div>
                     <div><span className="font-medium">อีเมล:</span> {selectedOrder.order_email}</div>
                     <div><span className="font-medium">เบอร์โทร:</span> {selectedOrder.order_phone || 'ไม่ระบุ'}</div>
                   </div>
@@ -258,8 +267,8 @@ export default function OrdersManagement() {
                     <Truck className="h-4 w-4 mr-2" />
                     ที่อยู่จัดส่ง
                   </h3>
-                  <div className="text-sm">
-                    <p>{selectedOrder.order_address || 'ไม่ระบุที่อยู่'}</p>
+                  <div className="text-sm text-gray-700">
+                    <p>{selectedOrder.shippingAddress || 'ไม่ระบุที่อยู่'}</p>
                     {selectedOrder.order_note && (
                       <div className="mt-2">
                         <span className="font-medium">หมายเหตุ:</span>
@@ -285,7 +294,7 @@ export default function OrdersManagement() {
                           ราคาต่อชิ้น: ฿{parseFloat(item.price).toLocaleString()}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right text-gray-700">
                         <div className="font-medium">จำนวน: {item.quantity}</div>
                         <div className="text-sm text-gray-600">
                           รวม: ฿{(parseFloat(item.price) * item.quantity).toLocaleString()}

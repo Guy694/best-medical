@@ -102,9 +102,9 @@ export default function OrderTimeline({ history }) {
                   <h3 className="font-semibold text-gray-800 text-lg">
                     {getStatusText(item.status)}
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  {/* <p className="text-sm text-gray-500">
                     {formatDateTime(item.changed_by)}
-                  </p>
+                  </p> */}
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
                   {item.status}
