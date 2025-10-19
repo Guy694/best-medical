@@ -297,15 +297,13 @@ export default function AdminArticlesPage() {
     });
   };
 
-  if (status === "loading") {
-    return <div className="text-gray- min-h-screen flex items-center justify-center">
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  if (loading) {
+    return <div className="text-gray-600 min-h-screen flex items-center justify-center">
       <div className="text-xl">กำลังโหลด...</div>
     </div>;
   }
-
- 
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-100">
