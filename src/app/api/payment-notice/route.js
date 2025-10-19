@@ -123,14 +123,6 @@ export async function POST(request) {
 
     const order = orders[0];
 
-    // Check if customer name matches
-    const customerFullName = `${order.firstname}`.trim();
-    if (customerFullName !== fullName.trim()) {
-      return NextResponse.json(
-        { error: 'ชื่อลูกค้าไม่ตรงกับในระบบ' },
-        { status: 400 }
-      );
-    }
 
     // Check if email matches
     if (order.email !== order_email) {
