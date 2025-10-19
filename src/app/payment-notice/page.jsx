@@ -65,7 +65,14 @@ export default function PaymentNotice() {
         formDataToSend.append(key, formData[key]);
       });
       
-  
+      // Debug: Log what we're sending
+      console.log('Form data being sent:', formData);
+      console.log('Transfer slip file:', transferSlipFile);
+      
+      // Log FormData contents
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}:`, value);
+      }
       
       // Add file if selected
       if (transferSlipFile) {
@@ -78,6 +85,8 @@ export default function PaymentNotice() {
       });
 
       const data = await response.json();
+
+      console.log('Response from API:', data);
 
       if (response.ok) {
         setSuccess(true);
@@ -94,7 +103,11 @@ export default function PaymentNotice() {
         });
         setTransferSlipFile(null); // Reset file input
       } else {
-        setError(data.error || 'เกิดข้อผิดพลาดในการแจ้งชำระเงิน');
+        let errorMsg = data.error || 'เกิดข้อผิดพลาดในการแจ้งชำระเงิน';
+        if (data.missingFields && data.missingFields.length > 0) {
+          errorMsg += '\nฟิลด์ที่ขาด: ' + data.missingFields.join(', ');
+        }
+        setError(errorMsg);
       }
     } catch (err) {
       setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');

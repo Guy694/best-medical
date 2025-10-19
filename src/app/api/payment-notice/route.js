@@ -19,6 +19,7 @@ export async function POST(request) {
         order_code: formDataRequest.get('order_code'),
         fullName: formDataRequest.get('fullName'),
         order_email: formDataRequest.get('order_email'),
+        order_phone: formDataRequest.get('order_phone'), // เพิ่ม order_phone
         totalPrice: formDataRequest.get('totalPrice'),
         transfer_date: formDataRequest.get('transfer_date'),
         transfer_time: formDataRequest.get('transfer_time'),
@@ -61,10 +62,38 @@ export async function POST(request) {
       shippingAddress
     } = formData;
 
+    // Debug: Log received data
+    console.log('Received payment notice data:', {
+      order_code,
+      fullName,
+      order_email,
+      order_phone,
+      totalPrice,
+      transfer_date,
+      transfer_time,
+      shippingAddress,
+      hasFile: !!transferSlipFile
+    });
+
     // Validate required fields
     if (!order_code || !fullName || !order_email || !order_phone || !totalPrice || !transfer_date || !transfer_time || !shippingAddress) {
+      const missingFields = [];
+      if (!order_code) missingFields.push('เลขที่ใบสั่งซื้อ');
+      if (!fullName) missingFields.push('ชื่อ-นามสกุล');
+      if (!order_email) missingFields.push('อีเมล');
+      if (!order_phone) missingFields.push('เบอร์โทรศัพท์');
+      if (!totalPrice) missingFields.push('จำนวนเงิน');
+      if (!transfer_date) missingFields.push('วันที่โอน');
+      if (!transfer_time) missingFields.push('เวลาที่โอน');
+      if (!shippingAddress) missingFields.push('ที่อยู่จัดส่ง');
+      
+      console.log('Missing fields:', missingFields);
+      
       return NextResponse.json(
-        { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
+        { 
+          error: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+          missingFields: missingFields
+        },
         { status: 400 }
       );
     }
