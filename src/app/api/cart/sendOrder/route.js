@@ -2,6 +2,7 @@ import pool from '@/app/lib/db';
 import nodemailer from 'nodemailer';
 
 export async function POST(req) {
+  let connection;
   try {
     const body = await req.formData();
     const cart = JSON.parse(body.get('cart'));
@@ -9,28 +10,68 @@ export async function POST(req) {
     const order_email = body.get('order_email');
     const totalPrice = body.get('totalPrice');
 
+    // Validation
+    if (!cart || cart.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'ตะกร้าสินค้าว่างเปล่า' }), 
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!order_email || !order_email.includes('@')) {
+      return new Response(
+        JSON.stringify({ error: 'กรุณากรอกอีเมลที่ถูกต้อง' }), 
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // สร้างเลขคำสั่งซื้อ
     const orderId = 'ORD' + Date.now();
 
-    // รวมราคาสินค้าทั้งหมด
-    // const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) + shipping.cost;
+    console.log('Creating order:', { orderId, order_email, totalPrice });
 
-    // บันทึกข้อมูลลง MySQL (เพิ่มฟิลด์ total)
-    await pool.execute(
+    // บันทึกข้อมูลลง MySQL
+    connection = await pool.getConnection();
+    await connection.execute(
       'INSERT INTO `order` (order_code, order_email, shipping, items, totalPrice, createdAt) VALUES (?, ?, ?, ?, ?, NOW())',
-      [orderId,order_email,shipping,JSON.stringify(cart),totalPrice]
+      [orderId, order_email, shipping, JSON.stringify(cart), totalPrice]
     );
 
+    console.log('Order saved to database');
 
-     const transporter = nodemailer.createTransport({
+    // ส่งอีเมล (แยกออกมาเป็น async เพื่อไม่ให้ block)
+    sendOrderEmail(order_email, orderId).catch(err => {
+      console.error('Error sending email:', err);
+      // ไม่ throw error เพื่อให้คำสั่งซื้อสำเร็จแม้อีเมลส่งไม่สำเร็จ
+    });
+
+    return new Response(JSON.stringify({ orderId, success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  } catch (error) {
+    console.error('Error in sendOrder:', error);
+    return new Response(
+      JSON.stringify({ error: error.message || 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ' }), 
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+// ฟังก์ชันส่งอีเมลแยกออกมา
+async function sendOrderEmail(order_email, orderId) {
+  try {
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: 'chakrit694@gmail.com',
         pass: 'nqjo cxbr howx mnvr',
       },
-       tls: {
-    rejectUnauthorized: false
-  }
+      tls: {
+        rejectUnauthorized: false
+      }
     });
 
     await transporter.sendMail({
@@ -40,12 +81,9 @@ export async function POST(req) {
       text: `ขอบคุณที่สั่งซื้อ! เลขคำสั่งซื้อของคุณคือ ${orderId} สามารถตรวจสอบสถานะได้ที่ http://199.21.175.91/track-order/${orderId}`,
     });
 
-
-    return new Response(JSON.stringify({ orderId }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
+    console.log('Email sent successfully to:', order_email);
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error('Failed to send email:', error);
+    throw error;
   }
 }
