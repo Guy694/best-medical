@@ -81,12 +81,27 @@ const Checkout = () => {
       });
       
       console.log('Response status:', res.status);
+      console.log('Response headers:', res.headers.get('content-type'));
+      
+      // อ่าน response text ก่อนเพื่อดู error
+      const responseText = await res.text();
+      console.log('Response text:', responseText);
       
       if (!res.ok) {
-        throw new Error('เกิดข้อผิดพลาดในการส่งคำสั่งซื้อ');
+        let errorMessage = 'เกิดข้อผิดพลาดในการส่งคำสั่งซื้อ';
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error || errorMessage;
+          if (errorData.details) {
+            console.error('Error details:', errorData.details);
+          }
+        } catch (e) {
+          console.error('Could not parse error response:', responseText);
+        }
+        throw new Error(errorMessage);
       }
       
-      const result = await res.json();
+      const result = JSON.parse(responseText);
       console.log('Response data:', result);
       
       if (result.orderId) {
