@@ -28,7 +28,7 @@ export default function Login() {
       } else if (user.role === "STAFF") {
         router.push("/admin/dashboard");
       } else {
-        router.push("/user/homepage");
+        router.push("/user/history");
       }
     }
   }, [router]);
@@ -72,7 +72,7 @@ export default function Login() {
         } else if (data.role === "STAFF") {
           router.push("/admin/dashboard");
         } else {
-          router.push("/user/homepage");
+          router.push("/user/history");
         }
       } else {
         setError(data.error || "เข้าสู่ระบบไม่สำเร็จ");

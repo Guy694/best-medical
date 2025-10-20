@@ -183,6 +183,20 @@ export async function POST(request) {
       order_code
     ]);
 
+       const updateuser = `
+      UPDATE \`user\` 
+      SET 
+        phone = ?,
+        address = ?
+      WHERE email = ?
+    `;
+
+    await query(updateuser, [
+      order_phone,
+      shippingAddress,
+      order_email
+    ]);
+
     // Log payment notification
     const logQuery = `
       INSERT INTO payment_notifications 

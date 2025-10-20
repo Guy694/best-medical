@@ -30,13 +30,9 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (userData.role !== 'ADMIN') {
-      // Redirect based on actual role
-      if (userData.role === 'STAFF') {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/user/homepage');
-      }
+    // อนุญาตเฉพาะ ADMIN และ STAFF
+    if (userData.role !== 'ADMIN' && userData.role !== 'STAFF') {
+      router.push('/user/history');
       return;
     }
 

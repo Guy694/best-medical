@@ -39,7 +39,7 @@ export function useAuth(requiredRole = null) {
         } else if (userData.role === 'STAFF') {
           router.push('/admin/dashboard');
         } else {
-          router.push('/user/homepage');
+          router.push('/user/history');
         }
         return;
       }
@@ -117,7 +117,7 @@ export function useRequireAuth(requiredRole = null) {
       } else if (userData.role === 'STAFF') {
         router.push('/admin/dashboard');
       } else {
-        router.push('/user/homepage');
+        router.push('/user/history');
       }
       return;
     }

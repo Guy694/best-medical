@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { sessionManager } from "@/app/lib/sessionTimeout";
 
 // กำหนดเมนูตาม role
 const getMenuByRole = (role) => {
@@ -36,13 +37,24 @@ const getMenuByRole = (role) => {
     { label: 'จัดการออเดอร์', href: '/admin/orders', icon: <ShoppingCart className="w-5 h-5 mr-2" />, color: 'teal' },
   ];
 
-  return role === 'admin' ? adminMenu : staffMenu;
+  // ใช้ตัวพิมพ์ใหญ่เพื่อให้ตรงกับ role จาก session
+  return role === 'ADMIN' ? adminMenu : staffMenu;
 };
 
-export default function Sidebar({ role = "admin", sidebarOpen, setSidebarOpen }) {
+export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const router = useRouter();
   const [active, setActive] = useState(router?.pathname || "");
-  const menuLinks = getMenuByRole(role);
+  const [userRole, setUserRole] = useState('STAFF');
+
+  // ดึง role จาก session
+  useEffect(() => {
+    const userData = sessionManager.getSession();
+    if (userData && userData.role) {
+      setUserRole(userData.role);
+    }
+  }, []);
+
+  const menuLinks = getMenuByRole(userRole);
 
   return (
     <aside className={`fixed z-40 top-0 left-0 min-h-screen h-full w-64 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 shadow-2xl transition-transform duration-300 md:static md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:w-64 md:block flex flex-col`}>
@@ -54,7 +66,7 @@ export default function Sidebar({ role = "admin", sidebarOpen, setSidebarOpen })
           </div>
           <div>
             <span className="font-bold text-lg text-white">Admin Panel</span>
-            <p className="text-xs text-blue-200">{role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'}</p>
+            <p className="text-xs text-blue-200">{userRole === 'ADMIN' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'}</p>
           </div>
         </div>
         <button 
@@ -72,7 +84,7 @@ export default function Sidebar({ role = "admin", sidebarOpen, setSidebarOpen })
         </div>
         <div>
           <span className="font-bold text-xl text-white">Admin Panel</span>
-          <p className="text-xs text-blue-200">{role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'}</p>
+          <p className="text-xs text-blue-200">{userRole === 'ADMIN' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่'}</p>
         </div>
       </div>
 
