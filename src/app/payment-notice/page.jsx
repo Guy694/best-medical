@@ -27,7 +27,8 @@ export default function PaymentNotice() {
     {
       id: "krungthai",
       name: "ธนาคารกรุงไทย สาขาเซ็นทรัลพลาซา เวสต์เกต",
-      accountNumber: "660-4-49380-6",
+      // accountNumber: "660-4-49380-6",
+      accountNumber: "",
       accountName: "บริษัท เบสท เมดิคอล จำกัด",
       logo: "/bank.png",
     },

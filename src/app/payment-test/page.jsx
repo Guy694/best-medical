@@ -197,7 +197,8 @@ export default function PaymentTestPage() {
                       <strong>ข้อมูลบัญชีธนาคาร:</strong>
                       <div className="bg-gray-50 p-2 rounded mt-1 text-xs">
                         <div>ธนาคารกรุงไทย</div>
-                        <div>เลขที่: 660-4-49380-6</div>
+                        {/* <div>เลขที่: 660-4-49380-6</div> */}
+                        <div>เลขที่: </div>
                         <div>ชื่อ: บริษัท เบสท เมดิคอล จำกัด</div>
                       </div>
                     </div>
