@@ -11,7 +11,9 @@ export default function AddProduct() {
     price: "",
     description: "",
     stock: "",
-    categoryId: ""
+    categoryId: "",
+    delivery: "",
+    warranty: ""
   });
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -94,6 +96,14 @@ export default function AddProduct() {
               <div>
                 <label className="block mb-1 text-gray-700">สต็อก</label>
                 <input type="number" name="stock" value={form.stock} onChange={handleChange} required className="w-full border rounded px-3 py-2 text-gray-700" />
+              </div>
+              <div>
+                <label className="block mb-1 text-gray-700">ค่าจัดส่ง (บาท)</label>
+                <input type="number" name="delivery" value={form.delivery} onChange={handleChange} step="0.01" className="w-full border rounded px-3 py-2 text-gray-700" placeholder="0.00" />
+              </div>
+              <div>
+                <label className="block mb-1 text-gray-700">ประกัน (เดือน)</label>
+                <input type="number" name="warranty" value={form.warranty} onChange={handleChange} className="w-full border rounded px-3 py-2 text-gray-700" placeholder="0" />
               </div>
               <div>
                 <label className="block mb-1 text-gray-700">หมวดหมู่</label>

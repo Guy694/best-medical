@@ -250,6 +250,17 @@ export default function Productmanagement() {
                         <span>ราคา</span>
                       </div>
                     </th>
+                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        <span>ค่าจัดส่ง</span>
+                      </div>
+                    </th>
+                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <span>ประกัน</span>
+                      </div>
+                    </th>
                     <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                       <div className="flex items-center justify-center gap-2">
                         <Eye className="w-4 h-4" />
@@ -270,13 +281,15 @@ export default function Productmanagement() {
                         <td className="py-4 px-6"><div className="h-16 w-16 bg-gray-200 rounded"></div></td>
                         <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-40"></div></td>
                         <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
                         <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-12 mx-auto"></div></td>
                         <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
                       </tr>
                     ))
                   ) : filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center">
+                      <td colSpan={8} className="py-12 text-center">
                         <div className="flex flex-col items-center justify-center">
                           <div className="p-4 bg-gray-100 rounded-full mb-3">
                             <AlertCircle className="w-12 h-12 text-gray-400" />
@@ -325,6 +338,16 @@ export default function Productmanagement() {
                           <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">
                             <DollarSign className="w-3 h-3" />
                             {Number(product.price).toLocaleString()} บาท
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
+                            {product.delivery ? `${Number(product.delivery).toLocaleString()} บาท` : '-'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-bold">
+                            {product.warranty ? `${product.warranty} เดือน` : '-'}
                           </span>
                         </td>
                         <td className="py-4 px-6 text-center">

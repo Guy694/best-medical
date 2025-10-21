@@ -42,7 +42,7 @@ export async function PUT(req, context) {
     } else {
       // อัปเดตข้อมูลสินค้าอื่นๆ
       await pool.execute(
-        'UPDATE product SET pro_name = ?, price = ?, description = ?, stock = ?, categoryId = ?, imageUrl = ? WHERE id = ?',
+        'UPDATE product SET pro_name = ?, price = ?, description = ?, stock = ?, categoryId = ?, imageUrl = ?, delivery = ?, warranty = ? WHERE id = ?',
         [
           body.pro_name ?? null,
           body.price ?? null,
@@ -50,6 +50,8 @@ export async function PUT(req, context) {
           body.stock ?? null,
           body.categoryId ?? null,
           body.imageUrl ?? null,
+          body.delivery ?? null,
+          body.warranty ?? null,
           id
         ]
       );

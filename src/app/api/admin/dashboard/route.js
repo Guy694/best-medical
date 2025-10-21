@@ -49,6 +49,43 @@ export async function GET(req) {
       ORDER BY createdAt DESC 
       LIMIT 5
     `, [year]);
+
+    // ดึงข้อมูลสินค้าที่มียอดสั่งซื้อทั้งหมด
+    const [ordersWithItems] = await pool.execute(`
+      SELECT items
+      FROM \`order\` 
+      WHERE status = "COMPLETED" AND YEAR(createdAt) = ? AND items IS NOT NULL
+    `, [year]);
+
+    // วิเคราะห์ข้อมูลสินค้าจาก JSON
+    const productSales = {};
+    ordersWithItems.forEach(order => {
+      try {
+        const items = JSON.parse(order.items);
+        items.forEach(item => {
+          if (productSales[item.id]) {
+            productSales[item.id].quantity += item.quantity;
+            productSales[item.id].totalRevenue += parseFloat(item.price) * item.quantity;
+          } else {
+            productSales[item.id] = {
+              id: item.id,
+              name: item.name,
+              image: item.image,
+              price: parseFloat(item.price),
+              quantity: item.quantity,
+              totalRevenue: parseFloat(item.price) * item.quantity
+            };
+          }
+        });
+      } catch (error) {
+        console.error('Error parsing items JSON:', error);
+      }
+    });
+
+    // แปลง object เป็น array และเรียงตามยอดขาย
+    const topProducts = Object.values(productSales)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10); // เอา 10 อันดับแรก
     
     // สร้างข้อมูลรายเดือน (12 เดือน)
     const monthlyData = Array.from({ length: 12 }, (_, index) => {
@@ -69,7 +106,8 @@ export async function GET(req) {
         ...order,
         totalPrice: parseFloat(order.totalPrice),
         createdAt: new Date(order.createdAt).toLocaleDateString('th-TH')
-      }))
+      })),
+      topProducts: topProducts
     };
     
     return new Response(JSON.stringify(dashboardData), {
@@ -89,7 +127,8 @@ export async function GET(req) {
         orders: 0,
         revenue: 0
       })),
-      recentOrders: []
+      recentOrders: [],
+      topProducts: []
     }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }

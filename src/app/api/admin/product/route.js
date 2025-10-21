@@ -12,6 +12,8 @@ export async function POST(req) {
     const description = formData.get("description") ?? null;
     const stock = formData.get("stock") ?? null;
     const categoryId = formData.get("categoryId") ?? null;
+    const delivery = formData.get("delivery") ?? null;
+    const warranty = formData.get("warranty") ?? null;
 
     // รับไฟล์รูปภาพ
     const imageFile = formData.get("image");
@@ -46,8 +48,8 @@ export async function POST(req) {
     }
 
     const [result] = await pool.execute(
-      'INSERT INTO product (pro_name, codename, price, description, stock, categoryId, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [pro_name, codename, price, description, stock, categoryId, imageUrl]
+      'INSERT INTO product (pro_name, codename, price, description, stock, categoryId, imageUrl, delivery, warranty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [pro_name, codename, price, description, stock, categoryId, imageUrl, delivery, warranty]
     );
     
     console.log("Product inserted successfully:", { 
@@ -66,6 +68,8 @@ export async function POST(req) {
       stock, 
       categoryId, 
       imageUrl,
+      delivery,
+      warranty,
       warning: imageUrl ? null : 'Image upload failed - product created without image'
     }), { status: 201 });
   } catch (error) {

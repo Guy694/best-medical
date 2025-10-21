@@ -17,7 +17,8 @@ export default function AdminDashboard() {
     totalRevenue: 0,
     pendingOrders: 0,
     monthlyData: [],
-    recentOrders: []
+    recentOrders: [],
+    topProducts: []
   });
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -218,6 +219,81 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* Top Products Table */}
+                <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 md:mb-8">
+                  <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">สินค้าที่มียอดสั่งซื้อสูงสุด (Top 10)</h2>
+                  <div className="overflow-x-auto -mx-4 md:mx-0">
+                    <div className="min-w-full inline-block align-middle">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              อันดับ
+                            </th>
+                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              รูปภาพ
+                            </th>
+                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              ชื่อสินค้า
+                            </th>
+                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              ราคา/ชิ้น
+                            </th>
+                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              จำนวนที่ขาย
+                            </th>
+                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              ยอดขายรวม
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {dataLoading ? (
+                            <tr>
+                              <td colSpan="6" className="px-3 md:px-6 py-4 text-center text-gray-500">
+                                กำลังโหลดข้อมูล...
+                              </td>
+                            </tr>
+                          ) : dashboardData.topProducts && dashboardData.topProducts.length > 0 ? (
+                            dashboardData.topProducts.map((product, index) => (
+                              <tr key={product.id}>
+                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-900">
+                                  #{index + 1}
+                                </td>
+                                <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                                  <img 
+                                    src={product.image} 
+                                    alt={product.name}
+                                    className="h-12 w-12 object-cover rounded"
+                                  />
+                                </td>
+                                <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900">
+                                  {product.name}
+                                </td>
+                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
+                                  ฿{product.price.toLocaleString()}
+                                </td>
+                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm font-semibold text-blue-600">
+                                  {product.quantity.toLocaleString()} ชิ้น
+                                </td>
+                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm font-semibold text-green-600">
+                                  ฿{product.totalRevenue.toLocaleString()}
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="6" className="px-3 md:px-6 py-4 text-center text-gray-500">
+                                ไม่มีข้อมูลสินค้า
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Recent Orders Table */}
                 <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
                   <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">รายการสั่งซื้อล่าสุด</h2>
@@ -290,6 +366,8 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
+
+
               </>
             )}
           </div>

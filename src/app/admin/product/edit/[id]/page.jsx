@@ -13,7 +13,9 @@ export default function EditProduct() {
     description: "",
     stock: "",
     categoryId: "",
-    imageUrl: ""
+    imageUrl: "",
+    delivery: "",
+    warranty: ""
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -44,7 +46,9 @@ export default function EditProduct() {
           description: productData.description || "",
           stock: productData.stock || "",
           categoryId: String(productData.categoryId || ""),
-          imageUrl: productData.imageUrl || ""
+          imageUrl: productData.imageUrl || "",
+          delivery: productData.delivery || "",
+          warranty: productData.warranty || ""
         });
         
         // Handle different API response formats
@@ -120,6 +124,14 @@ export default function EditProduct() {
               <div>
                 <label className="block mb-1 text-gray-700">สต็อก</label>
                 <input type="number" name="stock" value={form.stock} onChange={handleChange} required className="w-full border rounded px-3 py-2 text-gray-700" />
+              </div>
+              <div>
+                <label className="block mb-1 text-gray-700">ค่าจัดส่ง (บาท)</label>
+                <input type="number" name="delivery" value={form.delivery} onChange={handleChange} step="0.01" className="w-full border rounded px-3 py-2 text-gray-700" placeholder="0.00" />
+              </div>
+              <div>
+                <label className="block mb-1 text-gray-700">ประกัน (เดือน)</label>
+                <input type="number" name="warranty" value={form.warranty} onChange={handleChange} className="w-full border rounded px-3 py-2 text-gray-700" placeholder="0" />
               </div>
               <div>
                 <label className="block mb-1 text-gray-700">หมวดหมู่</label>

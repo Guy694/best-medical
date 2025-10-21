@@ -11,6 +11,9 @@ export default function OrdersManagement() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [cancelNote, setCancelNote] = useState('');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
 
   const statusOptions = [
     { value: 'PENDING', label: 'รอดำเนินการ', color: 'bg-gray-100 text-gray-800', icon: Clock },
@@ -47,6 +50,13 @@ export default function OrdersManagement() {
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
+    // ถ้าเป็นการยกเลิก ให้แสดง modal ขอหมายเหตุ
+    if (newStatus === 'CANCELLED') {
+      setOrderToCancel(orderId);
+      setShowCancelModal(true);
+      return;
+    }
+
     setUpdating(true);
     try {
       const res = await fetch('/api/admin/orders', {
@@ -69,6 +79,43 @@ export default function OrdersManagement() {
     } catch (error) {
       console.error('Error updating status:', error);
       alert('เกิดข้อผิดพลาดในการอัปเดต');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const confirmCancelOrder = async () => {
+    if (!cancelNote.trim()) {
+      alert('กรุณาระบุเหตุผลในการยกเลิก');
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          order_id: orderToCancel,
+          status: 'CANCELLED',
+          note: cancelNote
+        })
+      });
+
+      if (res.ok) {
+        await fetchOrders();
+        alert('ยกเลิกออร์เดอร์สำเร็จ');
+        setShowCancelModal(false);
+        setCancelNote('');
+        setOrderToCancel(null);
+      } else {
+        alert('เกิดข้อผิดพลาดในการยกเลิก');
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      alert('เกิดข้อผิดพลาดในการยกเลิก');
     } finally {
       setUpdating(false);
     }
@@ -288,10 +335,20 @@ export default function OrdersManagement() {
                 <div className="space-y-3">
                   {parseItems(selectedOrder.items).map((item, idx) => (
                     <div key={idx} className="bg-white rounded-lg p-3 flex justify-between items-center">
-                      <div>
-                        <div className="font-medium text-gray-800">{item.name}</div>
-                        <div className="text-sm text-gray-500">
-                          ราคาต่อชิ้น: ฿{parseFloat(item.price).toLocaleString()}
+                      <div className="flex items-center gap-3">
+                        {item.image && (
+                          <img 
+                            src={item.image} 
+                            alt={item.name}
+                            className="h-12 w-12 object-cover rounded"
+                            onError={(e) => { e.target.src = '/placeholder.png'; }}
+                          />
+                        )}
+                        <div>
+                          <div className="font-medium text-gray-800">{item.name}</div>
+                          <div className="text-sm text-gray-500">
+                            ราคาต่อชิ้น: ฿{parseFloat(item.price).toLocaleString()}
+                          </div>
                         </div>
                       </div>
                       <div className="text-right text-gray-700">
@@ -311,6 +368,32 @@ export default function OrdersManagement() {
                 </div>
               </div>
 
+              {/* Payment Slip */}
+              {selectedOrder.transfer_slip_file && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    หลักฐานการโอนเงิน
+                  </h3>
+                  <div className="bg-white rounded-lg p-3">
+                    <img 
+                      src={selectedOrder.transfer_slip_file} 
+                      alt="Payment Slip"
+                      className="max-w-full h-auto max-h-96 mx-auto rounded shadow-md"
+                      onError={(e) => { 
+                        e.target.src = '/placeholder.png';
+                        e.target.alt = 'ไม่พบรูปภาพสลิป';
+                      }}
+                    />
+                    {selectedOrder.paidAtdate && (
+                      <div className="mt-2 text-sm text-gray-600 text-center">
+                        โอนเมื่อ: {selectedOrder.paidAtdate} {selectedOrder.paidAttime}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Order Status */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-800 mb-3">สถานะปัจจุบัน</h3>
@@ -327,6 +410,45 @@ export default function OrdersManagement() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Order Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">ยกเลิกคำสั่งซื้อ</h2>
+            <p className="text-gray-600 mb-4">กรุณาระบุเหตุผลในการยกเลิกคำสั่งซื้อนี้</p>
+            
+            <textarea
+              value={cancelNote}
+              onChange={(e) => setCancelNote(e.target.value)}
+              placeholder="เช่น สินค้าหมด, ลูกค้าขอยกเลิก, ฯลฯ"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px]"
+              required
+            />
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setCancelNote('');
+                  setOrderToCancel(null);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                disabled={updating}
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={confirmCancelOrder}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                disabled={updating || !cancelNote.trim()}
+              >
+                {updating ? 'กำลังดำเนินการ...' : 'ยืนยันยกเลิก'}
+              </button>
             </div>
           </div>
         </div>

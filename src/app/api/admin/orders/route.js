@@ -34,7 +34,7 @@ export async function GET(req) {
 
 export async function PUT(req) {
   try {
-    const { order_id, status } = await req.json();
+    const { order_id, status, note } = await req.json();
     
     if (!order_id || !status) {
       return NextResponse.json({ error: 'Missing order_id or status' }, { status: 400 });
@@ -76,6 +76,14 @@ export async function PUT(req) {
       'UPDATE `order` SET status = ? WHERE order_id = ?',
       [status, order_id]
     );
+
+    // บันทึก history และ note (ถ้ามี)
+    if (note || status === 'CANCELLED') {
+      await pool.execute(
+        'INSERT INTO order_status_history (order_id, status, note, created_at) VALUES (?, ?, ?, NOW())',
+        [order_id, status, note || null]
+      );
+    }
     
     return NextResponse.json({ message: 'Order updated successfully', success: true });
   } catch (error) {
