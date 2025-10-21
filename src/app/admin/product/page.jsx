@@ -77,8 +77,8 @@ export default function Productmanagement() {
       p.name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesVisible = filterVisible === '' || 
-      (filterVisible === 'visible' && p.visible === 1) ||
-      (filterVisible === 'hidden' && p.visible === 0);
+      (filterVisible === 'visible' && p.visible === 0) ||
+      (filterVisible === 'hidden' && p.visible === 1);
     
     return matchesSearch && matchesVisible;
   });
@@ -150,7 +150,7 @@ export default function Productmanagement() {
                 <div>
                   <p className="text-gray-600 text-sm font-medium mb-1">แสดงบนเว็บ</p>
                   <p className="text-3xl font-bold text-green-600">
-                    {products.filter(p => p.visible === 1).length}
+                    {products.filter(p => p.visible === 0).length}
                   </p>
                 </div>
                 <div className="p-4 bg-gradient-to-br from-green-100 to-green-200 rounded-xl">
@@ -164,7 +164,7 @@ export default function Productmanagement() {
                 <div>
                   <p className="text-gray-600 text-sm font-medium mb-1">ซ่อนไว้</p>
                   <p className="text-3xl font-bold text-gray-600">
-                    {products.filter(p => p.visible === 0).length}
+                    {products.filter(p => p.visible === 1).length}
                   </p>
                 </div>
                 <div className="p-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl">
@@ -353,10 +353,10 @@ export default function Productmanagement() {
                         <td className="py-4 px-6 text-center">
                           <button
                             onClick={() => handleToggleVisible(product.id, product.visible)}
-                            title={product.visible ? "คลิกเพื่อซ่อนสินค้า" : "คลิกเพื่อแสดงสินค้า"}
+                            title={product.visible === 0 ? "คลิกเพื่อซ่อนสินค้า" : "คลิกเพื่อแสดงสินค้า"}
                             className="inline-flex items-center gap-1 px-3 py-2 rounded-lg font-semibold transition-all hover:scale-110"
                           >
-                            {product.visible ? (
+                            {product.visible === 0 ? (
                               <>
                                 <Eye className="w-5 h-5 text-green-600" />
                                 <span className="text-xs text-green-600 hidden lg:inline">แสดง</span>
@@ -404,11 +404,11 @@ export default function Productmanagement() {
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">
                       <Eye className="w-3 h-3" />
-                      แสดง: {products.filter(p => p.visible === 1).length}
+                      แสดง: {products.filter(p => p.visible === 0).length}
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold">
                       <EyeOff className="w-3 h-3" />
-                      ซ่อน: {products.filter(p => p.visible === 0).length}
+                      ซ่อน: {products.filter(p => p.visible === 1).length}
                     </div>
                   </div>
                 </div>

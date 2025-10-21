@@ -16,16 +16,22 @@ export default function Home() {
   const [newproducts, setnewProducts] = useState([]);
   const [category, setCategory] = useState([]);
   const [error, setError] = useState(null);
-  const [promotion, setPromotion] = useState([]);
+  // const [promotion, setPromotion] = useState([]);
   useEffect(() => {
     async function fetchProducts() {
       try {
         const res = await fetch('/api/product/new'); // เรียก API
-        if (!res.ok) throw new Error('ไม่สามารถดึงข้อมูลสินค้าได้');
+        if (!res.ok) {
+          console.error('Failed to fetch products:', res.status);
+          throw new Error('ไม่สามารถดึงข้อมูลสินค้าได้');
+        }
         const data = await res.json();
-        setnewProducts(data);
+        console.log('Fetched new products:', data);
+        setnewProducts(Array.isArray(data) ? data : []);
       } catch (err) {
+        console.error('Error fetching products:', err);
         setError(err.message);
+        setnewProducts([]);
       } finally {
         setLoading(false);
       }
@@ -34,31 +40,43 @@ export default function Home() {
     async function fetchCategory() {
       try {
         const res = await fetch('/api/categories'); // เรียก API
-        if (!res.ok) throw new Error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+        if (!res.ok) {
+          console.error('Failed to fetch categories:', res.status);
+          throw new Error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+        }
         const data = await res.json();
-        setCategory(data);
+        console.log('Fetched categories:', data);
+        setCategory(Array.isArray(data) ? data : []);
       } catch (err) {
+        console.error('Error fetching categories:', err);
         setError(err.message);
+        setCategory([]);
       } finally {
         setLoading(false);
       }
     }
-    async function fetchPromotion() {
-      try {
-        const res = await fetch('/api/product/promotion'); // เรียก API
-        if (!res.ok) throw new Error('ไม่สามารถดึงข้อมูลสินค้าได้');
-        const data = await res.json();
-        setPromotion(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
+    // async function fetchPromotion() {
+    //   try {
+    //     const res = await fetch('/api/product/promotion'); // เรียก API
+    //     if (!res.ok) {
+    //       console.error('Failed to fetch promotions:', res.status);
+    //       throw new Error('ไม่สามารถดึงข้อมูลสินค้าได้');
+    //     }
+    //     const data = await res.json();
+    //     console.log('Fetched promotions:', data);
+    //     setPromotion(Array.isArray(data) ? data : []);
+    //   } catch (err) {
+    //     console.error('Error fetching promotions:', err);
+    //     setError(err.message);
+    //     setPromotion([]);
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // }
 
     fetchProducts();
     fetchCategory();
-    fetchPromotion();
+    // fetchPromotion();
 
   }, []); // รันแค่ครั้งแรก
 
@@ -217,8 +235,15 @@ export default function Home() {
   </div>
 
  <div className="relative">
+  {loading ? (
+    <div className="flex justify-center items-center py-10">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+    </div>
+  ) : newproducts.length === 0 ? (
+    <div className="w-full text-center text-gray-500 py-8">ยังไม่มีสินค้าเข้าใหม่</div>
+  ) : (
   <div className="flex gap-2 overflow-x-auto pb-4">
-  {Array.isArray(newproducts) && newproducts.map((product) => (
+  {newproducts.map((product) => (
       <div
         key={product.id}
         className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
@@ -231,11 +256,12 @@ export default function Home() {
   <div className="flex justify-center mb-2 md:mb-4">
   <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
     <Image
-      src={(product.imageUrl || "").replace("172.16.107.247", "192.168.0.108")}
+      src={product.imageUrl || '/placeholder.png'}
       alt={product.pro_name}
       width={120}
       height={120}
       className="object-cover w-full h-full rounded-lg"
+      onError={(e) => { e.target.src = '/placeholder.png'; }}
     />
   </div>
 </div>
@@ -258,12 +284,13 @@ export default function Home() {
       </div>
     ))}
   </div>
+  )}
 </div>
 </section>
 <br />
 
 ิ<br />
-<section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
+{/* <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
   <div className="flex justify-between items-center mb-6">
     <h2 className="text-2xl font-bold text-gray-700">สินค้าโปรโมชั่น</h2>
     {promotion.length === 0 ? (
@@ -318,7 +345,7 @@ export default function Home() {
     )}
   </div>
 </div>
-</section>
+</section> */}
           {/* <section id="products" className="py-6 bg-gray-50">
             <div className="max-w-7xl mx-auto text-center border-8 p-5 rounded-2xl border-red-500 bg-white shadow-lg">
               <h2 className="text-3xl font-bold mb-10 text-red-500">สินค้าโปรโมชั่น</h2>

@@ -31,10 +31,17 @@ export async function POST(req) {
 export async function GET(req) {
   try {
     const [rows] = await pool.execute(
-      'SELECT * FROM Product WHERE visible = 0 ORDER BY createdAt DESC LIMIT 10'
+      'SELECT * FROM product WHERE visible = 0 ORDER BY createdAt DESC LIMIT 10'
     );
-    return new Response(JSON.stringify(rows), { status: 200 });
+    return new Response(JSON.stringify(rows), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error('Error fetching new products:', error);
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

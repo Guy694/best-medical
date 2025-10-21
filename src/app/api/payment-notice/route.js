@@ -103,10 +103,11 @@ export async function POST(request) {
       SELECT 
         o.order_id,
         o.order_code,
+        o.order_email,
         o.totalPrice as order_total,
         o.status,
         u.name As firstname,
-        u.email
+        u.email as user_email
     FROM \`order\` o
           LEFT JOIN user u ON o.order_email = u.email
       WHERE o.order_code = ?
@@ -123,11 +124,25 @@ export async function POST(request) {
 
     const order = orders[0];
 
+    // Debug: Log email comparison
+    console.log('Email comparison:', {
+      fromOrder: order.order_email,
+      fromForm: order_email,
+      trimmedOrder: order.order_email?.trim()?.toLowerCase(),
+      trimmedForm: order_email?.trim()?.toLowerCase()
+    });
 
-    // Check if email matches
-    if (order.email !== order_email) {
+    // Check if email matches (case-insensitive and trimmed)
+    const orderEmailNormalized = (order.order_email || '').trim().toLowerCase();
+    const formEmailNormalized = (order_email || '').trim().toLowerCase();
+    
+    if (orderEmailNormalized !== formEmailNormalized) {
       return NextResponse.json(
-        { error: 'อีเมลไม่ตรงกับในระบบ' },
+        { 
+          error: `อีเมลไม่ตรงกับในระบบ (ระบบ: ${order.order_email})`,
+          orderEmail: order.order_email,
+          providedEmail: order_email
+        },
         { status: 400 }
       );
     }
