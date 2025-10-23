@@ -414,24 +414,26 @@ export default function PaymentNotice() {
                 <div className="p-6">
                   {banks.map((bank) => (
                     <div key={bank.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center mb-3">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                          <Building2 className="w-6 h-6 text-blue-600" />
-                        </div>
+                      <div className="flex items-center mb-4">
+                       
                         <div>
-                          <h4 className="font-semibold text-gray-800">{bank.name}</h4>
+                       
                         </div>
                       </div>
                       
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">เลขที่บัญชี:</span>
-                          <span className="font-mono font-semibold text-blue-600">{bank.accountNumber}</span>
+                      {/* QR Code Section */}
+                      <div className="text-center">
+                        <p className="text-gray-700 font-medium mb-3">สแกน QR Code เพื่อโอนเงิน</p>
+                        <div className="flex justify-center">
+                          <img 
+                            src="/qrcode.jpg" 
+                            alt="QR Code สำหรับโอนเงิน" 
+                            className="w-48 h-48 object-contain border border-gray-200 rounded-lg shadow-sm"
+                          />
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">ชื่อบัญชี:</span>
-                          <span className="font-semibold text-gray-800">{bank.accountName}</span>
-                        </div>
+                        <p className="text-sm text-gray-500 mt-2">
+                          สแกนด้วยแอปธนาคารของคุณเพื่อโอนเงิน
+                        </p>
                       </div>
                     </div>
                   ))}
