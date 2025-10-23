@@ -10,6 +10,7 @@ import {
   Users, 
   UserCheck, 
   ShoppingCart,
+  MessageSquare,
   X 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,6 +27,7 @@ const getMenuByRole = (role) => {
     { label: 'จัดการสิทธิ์พนักงาน', href: '/admin/user/staff', icon: <UserCheck className="w-5 h-5 mr-2" />, color: 'red' },
     { label: 'จัดการรายการลูกค้า', href: '/admin/user/customer', icon: <Users className="w-5 h-5 mr-2" />, color: 'indigo' },
     { label: 'จัดการออเดอร์', href: '/admin/orders', icon: <ShoppingCart className="w-5 h-5 mr-2" />, color: 'teal' },
+    { label: 'ข้อความจากลูกค้า', href: '/admin/contacts', icon: <MessageSquare className="w-5 h-5 mr-2" />, color: 'pink' },
   ];
 
   const staffMenu = [
@@ -35,6 +37,7 @@ const getMenuByRole = (role) => {
     { label: 'จัดการบทความ', href: '/admin/articles', icon: <FileText className="w-5 h-5 mr-2" />, color: 'orange' },
     { label: 'จัดการรายการลูกค้า', href: '/admin/user/customer', icon: <Users className="w-5 h-5 mr-2" />, color: 'indigo' },
     { label: 'จัดการออเดอร์', href: '/admin/orders', icon: <ShoppingCart className="w-5 h-5 mr-2" />, color: 'teal' },
+    { label: 'ข้อความจากลูกค้า', href: '/admin/contacts', icon: <MessageSquare className="w-5 h-5 mr-2" />, color: 'pink' },
   ];
 
   // ใช้ตัวพิมพ์ใหญ่เพื่อให้ตรงกับ role จาก session
