@@ -7,9 +7,10 @@ import CookieBanner from "./components/cookiebanner";
 import FloatingContact from "./components/FloatingContact";
 import SessionTimeout from "./components/SessionTimeout";
 import Providers from "./components/Providers";
+import ChunkErrorHandler from "./components/ChunkErrorHandler";
 
 const prompt = Prompt({
-  subsets: ["latin","thai"], // รองรับภาษาไทย
+  subsets: ["latin", "thai"], // รองรับภาษาไทย
   weight: ["700", "400"], // น้ำหนักตัวอักษร
   display: "swap",
 });
@@ -55,6 +56,7 @@ export default function RootLayout({ children }) {
     <html lang="th">
       <body className={prompt.className}>
         <Providers>
+          <ChunkErrorHandler />
           <div className="flex flex-col min-h-screen">
             {/* <Sidebar /> */}
             {/* <Navbar /> */}
