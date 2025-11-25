@@ -94,10 +94,10 @@ export default function Home() {
           <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
           <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
         </div>
-        
+
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-        
+
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
           <div className=" bg-gradient-to-r from-blue-900 to-blue-800 text-white py-5 md:py-16  rounded-xl shadow-xl">
@@ -117,10 +117,10 @@ export default function Home() {
             </div>
           </div>
           <br />
-          
+
           <div className=" grid grid-cols-1 bg-white  rounded-xl p-6 md:flex items-center space-x-6 max-w-7xl mx-auto shadow">
             {/* โลโก้ */}
-            <img 
+            <img
               src="/banner.png"
               alt="หกห"
               className="w-32 h-32 object-contain rounded-lg"
@@ -185,112 +185,114 @@ export default function Home() {
             </div>
           </section>
 
-   <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
-  <div className="flex justify-between items-center mb-6">
-    <h2 className="text-2xl font-bold text-gray-700">หมวดหมู่สินค้า</h2>
-    <a href="categories" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
-      ดูหมวดหมู่สินค้าทั้งหมด
-    </a>
-  </div>
+          <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-700">หมวดหมู่สินค้า</h2>
+              <a href="categories" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
+                ดูหมวดหมู่สินค้าทั้งหมด
+              </a>
+            </div>
 
- <div className="relative">
-  <div className="flex gap-2 overflow-x-auto pb-4">
-    {category.map((category) => (
-      <div
-        key={category.id}
-        className="min-w-[160px] md:min-w-[260px] p-3 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
-      >
-       
-         <div className="flex justify-center mb-2 md:mb-4">
-  <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
-            <Image
-              src={(category.cate_img || "")}
-              alt={category.cate_name}
-              width={120}
-              height={120}
-              className="object-cover w-full h-full rounded-lg"
-            />
-        </div>   </div>
-        <p className="text-xs md:text-lg uppercase mb-1 text-center bg-gradient-to-bl from-blue-900 to-blue-700 text-white font-bold rounded-b-2xl p-1">{category.cate_name}</p>
-        <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
-          <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
-            <Eye size={40} />
-          </button>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
-</section>
+            <div className="relative">
+              <div className="flex gap-2 overflow-x-auto pb-4">
+                {category.map((category) => (
+                  <div
+                    key={category.id}
+                    className="min-w-[160px] md:min-w-[260px] p-3 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
+                  >
 
-<br />
+                    <div className="flex justify-center mb-2 md:mb-4">
+                      <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
+                        <Image
+                          src={(category.cate_img || "")}
+                          alt={category.cate_name}
+                          width={120}
+                          height={120}
+                          className="object-cover w-full h-full rounded-lg"
+                        />
+                      </div>   </div>
+                    <p className="text-xs md:text-lg uppercase mb-1 text-center bg-gradient-to-bl from-blue-900 to-blue-700 text-white font-bold rounded-b-2xl p-1">{category.cate_name}</p>
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
+                      <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
+                        <Eye size={40} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <br />
 
 
-  <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
-  <div className="flex justify-between items-center mb-6">
-    <h2 className="text-2xl font-bold text-gray-700">สินค้าเข้าใหม่</h2>
-    <a href="product" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
-      ดูสินค้าทั้งหมด
-    </a>
-  </div>
+          <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-700">สินค้าเข้าใหม่</h2>
+              <a href="product" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
+                ดูสินค้าทั้งหมด
+              </a>
+            </div>
 
- <div className="relative">
-  {loading ? (
-    <div className="flex justify-center items-center py-10">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-    </div>
-  ) : newproducts.length === 0 ? (
-    <div className="w-full text-center text-gray-500 py-8">ยังไม่มีสินค้าเข้าใหม่</div>
-  ) : (
-  <div className="flex gap-2 overflow-x-auto pb-4">
-  {newproducts.map((product) => (
-      <div
-        key={product.id}
-        className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
-      >
-        {product.discount && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-            {product.discount}%
-          </span>
-        )}
-  <div className="flex justify-center mb-2 md:mb-4">
-  <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
-    <Image
-      src={product.imageUrl || '/placeholder.png'}
-      alt={product.pro_name}
-      width={120}
-      height={120}
-      className="object-cover w-full h-full rounded-lg"
-      onError={(e) => { e.target.src = '/placeholder.png'; }}
-    />
-  </div>
-</div>
-        <p className="text-gray-800 text-xs uppercase mb-1">{product.category}</p>
-        <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{product.pro_name}</h3>
-        <div className="mb-2">
-          <span className="text-base text-gray-800 md:text-lg font-bold">{product.price} บาท</span>
-          {product.oldPrice && (
-            <span className="text-gray-800 line-through ml-2">${product.oldPrice}</span>
-          )}
-        </div>
-        <p className="text-xs text-green-600">(คงเหลือ {product.stock})</p>
-        <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
-            <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
-            <Link href={`/product/${product.id}`} passHref>
-              <Eye size={40} />
-            </Link>
-          </button>
-        </div>
-      </div>
-    ))}
-  </div>
-  )}
-</div>
-</section>
-<br />
+            <div className="relative">
+              {loading ? (
+                <div className="flex justify-center items-center py-10">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+                </div>
+              ) : newproducts.length === 0 ? (
+                <div className="w-full text-center text-gray-500 py-8">ยังไม่มีสินค้าเข้าใหม่</div>
+              ) : (
+                <div className="flex gap-2 overflow-x-auto pb-4">
+                  {newproducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
+                    >
+                      {product.discount && (
+                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                          {product.discount}%
+                        </span>
+                      )}
+                      <div className="flex justify-center mb-2 md:mb-4">
+                        <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
+                          <Image
+                            src={product.imageUrl || '/placeholder.png'}
+                            alt={product.pro_name}
+                            width={120}
+                            height={120}
+                            className="object-cover w-full h-full rounded-lg"
+                            onError={(e) => { e.target.src = '/placeholder.png'; }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-800 uppercase mb-1">{product.category}</p>
+                      <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{product.pro_name}</h3>
+                      <div className="mb-2">
+                        <span className="text-base text-gray-800 md:text-lg font-bold">
+                          {parseFloat(product.price) === 0 ? 'x.xx' : product.price} บาท
+                        </span>
+                        {product.oldPrice && (
+                          <span className="text-gray-800 line-through ml-2">${product.oldPrice}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-green-600">(คงเหลือ {product.stock})</p>
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
+                        <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
+                          <Link href={`/product/${product.id}`} passHref>
+                            <Eye size={40} />
+                          </Link>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+          <br />
 
-ิ<br />
-{/* <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
+          ิ<br />
+          {/* <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
   <div className="flex justify-between items-center mb-6">
     <h2 className="text-2xl font-bold text-gray-700">สินค้าโปรโมชั่น</h2>
     {promotion.length === 0 ? (
@@ -380,7 +382,7 @@ export default function Home() {
 
 
           </div>
-          
+
 
 
 

@@ -25,23 +25,23 @@ export default function ProductPage() {
 
 
 
-// ฟังก์ชันเพิ่มสินค้า
-function addToCart(product) {
-  // อ่านตะกร้าจาก cookie
-  const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
-  // เพิ่มสินค้าใหม่
-  cart.push({
-    id: product.id,
-    name: product.pro_name,
-    price: product.price,
-    image: product.imageUrl,
-    quantity: quantity,
-    delivery: product.delivery || 0
-  });
-  // เซฟกลับไปที่ cookie
-  Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
-  alert("เพิ่มสินค้าเข้าตะกร้าแล้ว!");
-}
+  // ฟังก์ชันเพิ่มสินค้า
+  function addToCart(product) {
+    // อ่านตะกร้าจาก cookie
+    const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+    // เพิ่มสินค้าใหม่
+    cart.push({
+      id: product.id,
+      name: product.pro_name,
+      price: product.price,
+      image: product.imageUrl,
+      quantity: quantity,
+      delivery: product.delivery || 0
+    });
+    // เซฟกลับไปที่ cookie
+    Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
+    alert("เพิ่มสินค้าเข้าตะกร้าแล้ว!");
+  }
 
   useEffect(() => {
     async function fetchProduct() {
@@ -80,16 +80,16 @@ function addToCart(product) {
       <Navbar />
       <div className="min-h-screen bg-gray-100">
         <div className="max-w-7xl mx-auto px-4 py-8">
-       <Breadcrumb
-  items={[
-    { label: "หน้าหลัก", href: "/" },
-    {
-      label: product?.cate_name || "อื่นๆ",
-      href: `/category/${product?.cate_name ? encodeURIComponent(product.cate_name) : "scale"}`
-    },
-    { label: product?.pro_name || "อื่นๆ" }
-  ]}
-/>
+          <Breadcrumb
+            items={[
+              { label: "หน้าหลัก", href: "/" },
+              {
+                label: product?.cate_name || "อื่นๆ",
+                href: `/category/${product?.cate_name ? encodeURIComponent(product.cate_name) : "scale"}`
+              },
+              { label: product?.pro_name || "อื่นๆ" }
+            ]}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-3xl shadow">
             {/* รูปสินค้า */}
@@ -107,9 +107,8 @@ function addToCart(product) {
                 {Array.isArray(product.images) && product.images.length > 0 && product.images.map((img, idx) => (
                   <div
                     key={idx}
-                    className={`border p-1 rounded cursor-pointer ${
-                      mainImage === img ? "border-blue-500" : ""
-                    }`}
+                    className={`border p-1 rounded cursor-pointer ${mainImage === img ? "border-blue-500" : ""
+                      }`}
                     onClick={() => setMainImage(img)}
                   >
                     <Image
@@ -134,15 +133,15 @@ function addToCart(product) {
               {hasPromotion ? (
                 <div>
                   <p className="text-gray-400 line-through">
-                    {product.price.toLocaleString()} บาท
+                    {parseFloat(product.price) === 0 ? 'x.xx' : product.price.toLocaleString()} บาท
                   </p>
                   <p className="text-red-500 text-2xl font-bold">
-                    {finalPrice.toLocaleString()} บาท
+                    {parseFloat(finalPrice) === 0 ? 'x.xx' : finalPrice.toLocaleString()} บาท
                   </p>
                 </div>
               ) : (
                 <p className="text-2xl text-gray-700 font-bold">
-                  {product.price.toLocaleString()} บาท
+                  {parseFloat(product.price) === 0 ? 'x.xx' : product.price.toLocaleString()} บาท
                 </p>
               )}
 
@@ -171,11 +170,15 @@ function addToCart(product) {
               </div>
 
               <button
-  className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-800 mb-4"
-  onClick={() => addToCart(product)}
->
-  หยิบใส่ตะกร้า
-</button>
+                className={`px-6 py-2 rounded mb-4 ${parseFloat(product.price) === 0
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-800'
+                  }`}
+                onClick={() => parseFloat(product.price) !== 0 && addToCart(product)}
+                disabled={parseFloat(product.price) === 0}
+              >
+                {parseFloat(product.price) === 0 ? 'ติดต่อสอบถามราคา' : 'หยิบใส่ตะกร้า'}
+              </button>
 
               <div className="flex gap-4">
                 <button
@@ -196,12 +199,12 @@ function addToCart(product) {
                 <button
                   className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 border border-gray-300 flex items-center gap-2"
                   onClick={() => {
-                   if (navigator.clipboard) {
-  navigator.clipboard.writeText(window.location.href);
-  alert('คัดลอกลิงก์เรียบร้อยแล้ว!');
-} else {
-  alert('เบราว์เซอร์ไม่รองรับการคัดลอกลิงก์');
-}
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(window.location.href);
+                      alert('คัดลอกลิงก์เรียบร้อยแล้ว!');
+                    } else {
+                      alert('เบราว์เซอร์ไม่รองรับการคัดลอกลิงก์');
+                    }
                   }}
                 >
                   <Copy className="inline-block h-5 w-5" />
@@ -218,11 +221,10 @@ function addToCart(product) {
               {tabs.map((tab, idx) => (
                 <button
                   key={tab.label}
-                  className={`px-6 py-2 font-medium ${
-                    activeTab === idx
+                  className={`px-6 py-2 font-medium ${activeTab === idx
                       ? "border-b-2 border-blue-600 text-blue-700"
                       : "text-gray-600"
-                  }`}
+                    }`}
                   onClick={() => setActiveTab(idx)}
                 >
                   {tab.label}
@@ -240,8 +242,8 @@ function addToCart(product) {
                   <ul className="list-disc list-inside space-y-2 text-gray-700">
                     {Array.isArray(product.description)
                       ? product.description.map((desc, idx) => (
-                          <li key={idx}>{desc}</li>
-                        ))
+                        <li key={idx}>{desc}</li>
+                      ))
                       : typeof product.description === 'string'
                         ? product.description.split(/\r?\n|,|\u2022|\*/).map((desc, idx) => desc.trim() && <li key={idx}>{desc.trim()}</li>)
                         : null}
