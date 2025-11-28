@@ -6,6 +6,7 @@ export async function POST(request) {
   try {
     const data = await request.formData();
     const file = data.get('file');
+    const folder = data.get('folder') || 'articles'; // ใช้ folder ที่ส่งมา หรือ default เป็น articles
 
     if (!file) {
       return NextResponse.json(
@@ -38,9 +39,21 @@ export async function POST(request) {
     const timestamp = Date.now();
     const originalName = file.name.replace(/\s+/g, '_');
     const fileName = `${timestamp}_${originalName}`;
-    
+
+    // กำหนด folder path ตามที่ระบุ
+    let uploadPath = 'uploads/articles'; // default
+    let urlPath = '/uploads/articles';
+
+    if (folder === 'pdimage') {
+      uploadPath = 'pdimage';
+      urlPath = '/pdimage';
+    } else if (folder === 'articles') {
+      uploadPath = 'uploads/articles';
+      urlPath = '/uploads/articles';
+    }
+
     // เส้นทางสำหรับบันทึกไฟล์
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'articles');
+    const uploadDir = join(process.cwd(), 'public', ...uploadPath.split('/'));
     const filePath = join(uploadDir, fileName);
 
     // สร้างโฟลเดอร์ถ้าไม่มี
@@ -55,11 +68,12 @@ export async function POST(request) {
     await writeFile(filePath, buffer);
 
     // ส่งคืน URL ของไฟล์
-    const fileUrl = `/uploads/articles/${fileName}`;
+    const fileUrl = `${urlPath}/${fileName}`;
 
     return NextResponse.json({
       success: true,
       message: 'อัพโหลดสำเร็จ',
+      imageUrl: fileUrl, // เปลี่ยนจาก url เป็น imageUrl เพื่อให้ตรงกับที่ใช้
       url: fileUrl,
       fileName: fileName
     });

@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import Navbar from '@/app/components/Nav';
 import Sidebar from '@/app/components/Sidebar';
-import { useRouter,useParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 
 export default function EditProduct() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,6 +18,8 @@ export default function EditProduct() {
     delivery: "",
     warranty: ""
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -33,13 +36,13 @@ export default function EditProduct() {
           fetch(`/api/admin/product/${id}`),
           fetch('/api/admin/categories')
         ]);
-        
+
         const productData = await productRes.json();
         const categoriesData = await categoriesRes.json();
-        
+
         console.log("Product Data:", productData);
         console.log("Categories Data:", categoriesData);
-        
+
         setForm({
           pro_name: productData.pro_name || productData.name || "",
           price: productData.price || "",
@@ -50,7 +53,12 @@ export default function EditProduct() {
           delivery: productData.delivery || "",
           warranty: productData.warranty || ""
         });
-        
+
+        // Set image preview to existing image
+        if (productData.imageUrl) {
+          setImagePreview(productData.imageUrl);
+        }
+
         // Handle different API response formats
         let categoriesArray = [];
         if (Array.isArray(categoriesData)) {
@@ -60,7 +68,7 @@ export default function EditProduct() {
         } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
           categoriesArray = categoriesData.data;
         }
-        
+
         setCategories(categoriesArray);
       } catch (err) {
         console.error("Fetch error:", err);
@@ -76,15 +84,53 @@ export default function EditProduct() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
+      let uploadedImageUrl = form.imageUrl; // ใช้รูปเดิม
+
+      // ถ้ามีการอัพโหลดรูปใหม่
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append('file', imageFile);
+        formData.append('folder', 'pdimage'); // ระบุโฟลเดอร์ pdimage
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          uploadedImageUrl = uploadData.imageUrl;
+        } else {
+          throw new Error('การอัพโหลดรูปภาพล้มเหลว');
+        }
+      }
+
+      // อัพเดตข้อมูลสินค้า
       const res = await fetch(`/api/admin/product/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          ...form,
+          imageUrl: uploadedImageUrl
+        })
       });
       if (res.ok) {
         router.push("/admin/product");
@@ -93,7 +139,7 @@ export default function EditProduct() {
         setError(data.error || "เกิดข้อผิดพลาด");
       }
     } catch (err) {
-      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      setError(err.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ");
     } finally {
       setLoading(false);
     }
@@ -145,8 +191,8 @@ export default function EditProduct() {
                   <option value="">เลือกหมวดหมู่</option>
                   {categories.length > 0 ? (
                     categories.map((category, index) => (
-                      <option 
-                        key={category.id || index} 
+                      <option
+                        key={category.id || index}
                         value={category.id}
                       >
                         {category.cate_name || category.name || `หมวดหมู่ ${category.id}`}
@@ -164,8 +210,37 @@ export default function EditProduct() {
                 )}
               </div>
               <div>
-                <label className="block mb-1 text-gray-700">รูปภาพ (URL)</label>
-                <input type="text" name="imageUrl" value={form.imageUrl} onChange={handleChange} className="w-full border rounded px-3 py-2 text-gray-700" />
+                <label className="block mb-1 text-gray-700">รูปภาพสินค้า</label>
+
+                {/* แสดงรูปภาพปัจจุบัน */}
+                {imagePreview && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-600 mb-2">รูปภาพปัจจุบัน:</p>
+                    <div className="relative w-48 h-48 border rounded-lg overflow-hidden">
+                      <Image
+                        src={imagePreview}
+                        alt="Product preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Input สำหรับอัพโหลดรูปใหม่ */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full border rounded px-3 py-2 text-gray-700"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  ไม่ต้องเลือกไฟล์หากต้องการใช้รูปเดิม
+                </p>
+              </div>
+              <div>
+                <label className="block mb-1 text-gray-700">รูปภาพ (URL) - ทางเลือก</label>
+                <input type="text" name="imageUrl" value={form.imageUrl} onChange={handleChange} className="w-full border rounded px-3 py-2 text-gray-700" placeholder="หรือใส่ URL รูปภาพ" />
               </div>
               <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
                 {loading ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
