@@ -49,10 +49,15 @@ export default function ProductPage() {
         const res = await fetch(`/api/product/${id}`);
         const data = await res.json();
 
+        console.log('Product data:', data);
+        console.log('ImageUrl:', data.imageUrl);
+
         if (res.ok) {
           setProduct(data);
           if (data.images && data.images.length > 0) {
             setMainImage(data.images[0]);
+          } else if (data.imageUrl) {
+            setMainImage(data.imageUrl);
           }
         } else {
           setError(data.error || "ไม่พบสินค้า");
@@ -99,6 +104,7 @@ export default function ProductPage() {
                   src={product.imageUrl || "/image.png"}
                   alt={product.pro_name}
                   fill
+                  unoptimized
                   className="object-contain rounded-lg"
                   sizes="100vw"
                 />
@@ -116,6 +122,7 @@ export default function ProductPage() {
                       alt=""
                       width={80}
                       height={80}
+                      unoptimized
                       className="object-contain"
                     />
                   </div>
