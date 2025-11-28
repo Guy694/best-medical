@@ -171,8 +171,8 @@ export default function ProductPage() {
 
               <button
                 className={`px-6 py-2 rounded mb-4 ${parseFloat(product.price) === 0
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    : 'bg-red-600 text-white hover:bg-red-800'
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-red-600 text-white hover:bg-red-800'
                   }`}
                 onClick={() => parseFloat(product.price) !== 0 && addToCart(product)}
                 disabled={parseFloat(product.price) === 0}
@@ -222,8 +222,8 @@ export default function ProductPage() {
                 <button
                   key={tab.label}
                   className={`px-6 py-2 font-medium ${activeTab === idx
-                      ? "border-b-2 border-blue-600 text-blue-700"
-                      : "text-gray-600"
+                    ? "border-b-2 border-blue-600 text-blue-700"
+                    : "text-gray-600"
                     }`}
                   onClick={() => setActiveTab(idx)}
                 >
@@ -239,7 +239,7 @@ export default function ProductPage() {
                   <h2 className="font-bold text-lg mb-4 text-gray-700">
                     คุณสมบัติ
                   </h2>
-                  <ul className="list-disc list-inside space-y-2 text-gray-700">
+                  <ul className="space-y-2 text-gray-700">
                     {Array.isArray(product.description)
                       ? product.description.map((desc, idx) => (
                         <li key={idx}>{desc}</li>
