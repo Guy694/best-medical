@@ -54,7 +54,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="th">
       <body className={prompt.className}>
-        <Providers>
+        <Providers session={null}>
           <div className="flex flex-col min-h-screen">
             {/* <Sidebar /> */}
             {/* <Navbar /> */}
