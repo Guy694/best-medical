@@ -83,7 +83,7 @@ export default function ProductsPage() {
                   <Package className="w-10 h-10" />
                   <h1 className="text-4xl font-bold">สินค้าทั้งหมด</h1>
                 </div>
-                <p className="text-blue-100">ค้นพบสินค้าคุณภาพดีมากมาย</p>
+
               </div>
               <button
                 className="md:hidden bg-white/20 backdrop-blur-sm rounded-xl p-3 hover:bg-white/30 transition"
@@ -112,8 +112,8 @@ export default function ProductsPage() {
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`p-3 rounded-xl transition ${viewMode === "grid"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                 >
                   <Grid className="w-5 h-5" />
@@ -121,8 +121,8 @@ export default function ProductsPage() {
                 <button
                   onClick={() => setViewMode("list")}
                   className={`p-3 rounded-xl transition ${viewMode === "list"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                 >
                   <List className="w-5 h-5" />
@@ -135,8 +135,8 @@ export default function ProductsPage() {
             {/* Sidebar */}
             <aside
               className={`lg:col-span-3 ${showMenu
-                  ? "fixed inset-0 bg-black/50 z-50 md:relative md:bg-transparent"
-                  : "hidden lg:block"
+                ? "fixed inset-0 bg-black/50 z-50 md:relative md:bg-transparent"
+                : "hidden lg:block"
                 }`}
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowMenu(false);
@@ -144,8 +144,8 @@ export default function ProductsPage() {
             >
               <div
                 className={`${showMenu
-                    ? "fixed left-0 top-0 h-full w-80 bg-white shadow-2xl overflow-y-auto"
-                    : ""
+                  ? "fixed left-0 top-0 h-full w-80 bg-white shadow-2xl overflow-y-auto"
+                  : ""
                   } lg:sticky lg:top-6`}
               >
                 {/* Categories Card */}

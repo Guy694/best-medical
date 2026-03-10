@@ -154,15 +154,15 @@ export default function ProductPage() {
               {hasPromotion ? (
                 <div>
                   <p className="text-gray-400 line-through">
-                    {parseFloat(product.price) === 0 ? 'x.xx' : product.price.toLocaleString()} บาท
+                    {parseFloat(product.price) === 0 ? 'x.xx' : Number(product.price).toLocaleString('th-TH')} บาท
                   </p>
                   <p className="text-red-500 text-2xl font-bold">
-                    {parseFloat(finalPrice) === 0 ? 'x.xx' : finalPrice.toLocaleString()} บาท
+                    {parseFloat(finalPrice) === 0 ? 'x.xx' : Number(finalPrice).toLocaleString('th-TH')} บาท
                   </p>
                 </div>
               ) : (
                 <p className="text-2xl text-gray-700 font-bold">
-                  {parseFloat(product.price) === 0 ? 'x.xx' : product.price.toLocaleString()} บาท
+                  {parseFloat(product.price) === 0 ? 'x.xx' : Number(product.price).toLocaleString('th-TH')} บาท
                 </p>
               )}
 
@@ -201,37 +201,7 @@ export default function ProductPage() {
                 {parseFloat(product.price) === 0 ? 'ติดต่อสอบถามราคา' : 'หยิบใส่ตะกร้า'}
               </button>
 
-              <div className="flex gap-4">
-                <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-800"
-                  onClick={() => {
-                    const shareUrl = window.location.href;
-                    window.open(
-                      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                        shareUrl
-                      )}`,
-                      "_blank",
-                      "noopener,noreferrer,width=600,height=400"
-                    );
-                  }}
-                >
-                  <Facebook className="inline-block" /> แชร์บนเฟสบุ๊ค
-                </button>
-                <button
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 border border-gray-300 flex items-center gap-2"
-                  onClick={() => {
-                    if (navigator.clipboard) {
-                      navigator.clipboard.writeText(window.location.href);
-                      alert('คัดลอกลิงก์เรียบร้อยแล้ว!');
-                    } else {
-                      alert('เบราว์เซอร์ไม่รองรับการคัดลอกลิงก์');
-                    }
-                  }}
-                >
-                  <Copy className="inline-block h-5 w-5" />
-                  คัดลอกลิงก์
-                </button>
-              </div>
+
             </div>
           </div>
 
