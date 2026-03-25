@@ -1,1 +1,1 @@
-self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/Users/skyline/dev/best-medical/src/app/layout\":[\"static/media/e9fcf2a736cc2865-s.p.woff2\",\"static/media/3c365cdafe49b4eb-s.p.woff2\",\"static/media/55190bc973e13381-s.p.woff2\",\"static/media/cc9a5f10ece852e7-s.p.woff2\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{},\"appUsingSizeAdjust\":false,\"pagesUsingSizeAdjust\":false}"

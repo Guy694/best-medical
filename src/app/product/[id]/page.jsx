@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Navbar from "@/app/components/Nav";
-import { Facebook, Copy } from "lucide-react";
+import { Facebook, Copy, ZoomIn, X } from "lucide-react";
 import Breadcrumb from "@/app/components/Breadcrumb";
 import { useParams } from "next/navigation";
 import Cookies from "js-cookie";
@@ -15,13 +15,15 @@ export default function ProductPage() {
   const [mainImage, setMainImage] = useState("");
 
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const tabs = [
-    { label: "คำอธิบาย" },
-    { label: "ข้อมูลเพิ่มเติม" },
-    { label: "บทวิจารณ์ (0)" },
-  ];
+  const closeLightbox = useCallback(() => setLightboxOpen(false), []);
+
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") closeLightbox(); };
+    if (lightboxOpen) window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightboxOpen, closeLightbox]);
 
 
 
@@ -80,6 +82,8 @@ export default function ProductPage() {
       : product.price - (product.price * product.promotion.discount_value) / 100
     : product.price;
 
+  const lightboxSrc = mainImage || product.imageUrl || "/image.png";
+
   return (
     <div>
       <Navbar />
@@ -99,15 +103,25 @@ export default function ProductPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-3xl shadow">
             {/* รูปสินค้า */}
             <div>
-              <div className="border border-gray-300 p-4 rounded-xl w-full h-96 relative">
+              <div
+                className="border border-gray-300 p-4 rounded-xl w-full h-96 relative cursor-zoom-in group overflow-hidden"
+                onClick={() => setLightboxOpen(true)}
+                title="คลิกเพื่อขยายรูป"
+              >
                 <Image
-                  src={product.imageUrl || "/image.png"}
+                  src={mainImage || product.imageUrl || "/image.png"}
                   alt={product.pro_name}
                   fill
                   unoptimized
-                  className="object-contain rounded-lg"
+                  className="object-contain rounded-lg transition-transform duration-300 group-hover:scale-105"
                   sizes="100vw"
                 />
+                {/* Zoom overlay icon */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all duration-300 rounded-xl">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/80 backdrop-blur-sm rounded-full p-3 shadow-lg">
+                    <ZoomIn className="w-6 h-6 text-gray-700" />
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2 mt-4">
                 {Array.isArray(product.images) && product.images.length > 0 && product.images.map((img, idx) => (
@@ -140,15 +154,15 @@ export default function ProductPage() {
               {hasPromotion ? (
                 <div>
                   <p className="text-gray-400 line-through">
-                    {parseFloat(product.price) === 0 ? 'x.xx' : product.price.toLocaleString()} บาท
+                    {parseFloat(product.price) === 0 ? 'x.xx' : Number(product.price).toLocaleString('th-TH')} บาท
                   </p>
                   <p className="text-red-500 text-2xl font-bold">
-                    {parseFloat(finalPrice) === 0 ? 'x.xx' : finalPrice.toLocaleString()} บาท
+                    {parseFloat(finalPrice) === 0 ? 'x.xx' : Number(finalPrice).toLocaleString('th-TH')} บาท
                   </p>
                 </div>
               ) : (
                 <p className="text-2xl text-gray-700 font-bold">
-                  {parseFloat(product.price) === 0 ? 'x.xx' : product.price.toLocaleString()} บาท
+                  {parseFloat(product.price) === 0 ? 'x.xx' : Number(product.price).toLocaleString('th-TH')} บาท
                 </p>
               )}
 
@@ -187,90 +201,59 @@ export default function ProductPage() {
                 {parseFloat(product.price) === 0 ? 'ติดต่อสอบถามราคา' : 'หยิบใส่ตะกร้า'}
               </button>
 
-              <div className="flex gap-4">
-                <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-800"
-                  onClick={() => {
-                    const shareUrl = window.location.href;
-                    window.open(
-                      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                        shareUrl
-                      )}`,
-                      "_blank",
-                      "noopener,noreferrer,width=600,height=400"
-                    );
-                  }}
-                >
-                  <Facebook className="inline-block" /> แชร์บนเฟสบุ๊ค
-                </button>
-                <button
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 border border-gray-300 flex items-center gap-2"
-                  onClick={() => {
-                    if (navigator.clipboard) {
-                      navigator.clipboard.writeText(window.location.href);
-                      alert('คัดลอกลิงก์เรียบร้อยแล้ว!');
-                    } else {
-                      alert('เบราว์เซอร์ไม่รองรับการคัดลอกลิงก์');
-                    }
-                  }}
-                >
-                  <Copy className="inline-block h-5 w-5" />
-                  คัดลอกลิงก์
-                </button>
-              </div>
+
             </div>
           </div>
 
           <br />
-          <div className="bg-white rounded-2xl shadow p-4">
-            {/* Tabs */}
-            <div className="flex border-b">
-              {tabs.map((tab, idx) => (
-                <button
-                  key={tab.label}
-                  className={`px-6 py-2 font-medium ${activeTab === idx
-                    ? "border-b-2 border-blue-600 text-blue-700"
-                    : "text-gray-600"
-                    }`}
-                  onClick={() => setActiveTab(idx)}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Tab Content */}
-            <div className="py-6">
-              {activeTab === 0 && (
-                <div>
-                  <h2 className="font-bold text-lg mb-4 text-gray-700">
-                    คุณสมบัติ
-                  </h2>
-                  <ul className="space-y-2 text-gray-700">
-                    {Array.isArray(product.description)
-                      ? product.description.map((desc, idx) => (
-                        <li key={idx}>{desc}</li>
-                      ))
-                      : typeof product.description === 'string'
-                        ? product.description.split(/\r?\n|,|\u2022|\*/).map((desc, idx) => desc.trim() && <li key={idx}>{desc.trim()}</li>)
-                        : null}
-                  </ul>
-                </div>
-              )}
-              {activeTab === 1 && (
-                <div className="text-gray-700">
-                  <p>ข้อมูลเพิ่มเติมเกี่ยวกับสินค้า...</p>
-                </div>
-              )}
-              {activeTab === 2 && (
-                <div className="text-gray-700">
-                  <p>ยังไม่มีบทวิจารณ์</p>
-                </div>
-              )}
-            </div>
+          <div className="bg-white rounded-2xl shadow p-6">
+            <h2 className="font-bold text-lg mb-4 text-gray-700">คุณสมบัติ</h2>
+            <ul className="space-y-2 text-gray-700">
+              {Array.isArray(product.description)
+                ? product.description.map((desc, idx) => (
+                  <li key={idx}>{desc}</li>
+                ))
+                : typeof product.description === 'string'
+                  ? product.description.split(/\r?\n|,|\u2022|\*/).map((desc, idx) => desc.trim() && <li key={idx}>{desc.trim()}</li>)
+                  : null}
+            </ul>
           </div>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
+          onClick={closeLightbox}
+        >
+          <div
+            className="relative max-w-5xl max-h-[90vh] w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeLightbox}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10 bg-white/10 hover:bg-white/20 rounded-full p-2"
+              title="ปิด (Esc)"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            {/* Image */}
+            <div className="relative w-full" style={{ height: '80vh' }}>
+              <Image
+                src={lightboxSrc}
+                alt={product.pro_name}
+                fill
+                unoptimized
+                className="object-contain rounded-xl"
+                sizes="100vw"
+              />
+            </div>
+            <p className="text-center text-white/60 text-sm mt-3">คลิกด้านนอกหรือกด Esc เพื่อปิด</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
