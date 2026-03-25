@@ -1,4 +1,4 @@
-// File: C:\xampp\htdocs\best-medical\src\app\product\page.jsx
+// File: /Users/skyline/dev/best-medical/src/app/product/page.jsx
 import * as entry from '../../../../src/app/product/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

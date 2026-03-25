@@ -1,4 +1,4 @@
-// File: C:\xampp\htdocs\best-medical\src\app\api\categories\route.js
+// File: /Users/skyline/dev/best-medical/src/app/api/categories/route.js
 import * as entry from '../../../../../src/app/api/categories/route.js'
 import type { NextRequest } from 'next/server.js'
 
