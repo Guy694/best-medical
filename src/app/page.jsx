@@ -1,412 +1,204 @@
 "use client";
-import { Menu, X, Globe, User, ShoppingCart, Bell, Briefcase, ShieldCheck, Truck, Store, ArrowBigRightDash, Car } from "lucide-react";
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Heart, Eye } from "lucide-react";
+
 import Link from "next/link";
-import Navbar from "./components/Nav";
-import Image from "next/image";
-import { p } from "framer-motion/client";
+import { useEffect, useState } from "react";
+import { ArrowRight, ShieldCheck, Truck, Headphones, BadgeCheck, Search, CreditCard, PackageCheck, ShoppingCart } from "lucide-react";
+import ProductCard, { ProductCardSkeleton } from "./components/ProductCard";
+import { imgSrc } from "./lib/format";
 
-
+const STEPS = [
+  { icon: Search, title: "เลือกสินค้า", desc: "ค้นหาและเพิ่มสินค้าลงตะกร้า" },
+  { icon: ShoppingCart, title: "สั่งซื้อ", desc: "กรอกอีเมลเพื่อรับเลขคำสั่งซื้อ" },
+  { icon: CreditCard, title: "ชำระเงิน", desc: "โอนเงินและแจ้งชำระพร้อมแนบสลิป" },
+  { icon: PackageCheck, title: "รับสินค้า", desc: "ติดตามสถานะได้ตลอดเวลา" },
+];
 
 export default function Home() {
+  const [products, setProducts] = useState(null);
+  const [categories, setCategories] = useState(null);
 
-  const [loading, setLoading] = useState(true);
-  const [current, setCurrent] = useState(0);
-  const [newproducts, setnewProducts] = useState([]);
-  const [category, setCategory] = useState([]);
-  const [error, setError] = useState(null);
-  // const [promotion, setPromotion] = useState([]);
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await fetch('/api/product/new'); // เรียก API
-        if (!res.ok) {
-          console.error('Failed to fetch products:', res.status);
-          throw new Error('ไม่สามารถดึงข้อมูลสินค้าได้');
-        }
-        const data = await res.json();
-        console.log('Fetched new products:', data);
-        setnewProducts(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error('Error fetching products:', err);
-        setError(err.message);
-        setnewProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function fetchCategory() {
-      try {
-        const res = await fetch('/api/categories'); // เรียก API
-        if (!res.ok) {
-          console.error('Failed to fetch categories:', res.status);
-          throw new Error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
-        }
-        const data = await res.json();
-        console.log('Fetched categories:', data);
-        setCategory(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError(err.message);
-        setCategory([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    // async function fetchPromotion() {
-    //   try {
-    //     const res = await fetch('/api/product/promotion'); // เรียก API
-    //     if (!res.ok) {
-    //       console.error('Failed to fetch promotions:', res.status);
-    //       throw new Error('ไม่สามารถดึงข้อมูลสินค้าได้');
-    //     }
-    //     const data = await res.json();
-    //     console.log('Fetched promotions:', data);
-    //     setPromotion(Array.isArray(data) ? data : []);
-    //   } catch (err) {
-    //     console.error('Error fetching promotions:', err);
-    //     setError(err.message);
-    //     setPromotion([]);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // }
-
-    fetchProducts();
-    fetchCategory();
-    // fetchPromotion();
-
-  }, []); // รันแค่ครั้งแรก
-
-
-
+    fetch("/api/product/new")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setProducts(Array.isArray(d) ? d : []))
+      .catch(() => setProducts([]));
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setCategories(Array.isArray(d) ? d : []))
+      .catch(() => setCategories([]));
+  }, []);
 
   return (
-
     <div>
-      <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
-        {/* Decorative background patterns */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
-        </div>
-
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-
-        {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
-          <div className=" bg-gradient-to-r from-blue-900 to-blue-800 text-white py-5 md:py-16  rounded-xl shadow-xl">
-            <div className="container mx-auto px-4 text-center">
-              <div className="flex justify-center mb-4">
-                <Image
-                  src="/logo.png"
-                  alt="โลโก้"
-                  width={180}
-                  height={60}
-                  className="w-44 h-16 md:w-64 md:h-20 object-contain"
-                />
-              </div>
-              <h1 className="text-2xl md:text-4xl font-bold mb-2">บริษัท เบสท เมดิคอล จำกัด</h1>
-              <h1 className="text-xl md:text-3xl font-bold mb-2">ศูนย์รวมอุปกรณ์การแพทย์ ครบวงจร</h1>
-              <p className="text-xl md:text-2xl opacity-90"></p>
-            </div>
-          </div>
-          <br />
-
-          <div className=" grid grid-cols-1 bg-white  rounded-xl p-6 md:flex items-center space-x-6 max-w-7xl mx-auto shadow">
-            {/* โลโก้ */}
-            <img
-              src="/banner.png"
-              alt="หกห"
-              className="w-32 h-32 object-contain rounded-lg"
-            />
-
-            {/* ข้อมูลร้าน */}
-            <div className=" md:flex-1">
-              <h1 className="md:text-2xl font-bold text-green-500">
-                ร้านขายอุปกรณ์การแพทย์ <span className="text-blue-900">บริษัท เบสท เมดิคอล จำกัด</span>
-              </h1>
-              <p className="text-gray-700 mt-2">
-                แหล่งรวมอุปกรณ์ทางการแพทย์ เครื่องมือสำหรับการตรวจรักษา ผลิตภัณฑ์ดูแลสุขภาพ ผู้ป่วย ผู้สูงอายุ รวมถึงครุภัณฑ์และเวชภัณฑ์ที่ใช้ในโรงพยาบาล คลินิก และสถานพยาบาลต่าง ๆ นอกจากนี้ยังมีเครื่องมือวิทยาศาสตร์ อุปกรณ์กู้ชีพ กู้ภัยฉุกเฉิน จากผู้ผลิตและแบรนด์คุณภาพระดับโลก พร้อมให้บริการจัดหาสินค้าตามความต้องการของลูกค้าอย่างครบวงจรในที่เดียว
-              </p>
-
-              {/* ปุ่ม */}
-              <div className="flex space-x-4 mt-5">
-                <a
-                  href="#"
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
-                >
-                  แอดไลน์
-                </a>
-                <a
-                  href="#"
-                  className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg flex items-center"
-                >
-                  แชทผ่านเฟสบุ๊ค
-                </a>
-                <a
-                  href="#"
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
-                >
-                  ติดต่อเรา
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <section className="py-6">
-            <div className="max-w-7xl mx-auto text-center grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="p-6 bg-white rounded-xl shadow">
-                <div className="flex justify-center items-center h-20">
-                  <Store className="w-15 h-15 text-green-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-green-600">สินค้าครบครัน</h3>
-                <p className="mt-2 text-gray-600">เลือกจากกว่า 5,000 รายการ</p>
-              </div>
-              <div className="p-6 bg-white rounded-xl shadow ">
-                <div className="flex justify-center items-center h-20">
-                  <Truck className="w-15 h-15 text-green-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-green-600">จัดส่งทั่วประเทศ</h3>
-                <p className="mt-2 text-gray-600">รวดเร็ว ปลอดภัย ถึงมือลูกค้า</p>
-              </div>
-              <div className="p-6 bg-white rounded-xl shadow">
-                <div className="flex justify-center items-center h-20">
-                  <ShieldCheck className="w-15 h-15 text-green-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-green-600">รับประกันสินค้าแท้</h3>
-                <p className="mt-2 text-gray-600">มั่นใจคุณภาพทุกชิ้น</p>
-              </div>
-            </div>
-          </section>
-
-          <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-700">หมวดหมู่สินค้า</h2>
-              <a href="categories" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
-                ดูหมวดหมู่สินค้าทั้งหมด
-              </a>
-            </div>
-
-            <div className="relative">
-              <div className="flex gap-2 overflow-x-auto pb-4">
-                {category.map((category) => (
-                  <div
-                    key={category.id}
-                    className="min-w-[160px] md:min-w-[260px] p-3 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
-                  >
-
-                    <div className="flex justify-center mb-2 md:mb-4">
-                      <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
-                        <Image
-                          src={(category.cate_img || "")}
-                          alt={category.cate_name}
-                          width={120}
-                          height={120}
-                          className="object-cover w-full h-full rounded-lg"
-                        />
-                      </div>   </div>
-                    <p className="text-xs md:text-lg uppercase mb-1 text-center bg-gradient-to-bl from-blue-900 to-blue-700 text-white font-bold rounded-b-2xl p-1">{category.cate_name}</p>
-                    <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
-                      <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
-                        <Eye size={40} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <br />
-
-
-          <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-700">สินค้าเข้าใหม่</h2>
-              <a href="product" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
-                ดูสินค้าทั้งหมด
-              </a>
-            </div>
-
-            <div className="relative">
-              {loading ? (
-                <div className="flex justify-center items-center py-10">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-                </div>
-              ) : newproducts.length === 0 ? (
-                <div className="w-full text-center text-gray-500 py-8">ยังไม่มีสินค้าเข้าใหม่</div>
-              ) : (
-                <div className="flex gap-2 overflow-x-auto pb-4">
-                  {newproducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
-                    >
-                      {product.discount && (
-                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                          {product.discount}%
-                        </span>
-                      )}
-                      <div className="flex justify-center mb-2 md:mb-4">
-                        <div className="w-[120px] h-[120px] md:w-[200px] md:h-[200px] flex items-center justify-center">
-                          <Image
-                            src={product.imageUrl || '/placeholder.png'}
-                            alt={product.pro_name}
-                            width={120}
-                            height={120}
-                            className="object-cover w-full h-full rounded-lg"
-                            onError={(e) => { e.target.src = '/placeholder.png'; }}
-                          />
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-800 uppercase mb-1">{product.category}</p>
-                      <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{product.pro_name}</h3>
-                      <div className="mb-2">
-                        <span className="text-base text-gray-800 md:text-lg font-bold">
-                          {parseFloat(product.price) === 0 ? 'x.xx' : product.price} บาท
-                        </span>
-                        {product.oldPrice && (
-                          <span className="text-gray-800 line-through ml-2">${product.oldPrice}</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-green-600">(คงเหลือ {product.stock})</p>
-                      <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
-                        <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
-                          <Link href={`/product/${product.id}`} passHref>
-                            <Eye size={40} />
-                          </Link>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-          <br />
-
-          ิ<br />
-          {/* <section className="py-10 max-w-full mx-auto bg-white p-6 rounded-xl shadow">
-  <div className="flex justify-between items-center mb-6">
-    <h2 className="text-2xl font-bold text-gray-700">สินค้าโปรโมชั่น</h2>
-    {promotion.length === 0 ? (
-      <div></div>
-    ) : (
-    <a href="products" className="text-white bg-green-500 p-1 rounded-4xl hover:bg-green-600">
-      ดูสินค้าทั้งหมด
-    </a>
-    )}
-  </div>
-
- <div className="relative">
-  <div className="flex gap-2 overflow-x-auto pb-4">
-    {promotion.length === 0 ? (
-      <div className="w-full text-center text-gray-500 py-8">ยังไม่มีรายการโปรโมชัน</div>
-    ) : (
-      promotion.map((promotion) => (
-        <div
-          key={promotion.id}
-          className="min-w-[160px] md:min-w-[260px] p-3 md:p-4 border-gray-400 rounded-2xl shadow-sm hover:shadow-lg transition bg-white relative"
-        >
-          {promotion.discount && (
-            <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-              {promotion.discount}%
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 text-white">
+        <div className="pointer-events-none absolute -top-32 -right-32 h-[28rem] w-[28rem] rounded-full bg-accent-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 -left-20 h-[26rem] w-[26rem] rounded-full bg-brand-400/30 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)] bg-[size:24px_24px]" />
+        <div className="container-page relative grid items-center gap-10 py-14 md:grid-cols-2 md:py-20">
+          <div className="animate-slide-up">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-accent-200 ring-1 ring-white/20">
+              <ShieldCheck className="h-3.5 w-3.5" /> ตัวแทนจำหน่ายอุปกรณ์การแพทย์คุณภาพ
             </span>
-          )}
-          <div className="flex justify-center mb-2 md:mb-4">
-            <Image
-              src={(promotion.imageUrl || "").replace("172.16.107.247", "192.168.1.144")}
-              alt={promotion.name}
-              width={120}
-              height={120}
-              className="object-contain"
-            />
+            <h1 className="mt-5 text-3xl leading-tight font-bold sm:text-4xl lg:text-5xl">
+              ศูนย์รวมอุปกรณ์การแพทย์
+              <span className="block bg-gradient-to-r from-accent-200 to-accent-400 bg-clip-text text-transparent">ครบวงจร ในที่เดียว</span>
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-brand-100 sm:text-lg">
+              เครื่องมือตรวจรักษา ผลิตภัณฑ์ดูแลผู้ป่วยและผู้สูงอายุ ครุภัณฑ์และเวชภัณฑ์สำหรับโรงพยาบาล คลินิก และใช้งานที่บ้าน
+              จากแบรนด์คุณภาพระดับโลก
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/product" className="btn btn-lg bg-white text-brand-800 shadow-lg hover:bg-brand-50">
+                เลือกซื้อสินค้า <ArrowRight className="h-5 w-5" />
+              </Link>
+              <Link href="/contact" className="btn btn-lg bg-white/10 text-white ring-1 ring-white/30 hover:bg-white/20">
+                ขอใบเสนอราคา
+              </Link>
+            </div>
+            <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-white/15 pt-6">
+              {[
+                ["5,000+", "รายการสินค้า"],
+                ["2", "สาขาให้บริการ"],
+                ["ทั่วไทย", "จัดส่งถึงบ้าน"],
+              ].map(([v, l]) => (
+                <div key={l}>
+                  <dt className="text-xl font-bold sm:text-2xl">{v}</dt>
+                  <dd className="text-xs text-brand-200 sm:text-sm">{l}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-          <p className="text-gray-800 text-xs uppercase mb-1">{promotion.category}</p>
-          <h3 className="text-xs text-gray-800 md:text-sm font-semibold line-clamp-2 mb-2">{promotion.name}</h3>
-          <div className="mb-2">
-            <span className="text-base text-gray-800 md:text-lg font-bold">{promotion.price} บาท</span>
-            {promotion.oldPrice && (
-              <span className="text-gray-800 line-through ml-2">${promotion.oldPrice}</span>
-            )}
-          </div>
-          <p className="text-xs text-green-600">({promotion.stock})</p>
-          <div className="absolute inset-0 flex items-center justify-center gap-2 md:gap-3 opacity-0 hover:opacity-100 transition bg-white/70 rounded-2xl">
-            <button className="p-2 bg-green-500 text-white rounded-full shadow hover:text-white">
-              <Eye size={40} />
-            </button>
+          <div className="relative hidden md:block">
+            <div className="absolute inset-8 rounded-full bg-white/10 blur-2xl" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/banner.png" alt="อุปกรณ์การแพทย์" className="relative mx-auto w-full max-w-lg drop-shadow-2xl" />
           </div>
         </div>
-      ))
-    )}
-  </div>
-</div>
-</section> */}
-          {/* <section id="products" className="py-6 bg-gray-50">
-            <div className="max-w-7xl mx-auto text-center border-8 p-5 rounded-2xl border-red-500 bg-white shadow-lg">
-              <h2 className="text-3xl font-bold mb-10 text-red-500">สินค้าโปรโมชั่น</h2>
-              <div className="flex gap-8 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-  {promotionProducts.map((i) => (
-    <div
-      key={i.id}
-      className="min-w-[280px] bg-white p-6 rounded-xl shadow hover:shadow-lg flex-shrink-0"
-    >
-      <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
-        <img src={i.image} alt={i.name} className="w-24 h-24 object-contain" />
-      </div>
-      <h3 className="text-lg font-semibold">สินค้า {i.name}</h3>
-      <p className="text-gray-600">{i.description}</p>
-      <p className="text-gray-600">{i.price} บาท</p>
-      <button className="mt-4 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">
-        เพิ่มลงตะกร้า
-      </button>
-    </div>
-  ))}
-</div>
-                 <a
-              href=""
-              className="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-blue-800 inline-flex items-center gap-3 mx-auto"
-            >
-              ดูรายการเพิ่มเติมที่นี่ <ArrowBigRightDash />
-            </a>
-            </div>
-          </section> */}
-          <div className="text-center">
-            <br />
+      </section>
 
-
-          </div>
-
-
-
-
-          <br />
-          {/* รีวิวลูกค้า */}
-          {/* <section className="py-16">
-            <div className="max-w-7xl mx-auto text-center bg-white shadow rounded-2xl p-6">
-              <h2 className="text-3xl font-bold mb-10 text-gray-700 p-6">เสียงจากลูกค้า</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white p-6 rounded-xl shadow-xl">
-                    <p className="text-gray-600">
-                      ⭐⭐⭐⭐⭐ บริการดีมาก สินค้าคุณภาพ ราคาคุ้มค่า
-                    </p>
-                    <h4 className="mt-4 font-semibold">คุณสมชาย</h4>
-                  </div>
-                ))}
+      {/* Perks */}
+      <section className="container-page relative z-10 -mt-8">
+        <div className="card grid grid-cols-2 divide-slate-100 lg:grid-cols-4 lg:divide-x">
+          {[
+            { icon: BadgeCheck, t: "สินค้าคุณภาพ", d: "มาตรฐานทางการแพทย์" },
+            { icon: Truck, t: "จัดส่งทั่วประเทศ", d: "รวดเร็ว ปลอดภัย" },
+            { icon: ShieldCheck, t: "รับประกันสินค้าแท้", d: "มั่นใจทุกชิ้น" },
+            { icon: Headphones, t: "ปรึกษาผู้เชี่ยวชาญ", d: "ฟรี! ทุกวันทำการ" },
+          ].map(({ icon: Icon, t, d }) => (
+            <div key={t} className="flex items-center gap-3 p-4 sm:p-5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{t}</p>
+                <p className="text-xs text-slate-500">{d}</p>
               </div>
             </div>
-          </section> */}
-
+          ))}
         </div>
-      </div>
+      </section>
 
+      {/* Categories */}
+      <section className="container-page mt-14">
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="section-title">หมวดหมู่สินค้า</h2>
+            <p className="mt-1 text-sm text-slate-500">เลือกดูสินค้าตามประเภทการใช้งาน</p>
+          </div>
+          <Link href="/product" className="link hidden items-center gap-1 text-sm sm:inline-flex">
+            ดูสินค้าทั้งหมด <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+          {categories === null
+            ? Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton aspect-[4/5] rounded-2xl" />)
+            : categories.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/category/${c.id}`}
+                  className="group card flex flex-col items-center p-3 text-center transition hover:-translate-y-1 hover:border-brand-200 hover:shadow-[var(--shadow-lift)]"
+                >
+                  <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-slate-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imgSrc(c.cate_img)}
+                      alt={c.cate_name}
+                      loading="lazy"
+                      onError={(e) => (e.currentTarget.src = "/placeholder.png")}
+                      className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-110"
+                    />
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-xs font-medium text-slate-700 group-hover:text-brand-700 sm:text-sm">{c.cate_name}</p>
+                </Link>
+              ))}
+        </div>
+      </section>
+
+      {/* New products */}
+      <section className="container-page mt-14">
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="section-title">สินค้าเข้าใหม่</h2>
+            <p className="mt-1 text-sm text-slate-500">อัปเดตสินค้าล่าสุดจากทางร้าน</p>
+          </div>
+          <Link href="/product" className="link inline-flex items-center gap-1 text-sm">
+            ดูทั้งหมด <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+          {products === null
+            ? Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)
+            : products.slice(0, 8).map((p) => <ProductCard key={p.id} product={p} />)}
+        </div>
+        {products?.length === 0 && <p className="py-10 text-center text-slate-500">ยังไม่มีสินค้า</p>}
+      </section>
+
+      {/* How to order */}
+      <section className="container-page mt-16">
+        <div className="card overflow-hidden">
+          <div className="grid lg:grid-cols-[1fr_2fr]">
+            <div className="bg-gradient-to-br from-accent-600 to-accent-700 p-8 text-white">
+              <h2 className="text-2xl font-bold">สั่งซื้อง่าย ใน 4 ขั้นตอน</h2>
+              <p className="mt-2 text-accent-50">ไม่ต้องสมัครสมาชิกก็สั่งซื้อได้ ติดตามสถานะด้วยเลขคำสั่งซื้อ</p>
+              <Link href="/howtopay" className="btn mt-6 bg-white text-accent-800 hover:bg-accent-50">
+                ดูวิธีการสั่งซื้อ <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <ol className="grid gap-6 p-8 sm:grid-cols-2 lg:grid-cols-4">
+              {STEPS.map(({ icon: Icon, title, desc }, i) => (
+                <li key={title} className="relative">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <p className="mt-3 text-xs font-semibold text-accent-600">ขั้นตอนที่ {i + 1}</p>
+                  <p className="font-semibold text-slate-900">{title}</p>
+                  <p className="mt-1 text-sm text-slate-500">{desc}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="container-page mt-16">
+        <div className="relative overflow-hidden rounded-3xl bg-brand-900 px-6 py-10 text-center text-white sm:px-12">
+          <div className="pointer-events-none absolute -top-20 left-1/2 h-60 w-[40rem] -translate-x-1/2 rounded-full bg-accent-400/20 blur-3xl" />
+          <h2 className="relative text-2xl font-bold sm:text-3xl">ต้องการสินค้าสำหรับโรงพยาบาลหรือคลินิก?</h2>
+          <p className="relative mx-auto mt-3 max-w-2xl text-brand-100">
+            เรามีบริการจัดหาสินค้าตามความต้องการ พร้อมออกใบเสนอราคาสำหรับหน่วยงานราชการและเอกชน
+          </p>
+          <div className="relative mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/contact" className="btn btn-lg bg-white text-brand-800 hover:bg-brand-50">
+              ติดต่อฝ่ายขาย
+            </Link>
+            <a href="tel:074606389" className="btn btn-lg bg-white/10 text-white ring-1 ring-white/30 hover:bg-white/20">
+              โทร 074-606-389
+            </a>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

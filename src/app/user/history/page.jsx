@@ -1,188 +1,210 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Navbar from '@/app/components/Nav';
-import { Package, Eye, Clock, CheckCircle, XCircle, Truck, CreditCard, Calendar } from 'lucide-react';
-import { sessionManager } from '@/app/lib/sessionTimeout';
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowRight, CreditCard, Eye, History, RefreshCw, ShoppingBag, UserCog } from "lucide-react";
+import { useAuth } from "@/app/components/Providers";
+import { Alert, EmptyState, PageHeader, StatusBadge } from "@/app/components/ui";
+import { ORDER_STATUS, api, cn, displayStatus, formatDateTime, formatTHB, imgSrc } from "@/app/lib/format";
+
+const TABS = ["ALL", "PENDING", "VERIFYING", "PAID", "SHIPPING", "COMPLETED", "CANCELLED"];
+
+function OrderCardSkeleton() {
+  return (
+    <div className="card card-body space-y-4">
+      <div className="flex justify-between">
+        <div className="skeleton h-5 w-48" />
+        <div className="skeleton h-5 w-24" />
+      </div>
+      <div className="flex gap-2">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="skeleton h-14 w-14 rounded-xl" />
+        ))}
+      </div>
+      <div className="skeleton h-9 w-full" />
+    </div>
+  );
+}
 
 export default function OrderHistoryPage() {
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [user, setUser] = useState(null);
+  const [orders, setOrders] = useState(null);
+  const [error, setError] = useState("");
+  const [tab, setTab] = useState("ALL");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    // ตรวจสอบว่า user login อยู่หรือไม่
-    const currentUser = sessionManager.getSession();
-    
-    if (!currentUser || sessionManager.isSessionExpired()) {
-      router.push('/login');
-      return;
+    if (!authLoading && !user) router.replace("/login?next=/user/history");
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    setError("");
+    api("/api/orders/history")
+      .then((d) => alive && setOrders(d.orders || []))
+      .catch((err) => {
+        if (!alive) return;
+        setError(err.message);
+        setOrders([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [user, reloadKey]);
+
+  const counts = useMemo(() => {
+    const c = { ALL: orders?.length || 0 };
+    for (const o of orders || []) {
+      const s = displayStatus(o);
+      c[s] = (c[s] || 0) + 1;
     }
+    return c;
+  }, [orders]);
 
-    if (currentUser.role !== 'CUSTOMER') {
-      router.push('/');
-      return;
-    }
-
-    setUser(currentUser);
-    fetchOrders(currentUser.email);
-  }, [router]);
-
-  const fetchOrders = async (email) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/orders/history?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setOrders(data.orders);
-      } else {
-        setError(data.error || 'ไม่สามารถโหลดข้อมูลได้');
-      }
-    } catch (err) {
-      console.error('Error fetching orders:', err);
-      setError('เกิดข้อผิดพลาดในการโหลดข้อมูล');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusInfo = (status) => {
-    switch (status) {
-      case 'PENDING':
-        return { label: 'รอดำเนินการ', color: 'bg-gray-100 text-gray-800', icon: Clock };
-      case 'PAID':
-        return { label: 'ชำระแล้ว', color: 'bg-green-100 text-green-800', icon: CreditCard };
-      case 'SHIPPING':
-        return { label: 'กำลังจัดส่ง', color: 'bg-blue-100 text-blue-800', icon: Truck };
-      case 'COMPLETED':
-        return { label: 'สำเร็จ', color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle };
-      case 'CANCELLED':
-        return { label: 'ยกเลิก', color: 'bg-red-100 text-red-800', icon: XCircle };
-      default:
-        return { label: status, color: 'bg-gray-100 text-gray-800', icon: Clock };
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const filtered = useMemo(() => (orders || []).filter((o) => tab === "ALL" || displayStatus(o) === tab), [orders, tab]);
+  const loading = authLoading || (user && orders === null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <Navbar />
-      
-      {/* Decorative background patterns */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-      
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+    <div>
+      <PageHeader
+        title="ประวัติการสั่งซื้อ"
+        subtitle={user ? `บัญชี: ${user.email}` : "รายการคำสั่งซื้อทั้งหมดของคุณ"}
+        icon={History}
+        breadcrumb={[{ label: "หน้าแรก", href: "/" }, { label: "ประวัติการสั่งซื้อ" }]}
+      >
+        <div className="flex gap-2">
+          <Link href="/user/profile" className="btn btn-secondary btn-sm">
+            <UserCog className="h-4 w-4" /> ข้อมูลส่วนตัว
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setOrders(null);
+              setReloadKey((k) => k + 1);
+            }}
+            className="btn btn-secondary btn-sm"
+            disabled={loading}
+          >
+            <RefreshCw className="h-4 w-4" /> รีเฟรช
+          </button>
+        </div>
+      </PageHeader>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center">
-                <Package className="w-8 h-8 mr-3 text-blue-600" />
-                ประวัติการสั่งซื้อ
-              </h1>
-              {user && (
-                <p className="text-gray-600 mt-2">
-                  บัญชี: {user.email}
-                </p>
+      <div className="container-page space-y-6 py-8">
+        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="กรองตามสถานะ">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={tab === t}
+              onClick={() => setTab(t)}
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-medium transition",
+                tab === t ? "border-brand-700 bg-brand-700 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700"
               )}
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-600">ทั้งหมด</div>
-              <div className="text-2xl font-bold text-blue-600">{orders.length} รายการ</div>
-            </div>
-          </div>
+            >
+              {t === "ALL" ? "ทั้งหมด" : ORDER_STATUS[t].label}
+              <span className={cn("rounded-full px-1.5 text-xs", tab === t ? "bg-white/20" : "bg-slate-100")}>{counts[t] || 0}</span>
+            </button>
+          ))}
+        </div>
 
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-                <span className="text-gray-600">กำลังโหลดข้อมูล...</span>
-              </div>
-            </div>
-          ) : error ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          ) : orders.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">ยังไม่มีประวัติการสั่งซื้อ</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {orders.map((order) => {
-                const statusInfo = getStatusInfo(order.status);
-                const StatusIcon = statusInfo.icon;
-                
-                return (
-                  <div 
-                    key={order.order_id} 
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            {order.order_code}
-                          </h3>
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
-                            <StatusIcon className="w-3 h-3 mr-1" />
-                            {statusInfo.label}
+        {error && <Alert tone="error">{error}</Alert>}
+
+        {loading ? (
+          <div className="grid gap-4">
+            {[0, 1, 2].map((i) => (
+              <OrderCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : !filtered.length ? (
+          <div className="card">
+            <EmptyState
+              icon={ShoppingBag}
+              title={orders?.length ? "ไม่มีคำสั่งซื้อในสถานะนี้" : "ยังไม่มีประวัติการสั่งซื้อ"}
+              description={orders?.length ? "ลองเลือกสถานะอื่น" : "เมื่อคุณสั่งซื้อสินค้า รายการจะแสดงที่นี่"}
+              action={
+                orders?.length ? (
+                  <button type="button" className="btn btn-secondary" onClick={() => setTab("ALL")}>
+                    ดูทั้งหมด
+                  </button>
+                ) : (
+                  <Link href="/product" className="btn btn-primary">
+                    เลือกซื้อสินค้า <ArrowRight className="h-4 w-4" />
+                  </Link>
+                )
+              }
+            />
+          </div>
+        ) : (
+          <ul className="grid gap-4">
+            {filtered.map((o) => {
+              const qty = o.items.reduce((s, i) => s + Number(i.quantity), 0);
+              return (
+                <li key={o.order_code} className="card animate-fade-in overflow-hidden transition hover:shadow-[var(--shadow-lift)]">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-5 py-3">
+                    <div>
+                      <p className="font-mono font-semibold text-slate-900">{o.order_code}</p>
+                      <p className="text-xs text-slate-500">{formatDateTime(o.createdAt)}</p>
+                    </div>
+                    <StatusBadge order={o} />
+                  </div>
+                  <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex -space-x-3">
+                        {o.items.slice(0, 4).map((it, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={i}
+                            src={imgSrc(it.image)}
+                            alt={it.name}
+                            title={it.name}
+                            onError={(e) => (e.currentTarget.src = "/placeholder.png")}
+                            className="h-14 w-14 rounded-xl border-2 border-white bg-white object-contain shadow-sm"
+                          />
+                        ))}
+                        {o.items.length > 4 && (
+                          <span className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-white bg-slate-100 text-sm font-medium text-slate-600">
+                            +{o.items.length - 4}
                           </span>
-                        </div>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            {formatDate(order.createdAt)}
-                          </div>
-                          <div className="flex items-center">
-                            <Package className="w-4 h-4 mr-2" />
-                            จำนวน {order.item_count} รายการ
-                          </div>
-                        </div>
+                        )}
                       </div>
-                      
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="text-sm text-gray-600">ยอดรวม</div>
-                          <div className="text-xl font-bold text-gray-800">
-                            ฿{Number(order.totalPrice).toLocaleString()}
-                          </div>
-                        </div>
-                        
-                        <button
-                          onClick={() => router.push(`/order-status/${order.order_code}`)}
-                          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span className="hidden sm:inline">ดูรายละเอียด</span>
-                        </button>
+                      <div className="min-w-0 text-sm">
+                        <p className="line-clamp-1 font-medium text-slate-800">{o.items[0]?.name}</p>
+                        <p className="text-slate-500">
+                          {o.items.length} รายการ · {qty} ชิ้น
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+                      <div className="sm:text-right">
+                        <p className="text-xs text-slate-500">ยอดรวม</p>
+                        <p className="text-lg font-bold text-brand-700">{formatTHB(o.totalPrice)}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {o.status === "PENDING" && !o.payment_reported && (
+                          <Link
+                            href={`/payment-notice?order=${encodeURIComponent(o.order_code)}&amount=${o.totalPrice}`}
+                            className="btn btn-primary btn-sm"
+                          >
+                            <CreditCard className="h-4 w-4" /> แจ้งชำระเงิน
+                          </Link>
+                        )}
+                        <Link href={`/order-status/${encodeURIComponent(o.order_code)}`} className="btn btn-secondary btn-sm">
+                          <Eye className="h-4 w-4" /> ดูรายละเอียด
+                        </Link>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

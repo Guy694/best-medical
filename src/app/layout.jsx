@@ -1,75 +1,48 @@
-import Footter from "./components/Footter";
-import Navbar from "./components/Nav";
-import Sidebar from "./components/Sidebar";
 import "./globals.css";
 import { Prompt } from "next/font/google";
-import CookieBanner from "./components/cookiebanner";
-import FloatingContact from "./components/FloatingContact";
-import SessionTimeout from "./components/SessionTimeout";
 import Providers from "./components/Providers";
+import SiteChrome from "./components/SiteChrome";
 
 const prompt = Prompt({
-  subsets: ["latin", "thai"], // รองรับภาษาไทย
-  weight: ["700", "400"], // น้ำหนักตัวอักษร
+  subsets: ["latin", "thai"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
+  variable: "--font-prompt",
 });
+
+const SITE_URL = process.env.SITE_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
+
 export const metadata = {
-  title: "บริษัท เบสท เมดิคอล จำกัด",
-  description: "บริษัท เบสท เมดิคอล จำกัด",
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/logo.png",
-    other: [
-      {
-        rel: "icon",
-        url: "/logo.png",
-        sizes: "32x32",
-      },
-      {
-        rel: "icon",
-        url: "/logo.png",
-        sizes: "16x16",
-      },
-    ],
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "บริษัท เบสท เมดิคอล จำกัด | ศูนย์รวมอุปกรณ์การแพทย์ครบวงจร",
+    template: "%s | เบสท เมดิคอล",
   },
+  description:
+    "จำหน่ายอุปกรณ์การแพทย์ เครื่องมือตรวจรักษา ผลิตภัณฑ์ดูแลผู้ป่วยและผู้สูงอายุ ครุภัณฑ์และเวชภัณฑ์สำหรับโรงพยาบาลและคลินิก จัดส่งทั่วประเทศ",
+  keywords: ["อุปกรณ์การแพทย์", "เครื่องมือแพทย์", "เบสท เมดิคอล", "Best Medical", "เครื่องผลิตออกซิเจน", "รถเข็นผู้ป่วย"],
+  icons: { icon: "/favicon.ico", apple: "/logo.png" },
   openGraph: {
-    title: 'สินค้าสุขภาพ | เบสท เมดิคอล',
-    description: 'ซื้อสินค้าสุขภาพ X ราคาดี',
-    url: 'https://example.com/product',
-    images: ['https://example.com/product.jpg'],
-    type: 'website',
+    title: "บริษัท เบสท เมดิคอล จำกัด",
+    description: "ศูนย์รวมอุปกรณ์การแพทย์ครบวงจร จัดส่งทั่วประเทศ",
+    images: ["/banner.png"],
+    type: "website",
+    locale: "th_TH",
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'สินค้าสุขภาพ | เบสท เมดิคอล',
-    description: 'ซื้อสินค้าสุขภาพ X ราคาดี',
-    images: ['https://example.com/product.jpg'],
-  },
-  icons: '/favicon.ico',
 };
 
-
+export const viewport = {
+  themeColor: "#1c30bd",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="th">
-      <body className={prompt.className}>
-        <Providers session={null}>
-          <div className="flex flex-col min-h-screen">
-            {/* <Sidebar /> */}
-            {/* <Navbar /> */}
-            <main className="flex-1 bg-gray-100">
-              {children}
-            </main>
-            <Footter />
-          </div>
-          <FloatingContact
-            facebookUrl="https://www.facebook.com/profile.php?id=100070566921817"
-            lineUrl="https://line.me/ti/p/bestmedical"
-            label="ติดต่อผ่านโซเชียล"
-          />
-          <CookieBanner />
-          <SessionTimeout />
+    <html lang="th" className={prompt.variable}>
+      <body>
+        <Providers>
+          <SiteChrome>{children}</SiteChrome>
         </Providers>
       </body>
     </html>

@@ -1,48 +1,15 @@
-import { NextResponse } from 'next/server';
-import pool from '@/app/lib/db';
+import { query } from "@/app/lib/db";
+import { route, json } from "@/app/lib/api";
+import { serializeOrder } from "@/app/lib/orderView";
 
-export async function GET(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email');
-
-    if (!email) {
-      return NextResponse.json(
-        { success: false, error: 'กรุณาระบุอีเมล' },
-        { status: 400 }
-      );
-    }
-
-    // Query orders by email
-    const ordersQuery = `
-      SELECT 
-        o.order_id,
-        o.order_code,
-        o.order_email,
-        o.totalPrice,
-        o.status,
-        o.createdAt,
-        o.shippingAddress,
-        COUNT(oi.id) as item_count
-      FROM \`order\` o
-      LEFT JOIN orderitem oi ON o.order_id = oi.orderId
-      WHERE o.order_email = ?
-      GROUP BY o.order_id
-      ORDER BY o.createdAt DESC
-    `;
-
-    const [orders] = await pool.execute(ordersQuery, [email]);
-
-    return NextResponse.json({
-      success: true,
-      orders: orders
-    });
-
-  } catch (error) {
-    console.error('Error fetching order history:', error);
-    return NextResponse.json(
-      { success: false, error: 'เกิดข้อผิดพลาดในการดึงข้อมูล', details: error.message },
-      { status: 500 }
+// GET /api/orders/history – orders of the logged-in user (by account id or email)
+export const GET = route(
+  async (req, { user }) => {
+    const rows = await query(
+      "SELECT * FROM `order` WHERE user_id = ? OR order_email = ? ORDER BY createdAt DESC LIMIT 200",
+      [user.id, user.email]
     );
-  }
-}
+    return json({ success: true, orders: rows.map((o) => serializeOrder(o, { full: true })) });
+  },
+  { roles: ["CUSTOMER", "STAFF", "ADMIN"] }
+);

@@ -1,14 +1,18 @@
 {
   "name": "best-medical",
   "type": "module",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.12"
+  },
   "scripts": {
     "dev": "next dev",
     "dev:lan": "next dev --hostname 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint src",
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
@@ -20,6 +24,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.18",
     "framer-motion": "^12.23.12",
+    "jose": "^4.15.9",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.542.0",
     "mysql2": "^3.14.5",

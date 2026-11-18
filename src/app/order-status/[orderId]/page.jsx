@@ -1,205 +1,109 @@
-// src/app/order-status/[orderId]/page.jsx
 "use client";
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import Navbar from '@/app/components/Nav';
-import OrderTimeline from '@/app/components/OrderTimeline';
-import { Package, MapPin, Phone, Mail, Calendar } from 'lucide-react';
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { ArrowLeft, LogIn, Printer, ReceiptText, RefreshCw, Search } from "lucide-react";
+import { useAuth } from "@/app/components/Providers";
+import { Alert, EmptyState, PageHeader, PageLoader } from "@/app/components/ui";
+import { OrderDetail } from "@/app/components/order/OrderParts";
+import { api } from "@/app/lib/format";
 
 export default function OrderStatusPage() {
-  const params = useParams();
-  const orderId = params.orderId;
-  
+  const { orderId } = useParams();
+  const code = decodeURIComponent(String(orderId || ""));
+  const { user, loading: authLoading } = useAuth();
   const [order, setOrder] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (orderId) {
-      fetchOrderData();
-    }
-  }, [orderId]);
-
-  const fetchOrderData = async () => {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
-      setLoading(true);
-      
-      // ดึงข้อมูลคำสั่งซื้อ
-      const orderRes = await fetch(`/api/orders/${orderId}`);
-      const orderData = await orderRes.json();
-      
-      if (orderData.success) {
-        setOrder(orderData.order);
-      } else {
-        setError('ไม่พบคำสั่งซื้อ');
-        return;
-      }
-
-      // ดึงประวัติสถานะ
-      const historyRes = await fetch(`/api/orders/${orderId}/history`);
-      const historyData = await historyRes.json();
-      
-      if (historyData.success) {
-        setHistory(historyData.history);
-      }
-
+      setOrder(await api(`/api/orders/${encodeURIComponent(code)}`));
     } catch (err) {
-      console.error('Error:', err);
-      setError('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+      setOrder(null);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [code]);
 
-  if (loading) {
-    return (
-      <div>
-        <Navbar />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // re-fetch once auth is known so owners get the full view
+  useEffect(() => {
+    if (!authLoading && code) load();
+  }, [authLoading, user?.id, code, load]);
 
-  if (error || !order) {
-    return (
-      <div>
-        <Navbar />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-xl text-gray-600">{error || 'ไม่พบคำสั่งซื้อ'}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isFull = order && "order_email" in order;
 
   return (
     <div>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-5xl mx-auto px-4">
-          {/* Header */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                  สถานะคำสั่งซื้อ
-                </h1>
-                <p className="text-gray-600">
-                  รหัสคำสั่งซื้อ: <span className="font-semibold text-blue-600">{order.orderCode}</span>
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-500 mb-1">ยอดรวม</div>
-                <div className="text-2xl font-bold text-gray-800">
-                  ฿{Number(order.totalPrice).toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            {/* Order Info Grid */}
-            <div className="grid md:grid-cols-2 gap-6 mt-6 pt-6 border-t">
-              {/* Customer Info */}
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
-                  <Mail className="w-5 h-5 mr-2 text-blue-600" />
-                  ข้อมูลการติดต่อ
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start">
-                    <span className="text-gray-600 w-24">อีเมล:</span>
-                    <span className="font-medium">{order.email}</span>
-                  </div>
-                  {order.phone && (
-                    <div className="flex items-start">
-                      <Phone className="w-4 h-4 mr-2 text-gray-400 mt-0.5" />
-                      <span className="font-medium">{order.phone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Shipping Address */}
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
-                  <MapPin className="w-5 h-5 mr-2 text-blue-600" />
-                  ที่อยู่จัดส่ง
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {order.shippingAddress || 'ไม่มีข้อมูล'}
-                </p>
-              </div>
-
-              {/* Order Date */}
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
-                  <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-                  วันที่สั่งซื้อ
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {new Date(order.createdAt).toLocaleString('th-TH', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Timeline */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              ประวัติการดำเนินการ
-            </h2>
-            <OrderTimeline history={history} />
-          </div>
-
-          {/* Order Items */}
-          {order.items && order.items.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                รายการสินค้า
-              </h2>
-              <div className="divide-y">
-                {order.items.map((item, index) => (
-                  <div key={index} className="py-4 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      {item.image && (
-                        <img 
-                          src={item.image} 
-                          alt={item.name}
-                          className="w-16 h-16 object-cover rounded"
-                        />
-                      )}
-                      <div>
-                        <h4 className="font-medium text-gray-800">{item.name}</h4>
-                        <p className="text-sm text-gray-500">จำนวน: {item.quantity}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-800">
-                        ฿{(item.price * item.quantity).toLocaleString()}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        @ ฿{item.price.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+      <PageHeader
+        title="รายละเอียดคำสั่งซื้อ"
+        subtitle={code}
+        icon={ReceiptText}
+        breadcrumb={[
+          { label: "หน้าแรก", href: "/" },
+          ...(user ? [{ label: "ประวัติการสั่งซื้อ", href: "/user/history" }] : []),
+          { label: code },
+        ]}
+      >
+        <div className="no-print flex gap-2">
+          <button type="button" onClick={load} className="btn btn-secondary btn-sm" disabled={loading}>
+            <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} /> รีเฟรช
+          </button>
+          <button type="button" onClick={() => window.print()} className="btn btn-secondary btn-sm">
+            <Printer className="h-4 w-4" /> พิมพ์
+          </button>
         </div>
+      </PageHeader>
+
+      <div className="container-page space-y-6 py-8">
+        {loading && !order ? (
+          <PageLoader label="กำลังโหลดคำสั่งซื้อ..." />
+        ) : error ? (
+          <div className="card">
+            <EmptyState
+              icon={ReceiptText}
+              title="ไม่พบคำสั่งซื้อ"
+              description={error}
+              action={
+                <Link href="/paidstatus" className="btn btn-primary">
+                  <Search className="h-4 w-4" /> ค้นหาคำสั่งซื้อ
+                </Link>
+              }
+            />
+          </div>
+        ) : order ? (
+          <>
+            {!isFull && (
+              <Alert tone="info" title="แสดงข้อมูลบางส่วน" className="no-print">
+                <p>ข้อมูลผู้รับและที่อยู่จัดส่งจะแสดงเฉพาะเจ้าของคำสั่งซื้อ กรุณาเข้าสู่ระบบด้วยบัญชีที่ใช้สั่งซื้อ หรือค้นหาด้วยอีเมลที่ใช้สั่งซื้อ</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {!user && (
+                    <Link href={`/login?next=${encodeURIComponent(`/order-status/${code}`)}`} className="btn btn-primary btn-sm">
+                      <LogIn className="h-4 w-4" /> เข้าสู่ระบบ
+                    </Link>
+                  )}
+                  <Link href={`/paidstatus?code=${encodeURIComponent(code)}`} className="btn btn-secondary btn-sm">
+                    <Search className="h-4 w-4" /> ค้นหาด้วยอีเมล
+                  </Link>
+                </div>
+              </Alert>
+            )}
+            <OrderDetail
+              order={order}
+              actions={
+                user && (
+                  <Link href="/user/history" className="btn btn-ghost">
+                    <ArrowLeft className="h-4 w-4" /> กลับไปประวัติการสั่งซื้อ
+                  </Link>
+                )
+              }
+            />
+          </>
+        ) : null}
       </div>
     </div>
   );

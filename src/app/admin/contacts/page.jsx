@@ -1,342 +1,287 @@
 "use client";
-import { useState, useEffect } from "react";
-import Sidebar from "../../components/Sidebar";
-import { 
-  MessageSquare, 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar,
-  Clock,
-  Search,
-  Filter,
-  Eye,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  RefreshCw
-} from "lucide-react";
 
-export default function ContactsManagement() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { MessageSquare, RefreshCw, Mail, Phone, Trash2, MailOpen, Inbox, Reply, CalendarClock } from "lucide-react";
+import { AdminHeader, FilterTabs, Pager, SearchInput, paginate } from "@/app/components/admin";
+import { Alert, Badge, EmptyState, Modal, Spinner } from "@/app/components/ui";
+import { useToast } from "@/app/components/Providers";
+import { api, cn, formatDateTime } from "@/app/lib/format";
+
+const PAGE_SIZE = 20;
+const TOPICS = {
+  general: { label: "สอบถามทั่วไป", tone: "blue" },
+  support: { label: "ขอความช่วยเหลือ", tone: "sky" },
+  business: { label: "ติดต่อเรื่องธุรกิจ", tone: "violet" },
+  complaint: { label: "ร้องเรียน", tone: "red" },
+  suggestion: { label: "เสนอแนะ", tone: "emerald" },
+};
+const topic = (a) => TOPICS[a] || { label: a || "ไม่ระบุหัวข้อ", tone: "slate" };
+const isUnread = (c) => !Number(c.is_read);
+
+function useIsDesktop() {
+  return useSyncExternalStore(
+    (cb) => {
+      const mq = window.matchMedia("(min-width: 1024px)");
+      mq.addEventListener("change", cb);
+      return () => mq.removeEventListener("change", cb);
+    },
+    () => window.matchMedia("(min-width: 1024px)").matches,
+    () => true
+  );
+}
+
+function MessageDetail({ msg, deleting, onDelete, onToggleRead }) {
+  const t = topic(msg.article);
+  const subject = `ตอบกลับ: ${t.label} - Best Medical`;
+  const body = `เรียน คุณ${msg.name}\n\n\n\n---- ข้อความของท่าน (${formatDateTime(msg.createdAt)}) ----\n${msg.detail || ""}`;
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 font-semibold text-brand-700">
+            {(msg.name || "?").trim().charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold text-slate-900">{msg.name}</p>
+            <p className="flex items-center gap-1 text-xs text-slate-500">
+              <CalendarClock className="h-3.5 w-3.5" /> {formatDateTime(msg.createdAt)}
+            </p>
+          </div>
+        </div>
+        <Badge tone={t.tone}>{t.label}</Badge>
+      </div>
+
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+        <a href={`mailto:${msg.email}`} className="flex items-center gap-1.5 text-slate-600 hover:text-brand-700">
+          <Mail className="h-4 w-4 text-slate-400" /> <span className="break-all">{msg.email}</span>
+        </a>
+        {msg.phone && (
+          <a href={`tel:${msg.phone}`} className="flex items-center gap-1.5 text-slate-600 hover:text-brand-700">
+            <Phone className="h-4 w-4 text-slate-400" /> {msg.phone}
+          </a>
+        )}
+      </div>
+
+      <div className="rounded-2xl bg-slate-50 p-5 text-sm leading-relaxed whitespace-pre-line text-slate-800">{msg.detail || "-"}</div>
+
+      <div className="flex flex-wrap gap-2">
+        <a
+          href={`mailto:${msg.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
+          className="btn btn-primary btn-sm"
+        >
+          <Reply className="h-4 w-4" /> ตอบกลับทางอีเมล
+        </a>
+        {msg.phone && (
+          <a href={`tel:${msg.phone}`} className="btn btn-accent btn-sm">
+            <Phone className="h-4 w-4" /> โทรหาลูกค้า
+          </a>
+        )}
+        <button className="btn btn-secondary btn-sm" onClick={() => onToggleRead(msg, !isUnread(msg) ? 0 : 1)}>
+          <Mail className="h-4 w-4" /> {isUnread(msg) ? "ทำเครื่องหมายว่าอ่านแล้ว" : "ทำเครื่องหมายว่ายังไม่อ่าน"}
+        </button>
+        <button className="btn btn-danger-soft btn-sm sm:ml-auto" onClick={() => onDelete(msg)} disabled={deleting}>
+          {deleting ? <Spinner className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />} ลบข้อความ
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminContactsPage() {
+  const toast = useToast();
+  const isDesktop = useIsDesktop();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [expandedContact, setExpandedContact] = useState(null);
-  const [deleting, setDeleting] = useState(null);
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [selectedId, setSelectedId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-  // ดึงข้อมูล contacts
-  const fetchContacts = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
-      console.log('Fetching contacts...');
-      const response = await fetch('/api/admin/contacts', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Received data:', data);
-      
-      if (data.success) {
-        setContacts(data.contacts || []);
-      } else {
-        console.error('API returned error:', data.error);
-        alert('เกิดข้อผิดพลาดในการดึงข้อมูล: ' + data.error);
-      }
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message);
+      const data = await api("/api/admin/contacts");
+      setContacts(Array.isArray(data?.contacts) ? data.contacts : []);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  // ลบข้อความ
-  const handleDelete = async (contactId) => {
-    if (!confirm('คุณต้องการลบข้อความนี้หรือไม่?')) {
-      return;
-    }
-
-    setDeleting(contactId);
-    try {
-      const response = await fetch(`/api/admin/contacts?id=${contactId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setContacts(contacts.filter(contact => contact.id !== contactId));
-        if (expandedContact === contactId) {
-          setExpandedContact(null);
-        }
-        alert('ลบข้อความสำเร็จ');
-      } else {
-        alert('เกิดข้อผิดพลาดในการลบข้อความ: ' + data.error);
-      }
-    } catch (error) {
-      console.error('Error deleting contact:', error);
-      alert('เกิดข้อผิดพลาดในการลบข้อความ');
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  // กรองและค้นหาข้อมูล
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = searchTerm === "" || 
-      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.article.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.detail.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesFilter = filterType === "all" || contact.article === filterType;
-
-    return matchesSearch && matchesFilter;
-  }).sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
-    return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
-  });
-
-  // แปลงประเภทข้อความ
-  const getArticleLabel = (article) => {
-    const articleMap = {
-      'general': 'สอบถามทั่วไป',
-      'support': 'ขอความช่วยเหลือ',
-      'business': 'ติดต่อเรื่องธุรกิจ',
-      'complaint': 'ร้องเรียน',
-      'suggestion': 'เสนอแนะ'
-    };
-    return articleMap[article] || article;
-  };
-
-  // สีตามประเภทข้อความ
-  const getArticleColor = (article) => {
-    const colorMap = {
-      'general': 'bg-blue-100 text-blue-800',
-      'support': 'bg-yellow-100 text-yellow-800',
-      'business': 'bg-green-100 text-green-800',
-      'complaint': 'bg-red-100 text-red-800',
-      'suggestion': 'bg-purple-100 text-purple-800'
-    };
-    return colorMap[article] || 'bg-gray-100 text-gray-800';
-  };
-
-  // จัดรูปแบบวันที่
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  useEffect(() => {
-    fetchContacts();
   }, []);
 
-  const uniqueArticles = [...new Set(contacts.map(contact => contact.article))];
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const searched = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return contacts;
+    return contacts.filter((c) =>
+      [c.name, c.email, c.phone, c.detail, topic(c.article).label].some((v) => String(v || "").toLowerCase().includes(q))
+    );
+  }, [contacts, search]);
+  const unreadCount = useMemo(() => searched.filter(isUnread).length, [searched]);
+  const list = filter === "unread" ? searched.filter(isUnread) : searched;
+  const pageCount = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const { rows } = paginate(list, safePage, PAGE_SIZE);
+  const selected = contacts.find((c) => c.id === selectedId) || null;
+
+  const setRead = async (msg, value) => {
+    setContacts((cs) => cs.map((c) => (c.id === msg.id ? { ...c, is_read: value } : c)));
+    try {
+      await api("/api/admin/contacts", { method: "PATCH", body: { id: msg.id, is_read: !!value } });
+    } catch (err) {
+      setContacts((cs) => cs.map((c) => (c.id === msg.id ? { ...c, is_read: msg.is_read } : c)));
+      toast.error(err.message);
+    }
+  };
+
+  const open = (msg) => {
+    setSelectedId(msg.id);
+    if (isUnread(msg)) setRead(msg, 1);
+  };
+
+  const remove = async (msg) => {
+    const ok = await toast.confirm({
+      title: "ลบข้อความ",
+      message: `ต้องการลบข้อความจาก "${msg.name}" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้`,
+      confirmText: "ลบข้อความ",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setDeletingId(msg.id);
+    try {
+      const res = await api(`/api/admin/contacts?id=${msg.id}`, { method: "DELETE" });
+      setContacts((cs) => cs.filter((c) => c.id !== msg.id));
+      setSelectedId(null);
+      toast.success(res?.message || "ลบข้อความสำเร็จ");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const detail = selected && (
+    <MessageDetail msg={selected} deleting={deletingId === selected.id} onDelete={remove} onToggleRead={setRead} />
+  );
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      
-      <div className="flex-1 md:ml-0">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <MessageSquare className="w-6 h-6" />
-                </button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <MessageSquare className="w-7 h-7 text-pink-600" />
-                    ข้อความจากลูกค้า
-                  </h1>
-                  <p className="text-gray-600 text-sm">จัดการข้อความที่ส่งมาจากลูกค้า</p>
-                </div>
-              </div>
-              
-              <button
-                onClick={fetchContacts}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                รีเฟรช
-              </button>
-            </div>
-          </div>
-        </div>
+    <div>
+      <AdminHeader
+        title="ข้อความจากลูกค้า"
+        description="ข้อความที่ส่งมาจากแบบฟอร์มติดต่อเรา"
+        actions={
+          <button className="btn btn-secondary" onClick={load} disabled={loading}>
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> รีเฟรช
+          </button>
+        }
+      />
 
-        {/* Filters and Search */}
-        <div className="p-6">
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="ค้นหาชื่อ, อีเมล, หรือข้อความ..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <FilterTabs
+          tabs={[
+            { value: "all", label: "ทั้งหมด", count: searched.length },
+            { value: "unread", label: "ยังไม่อ่าน", count: unreadCount },
+          ]}
+          value={filter}
+          onChange={(v) => {
+            setFilter(v);
+            setPage(1);
+          }}
+        />
+        <SearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder="ค้นหาชื่อ, อีเมล, หรือข้อความ..."
+          className="sm:w-80"
+        />
+      </div>
 
-              {/* Filter by article type */}
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">ทุกประเภท</option>
-                  {uniqueArticles.map(article => (
-                    <option key={article} value={article}>
-                      {getArticleLabel(article)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      {error && (
+        <Alert tone="error" title="โหลดข้อมูลไม่สำเร็จ" className="mb-4">
+          {error}
+        </Alert>
+      )}
 
-              {/* Sort */}
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="pl-10 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="desc">ใหม่สุดก่อน</option>
-                  <option value="asc">เก่าสุดก่อน</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="mt-4 text-sm text-gray-600">
-              แสดง {filteredContacts.length} จาก {contacts.length} ข้อความ
-            </div>
-          </div>
-
-          {/* Contacts List */}
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : filteredContacts.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">ไม่มีข้อความ</h3>
-              <p className="text-gray-600">ยังไม่มีข้อความจากลูกค้าในระบบ</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredContacts.map((contact) => (
-                <div key={contact.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-                  {/* Contact Header */}
-                  <div className="p-6 border-b border-gray-100">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getArticleColor(contact.article)}`}>
-                            {getArticleLabel(contact.article)}
-                          </span>
-                          <span className="text-sm text-gray-500 flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {formatDate(contact.createdAt)}
-                          </span>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm font-medium text-gray-900">{contact.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">{contact.email}</span>
-                          </div>
-                          {contact.phone && (
-                            <div className="flex items-center gap-2">
-                              <Phone className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-600">{contact.phone}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 ml-4">
-                        <button
-                          onClick={() => setExpandedContact(expandedContact === contact.id ? null : contact.id)}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          {expandedContact === contact.id ? 
-                            <ChevronUp className="w-5 h-5" /> : 
-                            <ChevronDown className="w-5 h-5" />
-                          }
-                        </button>
-                        <button
-                          onClick={() => handleDelete(contact.id)}
-                          disabled={deleting === contact.id}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          {deleting === contact.id ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
-                          ) : (
-                            <Trash2 className="w-5 h-5" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Expanded Content */}
-                  {expandedContact === contact.id && (
-                    <div className="p-6 bg-gray-50">
-                      <h4 className="font-medium text-gray-900 mb-3">ข้อความ:</h4>
-                      <div className="bg-white rounded-lg p-4 border">
-                        <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                          {contact.detail}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+        <div className="card overflow-hidden">
+          {loading && !contacts.length ? (
+            <div className="space-y-3 p-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="skeleton h-16 w-full" />
               ))}
             </div>
+          ) : !list.length ? (
+            <EmptyState
+              icon={Inbox}
+              title={filter === "unread" ? "ไม่มีข้อความที่ยังไม่อ่าน" : "ไม่มีข้อความ"}
+              description={!contacts.length ? "ยังไม่มีข้อความจากลูกค้าในระบบ" : search ? "ลองเปลี่ยนคำค้นหา" : undefined}
+            />
+          ) : (
+            <>
+              <ul className="divide-y divide-slate-100 lg:max-h-[70vh] lg:overflow-y-auto">
+                {rows.map((c) => {
+                  const unread = isUnread(c);
+                  const t = topic(c.article);
+                  return (
+                    <li key={c.id}>
+                      <button
+                        onClick={() => open(c)}
+                        aria-current={selectedId === c.id}
+                        className={cn(
+                          "relative flex w-full gap-3 px-4 py-3.5 text-left transition-colors",
+                          selectedId === c.id ? "bg-brand-50" : unread ? "bg-sky-50/40 hover:bg-slate-50" : "hover:bg-slate-50"
+                        )}
+                      >
+                        {selectedId === c.id && <span className="absolute inset-y-0 left-0 w-1 bg-brand-700" />}
+                        <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", unread ? "bg-brand-600" : "bg-transparent")} aria-hidden />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className={cn("truncate text-sm", unread ? "font-semibold text-slate-900" : "font-medium text-slate-700")}>{c.name}</p>
+                            <span className="shrink-0 text-[11px] text-slate-400">{formatDateTime(c.createdAt)}</span>
+                          </div>
+                          <p className={cn("text-xs", unread ? "font-medium text-brand-700" : "text-slate-500")}>{t.label}</p>
+                          <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{c.detail}</p>
+                        </div>
+                        {unread && <span className="sr-only">ยังไม่อ่าน</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <Pager page={safePage} pageCount={pageCount} onChange={setPage} total={list.length} />
+            </>
           )}
         </div>
+
+        <div className="hidden lg:block">
+          <div className="card card-body sticky top-24 min-h-[320px]">
+            {selected ? (
+              <div className="animate-fade-in">{detail}</div>
+            ) : (
+              <EmptyState icon={MailOpen} title="เลือกข้อความเพื่ออ่าน" description="คลิกที่ข้อความทางซ้ายเพื่อดูรายละเอียดและตอบกลับลูกค้า" />
+            )}
+          </div>
+        </div>
       </div>
+
+      <Modal open={!isDesktop && !!selected} onClose={() => setSelectedId(null)} title="รายละเอียดข้อความ">
+        {!isDesktop && detail}
+      </Modal>
+
+      {!loading && !contacts.length && !error && (
+        <p className="mt-4 flex items-center gap-2 text-xs text-slate-400">
+          <MessageSquare className="h-4 w-4" /> ข้อความใหม่จะแสดงที่นี่เมื่อลูกค้าส่งแบบฟอร์มจากหน้า &quot;ติดต่อเรา&quot;
+        </p>
+      )}
     </div>
   );
 }

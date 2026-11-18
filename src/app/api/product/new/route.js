@@ -1,47 +1,12 @@
-// app/api/product/new/route.js
-import pool from '@/app/lib/db';
+import { query } from "@/app/lib/db";
+import { route, json } from "@/app/lib/api";
 
-export async function POST(req) {
-  try {
-    const body = await req.json();
-    
-    const [result] = await pool.execute(
-      `INSERT INTO Product (name, codename, description, price, stock, categoryId, image_url, warranty, property)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        body.name,
-        body.codename,
-        body.description,
-        body.price,
-        body.stock,
-        body.categoryId,
-        body.imageUrl,
-        body.warranty,
-        JSON.stringify(body.property),
-      ]
-    );
-
-    return new Response(JSON.stringify({ id: result.insertId, ...body }), { status: 201 });
-  } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-}
-
-export async function GET(req) {
-  try {
-    const [rows] = await pool.execute(
-      'SELECT * FROM product WHERE visible = 0 ORDER BY createdAt DESC LIMIT 10'
-    );
-    return new Response(JSON.stringify(rows), { 
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error) {
-    console.error('Error fetching new products:', error);
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-}
+// GET /api/product/new – latest 12 visible products
+export const GET = route(async () => {
+  const rows = await query(
+    `SELECT p.id, p.pro_name, p.codename, p.price, p.stock, p.categoryId, p.imageUrl, p.createdAt, c.cate_name
+     FROM product p LEFT JOIN category c ON c.id = p.categoryId
+     WHERE p.visible = 0 ORDER BY p.createdAt DESC, p.id DESC LIMIT 12`
+  );
+  return json(rows);
+});

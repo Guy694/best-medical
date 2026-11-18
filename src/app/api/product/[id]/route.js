@@ -1,44 +1,18 @@
-import pool from '@/app/lib/db';
+import { query } from "@/app/lib/db";
+import { route, json, HttpError } from "@/app/lib/api";
+import { isStaff } from "@/app/lib/auth";
 
-export async function GET(req, context) {
-  try {
-    const { params } = context;
-    const [rows] = await pool.execute(
-      'SELECT * FROM product INNER JOIN category ON product.categoryId = category.id WHERE product.id = ?',
-      [params.id]
-    );
-    if (rows.length === 0) {
-      return new Response(JSON.stringify({ error: "Product not found" }), { status: 404 });
-    }
-    return new Response(JSON.stringify(rows[0]), { status: 200 });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-}
-
-// export async function PUT(req, { params }) {
-//     try {
-//         const data = await req.json();
-//         const updatedArticle = await prisma.product.update({
-//             where: { id: Number(params.id) },
-//             data,
-//         });
-
-//         return Response.json(updatedArticle);
-//     } catch (error) {
-//         return Response.json({ error: error.message }, { status: 400 });
-//     }
-// }
-
-
-// export async function DELETE(req, context) {
-//     try {
-//        const { params } = await context;
-//     await prisma.product.delete({
-//         where: { id: Number(params.id) },
-//     });
-//     return Response.json({ message: "Product deleted successfully" });
-//     } catch (error) {
-//         return Response.json({ error: error.message }, { status: 400 });
-//     }
-// }
+// GET /api/product/:id – product detail (hidden products only for staff)
+export const GET = route(async (req, { params, user }) => {
+  const id = Number(params.id);
+  if (!Number.isInteger(id) || id <= 0) throw new HttpError(404, "ไม่พบสินค้า");
+  const rows = await query(
+    `SELECT p.id, p.pro_name, p.codename, p.description, p.price, p.stock, p.categoryId, p.imageUrl,
+            p.createdAt, p.warranty, p.property, p.pro_size, p.delivery, p.visible, c.cate_name
+     FROM product p LEFT JOIN category c ON c.id = p.categoryId WHERE p.id = ?`,
+    [id]
+  );
+  const product = rows[0];
+  if (!product || (Number(product.visible) !== 0 && !isStaff(user))) throw new HttpError(404, "ไม่พบสินค้า");
+  return json(product);
+});

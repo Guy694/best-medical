@@ -1,97 +1,110 @@
-import pool from '@/app/lib/db';
-import nodemailer from 'nodemailer';
+import { transaction } from "@/app/lib/db";
+import { route, json, HttpError, email as parseEmail, rateLimit } from "@/app/lib/api";
+import { newOrderCode } from "@/app/lib/orders";
+import { sendMail, templates } from "@/app/lib/mailer";
 
-export async function POST(req) {
-  try {
-    const body = await req.formData();
-    const cart = JSON.parse(body.get('cart'));
-    const shipping = body.get('shipping');
-    const order_email = body.get('order_email');
-    const totalPrice = body.get('totalPrice');
+const SHIPPING_METHODS = ["ems", "store"];
 
-    console.log('Received order data:', { 
-      cartItems: cart?.length, 
-      shipping, 
-      order_email, 
-      totalPrice 
-    });
+/**
+ * POST /api/cart/sendOrder
+ * Body (JSON): { items: [{ id, quantity }], shipping: "ems" | "store", email }
+ * Prices, names and shipping cost are ALWAYS taken from the database – never from the client.
+ */
+export const POST = route(async (req, { user }) => {
+  rateLimit(req, "order", { limit: 10, windowMs: 10 * 60_000 });
 
-    // Validation
-    if (!cart || cart.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'ตะกร้าสินค้าว่างเปล่า' }), 
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!order_email || !order_email.includes('@')) {
-      return new Response(
-        JSON.stringify({ error: 'กรุณากรอกอีเมลที่ถูกต้อง' }), 
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // สร้างเลขคำสั่งซื้อ
-    const orderId = 'ORD' + Date.now();
-
-    console.log('Creating order:', { orderId, order_email, totalPrice });
-
-    // บันทึกข้อมูลลง MySQL (ใช้ pool.execute แทน getConnection)
-    // เพิ่ม transfer_slip_file เป็น empty string เพราะเป็น NOT NULL
-    await pool.execute(
-      'INSERT INTO `order` (order_code, order_email, shipping, items, totalPrice, transfer_slip_file, createdAt) VALUES (?, ?, ?, ?, ?, ?, NOW())',
-      [orderId, order_email, shipping, JSON.stringify(cart), totalPrice, '']
-    );
-
-    console.log('Order saved to database successfully');
-
-    // ส่งอีเมล (แยกออกมาเป็น async เพื่อไม่ให้ block)
-    sendOrderEmail(order_email, orderId).catch(err => {
-      console.error('Error sending email:', err);
-      // ไม่ throw error เพื่อให้คำสั่งซื้อสำเร็จแม้อีเมลส่งไม่สำเร็จ
-    });
-
-    return new Response(JSON.stringify({ orderId, success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
-  } catch (error) {
-    console.error('Error in sendOrder:', error);
-    console.error('Error stack:', error.stack);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      }), 
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+  let body;
+  const ct = req.headers.get("content-type") || "";
+  if (ct.includes("application/json")) {
+    body = await req.json().catch(() => ({}));
+  } else {
+    // backward compatibility with the old multipart form
+    const fd = await req.formData();
+    body = {
+      items: JSON.parse(fd.get("cart") || "[]"),
+      shipping: fd.get("shipping"),
+      email: fd.get("order_email"),
+    };
   }
-}
 
-// ฟังก์ชันส่งอีเมลแยกออกมา
-async function sendOrderEmail(order_email, orderId) {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'chakrit694@gmail.com',
-        pass: 'nqjo cxbr howx mnvr',
-      },
-      tls: {
-        rejectUnauthorized: false
+  const orderEmail = parseEmail(body.email || user?.email);
+  const shipping = SHIPPING_METHODS.includes(body.shipping) ? body.shipping : "ems";
+
+  // merge duplicate lines & validate quantities
+  const wanted = new Map();
+  for (const line of Array.isArray(body.items) ? body.items : []) {
+    const id = Number(line.id ?? line.product_id);
+    const qty = Number(line.quantity);
+    if (!Number.isInteger(id) || id <= 0) continue;
+    if (!Number.isInteger(qty) || qty < 1 || qty > 999) throw new HttpError(400, "จำนวนสินค้าไม่ถูกต้อง");
+    wanted.set(id, (wanted.get(id) || 0) + qty);
+  }
+  if (!wanted.size) throw new HttpError(400, "ตะกร้าสินค้าว่างเปล่า");
+  if (wanted.size > 100) throw new HttpError(400, "จำนวนรายการสินค้ามากเกินไป");
+
+  const result = await transaction(async (conn) => {
+    const ids = [...wanted.keys()];
+    const [products] = await conn.query(
+      "SELECT id, pro_name, price, stock, imageUrl, delivery, visible FROM product WHERE id IN (?)",
+      [ids]
+    );
+    const byId = new Map(products.map((p) => [p.id, p]));
+
+    const items = [];
+    let subtotal = 0;
+    let shippingCost = 0;
+    for (const [id, quantity] of wanted) {
+      const p = byId.get(id);
+      if (!p || Number(p.visible) !== 0) throw new HttpError(400, "มีสินค้าบางรายการไม่พร้อมจำหน่ายแล้ว กรุณาตรวจสอบตะกร้า", { productId: id });
+      const price = Number(p.price);
+      if (!(price > 0)) throw new HttpError(400, `สินค้า "${p.pro_name}" ต้องติดต่อสอบถามราคา ไม่สามารถสั่งซื้อออนไลน์ได้`, { productId: id });
+      if (p.stock < quantity) throw new HttpError(409, `สินค้า "${p.pro_name}" มีไม่พอ (คงเหลือ ${p.stock} ชิ้น)`, { productId: id, stock: p.stock });
+      const delivery = Number(p.delivery) || 0;
+      items.push({ product_id: p.id, id: p.id, name: p.pro_name, price: price.toFixed(2), image: p.imageUrl, quantity, delivery: delivery.toFixed(2) });
+      subtotal += price * quantity;
+      shippingCost += delivery * quantity;
+    }
+    if (shipping === "store") shippingCost = 0;
+    const totalPrice = Math.round((subtotal + shippingCost) * 100) / 100;
+
+    let order_code;
+    let orderId;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      order_code = newOrderCode();
+      try {
+        const [ins] = await conn.execute(
+          `INSERT INTO \`order\` (order_code, order_email, user_id, shipping, shipping_cost, items, totalPrice, status, transfer_slip_file, createdAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', NULL, NOW(3))`,
+          [order_code, orderEmail, user?.id || null, shipping, shippingCost.toFixed(2), JSON.stringify(items), totalPrice.toFixed(2)]
+        );
+        orderId = ins.insertId;
+        break;
+      } catch (err) {
+        if (err.code !== "ER_DUP_ENTRY" || attempt === 4) throw err;
       }
-    });
+    }
 
-    await transporter.sendMail({
-      from: 'chakrit694@gmail.com',
-      to: order_email,
-      subject: 'บริษัท เบสท เมดิคอล จำกัด เลขคำสั่งซื้อของคุณ',
-      text: `ขอบคุณที่สั่งซื้อ! เลขคำสั่งซื้อของคุณคือ ${orderId} สามารถชำระเงินได้ที่ https://www.best-medical-bm.com/payment-notice และตรวจสอบสถานะได้ที่ https://www.best-medical-bm.com/paidstatus`,
-    });
+    for (const it of items) {
+      await conn.execute("INSERT INTO orderitem (orderId, productId, quantity, price) VALUES (?, ?, ?, ?)", [
+        orderId, it.product_id, it.quantity, it.price,
+      ]);
+    }
+    await conn.execute(
+      `INSERT INTO order_status_history (order_id, order_code, status, previous_status, note, changed_by, created_at)
+       VALUES (?, ?, 'PENDING', NULL, 'สร้างคำสั่งซื้อ', 'system', NOW())`,
+      [orderId, order_code]
+    ).catch(() => {});
 
-    console.log('Email sent successfully to:', order_email);
-  } catch (error) {
-    console.error('Failed to send email:', error);
-    throw error;
-  }
-}
+    return { order_code, orderId, items, totalPrice, shippingCost };
+  });
+
+  // fire-and-forget email
+  sendMail({
+    to: orderEmail,
+    subject: `คำสั่งซื้อ ${result.order_code} - บริษัท เบสท เมดิคอล จำกัด`,
+    title: "ขอบคุณสำหรับคำสั่งซื้อ",
+    html: templates.order({ order_code: result.order_code, totalPrice: result.totalPrice, shippingCost: result.shippingCost }, result.items),
+  });
+
+  return json({ success: true, orderId: result.order_code, totalPrice: result.totalPrice });
+});

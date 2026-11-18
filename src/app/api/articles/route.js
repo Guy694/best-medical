@@ -1,241 +1,85 @@
-import { NextResponse } from 'next/server';
-import pool from '@/app/lib/db';
+import { query } from "@/app/lib/db";
+import { route, json, HttpError } from "@/app/lib/api";
+import { parseArticle, ARTICLE_STATUSES as STATUSES } from "@/app/lib/articles";
+import { isStaff, STAFF_ROLES } from "@/app/lib/auth";
 
-// GET - ดึงบทความทั้งหมด หรือบทความเดียว
-export async function GET(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    const status = searchParams.get('status') || 'published';
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 10;
-    const offset = (page - 1) * limit;
+const LIST_COLUMNS = `a.id, a.title, a.excerpt, a.banner, a.category, a.status, a.views, a.author_id,
+  a.published_at, a.created_at, a.updated_at, u.name AS author_name`;
 
-    if (id) {
-      // ดึงบทความเดียว
-      const articleQuery = `
-        SELECT 
-          a.*,
-          u.name as author_firstname
-        FROM articles a
-        LEFT JOIN \`user\` u ON a.author_id = u.id
-        WHERE a.id = ?
-      `;
-      
-      const [articles] = await pool.execute(articleQuery, [id]);
-      
-      if (articles.length === 0) {
-        return NextResponse.json(
-          { error: 'ไม่พบบทความ' },
-          { status: 404 }
-        );
-      }
+// GET /api/articles?page=1&limit=9&category=&q=&status=published|all   (status=all → staff only)
+export const GET = route(async (req, { user }) => {
+  const sp = req.nextUrl.searchParams;
 
-      // อัพเดตจำนวนการดู
-      await pool.execute('UPDATE articles SET views = views + 1 WHERE id = ?', [id]);
-      
-      return NextResponse.json({
-        success: true,
-        article: articles[0]
-      });
-    } else {
-      // ดึงบทความทั้งหมด
-      const where = status === 'all' ? '' : 'WHERE a.status = ?';
-      const params = status === 'all' ? [] : [status];
-      
-      const articlesQuery = `
-        SELECT 
-          a.*,
-          u.name as author_firstname
-        FROM articles a
-        LEFT JOIN \`user\` u ON a.author_id = u.id
-        ${where}
-        ORDER BY 
-          CASE WHEN a.published_at IS NULL OR a.published_at > NOW() THEN a.created_at ELSE a.published_at END DESC
-        LIMIT ? OFFSET ?
-      `;
-      
-      const countQuery = `
-        SELECT COUNT(*) as total 
-        FROM articles a 
-        ${where}
-      `;
-
-      const [articles] = await pool.execute(articlesQuery, [...params, limit, offset]);
-      const [countResult] = await pool.execute(countQuery, params);
-
-      const total = countResult[0].total;
-      const totalPages = Math.ceil(total / limit);
-
-      return NextResponse.json({
-        success: true,
-        articles,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1
-        }
-      });
-    }
-  } catch (error) {
-    console.error('Error fetching articles:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' },
-      { status: 500 }
+  // legacy: /api/articles?id=5
+  if (sp.get("id")) {
+    const rows = await query(
+      `SELECT a.*, u.name AS author_name FROM articles a LEFT JOIN user u ON u.id = a.author_id WHERE a.id = ?`,
+      [Number(sp.get("id")) || 0]
     );
+    const a = rows[0];
+    if (!a || (a.status !== "published" && !isStaff(user))) throw new HttpError(404, "ไม่พบบทความ");
+    return json({ success: true, article: a });
   }
-}
 
-// POST - สร้างบทความใหม่
-export async function POST(request) {
-  try {
-    const {
-      title,
-      content,
-      excerpt,
-      banner,
-      author_id = '1',
-      status = 'published',
-      published_at,
- 
-      category
-    } = await request.json();
+  const page = Math.max(parseInt(sp.get("page"), 10) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(sp.get("limit"), 10) || 9, 1), 100);
+  const offset = (page - 1) * limit;
 
-    if (!title || !content || !author_id) {
-      return NextResponse.json(
-        { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
-        { status: 400 }
-      );
-    }
+  const where = [];
+  const params = [];
+  const status = sp.get("status");
+  if (status === "all" && isStaff(user)) {
+    // no filter
+  } else if (STATUSES.includes(status) && isStaff(user)) {
+    where.push("a.status = ?");
+    params.push(status);
+  } else {
+    where.push("a.status = 'published' AND (a.published_at IS NULL OR a.published_at <= NOW())");
+  }
+  const category = (sp.get("category") || "").trim();
+  if (category) {
+    where.push("a.category = ?");
+    params.push(category.slice(0, 100));
+  }
+  const q = (sp.get("q") || "").trim().slice(0, 100);
+  if (q) {
+    where.push("(a.title LIKE ? OR a.excerpt LIKE ?)");
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    // สร้างเนื้อหาตัวอย่าง (excerpt) ถ้าไม่ได้ระบุ
-    const autoExcerpt = excerpt || content.replace(/<[^>]*>/g, '').substring(0, 200) + '...';
+  const articles = await query(
+    `SELECT ${LIST_COLUMNS} FROM articles a LEFT JOIN user u ON u.id = a.author_id ${whereSql}
+     ORDER BY COALESCE(a.published_at, a.created_at) DESC, a.id DESC LIMIT ${limit} OFFSET ${offset}`,
+    params
+  );
+  const [{ total }] = await query(`SELECT COUNT(*) AS total FROM articles a ${whereSql}`, params);
+  const categories = await query(
+    "SELECT DISTINCT category FROM articles WHERE status = 'published' AND category IS NOT NULL AND category <> '' ORDER BY category"
+  );
+  const totalPages = Math.max(Math.ceil(total / limit), 1);
+  return json({
+    success: true,
+    articles,
+    categories: categories.map((c) => c.category),
+    pagination: { page, limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 },
+  });
+});
 
-    const insertQuery = `
-      INSERT INTO articles (
-        title, content, excerpt, banner, author_id, status, 
-        published_at, category, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    `;
-
-    const [result] = await pool.execute(insertQuery, [
-      title,
-      content,
-      autoExcerpt,
-      banner || null,
-      author_id,
-      status,
-      published_at || (status === 'published' ? new Date() : null),
-    
-      category || null
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      message: 'สร้างบทความสำเร็จ',
-      article_id: result.insertId
-    });
-
-  } catch (error) {
-    console.error('Error creating article:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการสร้างบทความ' },
-      { status: 500 }
+// POST /api/articles – create (staff)
+export const POST = route(
+  async (req, { user }) => {
+    const body = await req.json().catch(() => ({}));
+    const a = parseArticle(body);
+    const status = a.status || "published";
+    const publishedAt = a.published_at || (status === "published" ? new Date() : null);
+    const result = await query(
+      `INSERT INTO articles (title, content, excerpt, banner, author_id, status, published_at, category, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [a.title, a.content, a.excerpt, a.banner || null, user.id, status, publishedAt, a.category || null]
     );
-  }
-}
+    return json({ success: true, message: "สร้างบทความสำเร็จ", article_id: result.insertId }, { status: 201 });
+  },
+  { roles: STAFF_ROLES }
+);
 
-// PUT - แก้ไขบทความ
-export async function PUT(request) {
-  try {
-    const {
-      id,
-      title,
-      content,
-      excerpt,
-      banner,
-      status,
-      published_at,
-   
-      category
-    } = await request.json();
-
-    if (!id || !title || !content) {
-      return NextResponse.json(
-        { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
-        { status: 400 }
-      );
-    }
-
-    const autoExcerpt = excerpt || content.replace(/<[^>]*>/g, '').substring(0, 200) + '...';
-
-    const updateQuery = `
-      UPDATE articles
-      SET 
-        title = ?, 
-        content = ?, 
-        excerpt = ?, 
-        banner = ?, 
-        status = ?,
-        published_at = ?,
-        category = ?
-      WHERE id = ?
-    `;
-
-    await pool.execute(updateQuery, [
-      title,
-      content,
-      autoExcerpt,
-      banner || null,
-      status,
-      published_at,
-  
-      category || null,
-      id
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      message: 'แก้ไขบทความสำเร็จ'
-    });
-
-  } catch (error) {
-    console.error('Error updating article:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการแก้ไขบทความ' },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE - ลบบทความ
-export async function DELETE(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'กรุณาระบุ ID บทความ' },
-        { status: 400 }
-      );
-    }
-
-    await pool.execute('DELETE FROM articles WHERE id = ?', [id]);
-
-    return NextResponse.json({
-      success: true,
-      message: 'ลบบทความสำเร็จ'
-    });
-
-  } catch (error) {
-    console.error('Error deleting article:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการลบบทความ' },
-      { status: 500 }
-    );
-  }
-}

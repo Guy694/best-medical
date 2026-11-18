@@ -1,422 +1,453 @@
 "use client";
-import Navbar from '@/app/components/Nav';
-import Sidebar from '@/app/components/Sidebar';
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { 
-  Package, Search, Plus, Edit, Trash2, Image as ImageIcon,
-  Menu, RefreshCw, AlertCircle, Eye, EyeOff, DollarSign, ShoppingBag
-} from 'lucide-react';
 
-export default function Productmanagement() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterVisible, setFilterVisible] = useState('');
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { AlertTriangle, Check, ExternalLink, Package, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { useToast } from "@/app/components/Providers";
+import { Alert, Badge, EmptyState, Spinner } from "@/app/components/ui";
+import { AdminHeader, FilterTabs, Pager, SearchInput, paginate } from "@/app/components/admin";
+import { Switch } from "@/app/components/admin/FormParts";
+import { api, cn, imgSrc, priceLabel } from "@/app/lib/format";
+
+const PAGE_SIZE = 20;
+const LOW_STOCK = 5;
+
+const isShown = (p) => Number(p.visible) === 0;
+const TAB_FILTERS = {
+  all: () => true,
+  shown: isShown,
+  hidden: (p) => !isShown(p),
+  low: (p) => Number(p.stock) <= LOW_STOCK,
+  ask: (p) => Number(p.price) <= 0,
+};
+
+function Thumb({ product, className = "h-12 w-12" }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={imgSrc(product.imageUrl)}
+      alt=""
+      loading="lazy"
+      className={cn("shrink-0 rounded-xl border border-slate-100 bg-white object-contain", className)}
+      onError={(e) => (e.currentTarget.src = "/placeholder.png")}
+    />
+  );
+}
+
+/** Stock value with inline quick edit. */
+function StockCell({ product, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(String(product.stock ?? 0));
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef(null);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (editing) inputRef.current?.select();
+  }, [editing]);
 
-  async function fetchProducts() {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/product');
-      const data = await res.json();
-      setProducts(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Error fetching products:', err);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const handleDelete = async (id) => {
-    if (!confirm('ต้องการลบสินค้านี้ใช่หรือไม่?')) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/product/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        await fetchProducts();
-        alert('ลบสินค้าสำเร็จ');
-      } else {
-        alert('เกิดข้อผิดพลาดในการลบ');
-      }
-    } catch (err) {
-      console.error('Error deleting product:', err);
-      alert('เกิดข้อผิดพลาดในการลบ');
-    } finally {
-      setLoading(false);
-    }
+  const stock = Number(product.stock) || 0;
+  const start = () => {
+    setValue(String(stock));
+    setEditing(true);
+  };
+  const cancel = () => setEditing(false);
+  const valid = value !== "" && Number.isInteger(Number(value)) && Number(value) >= 0;
+  const save = async () => {
+    if (!valid) return;
+    const n = Number(value);
+    if (n === stock) return cancel();
+    setSaving(true);
+    const ok = await onSave(product, n);
+    setSaving(false);
+    if (ok) setEditing(false);
   };
 
-  const handleToggleVisible = async (id, currentVisible) => {
-    try {
-      const res = await fetch(`/api/admin/product/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible: currentVisible ? 0 : 1 }),
-      });
-      if (res.ok) {
-        setProducts(products =>
-          products.map(p =>
-            p.id === id ? { ...p, visible: currentVisible ? 0 : 1 } : p
-          )
-        );
-      }
-    } catch (err) {
-      console.error('Error toggling visibility:', err);
-    }
-  };
-
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = !searchTerm || 
-      p.pro_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesVisible = filterVisible === '' || 
-      (filterVisible === 'visible' && p.visible === 0) ||
-      (filterVisible === 'hidden' && p.visible === 1);
-    
-    return matchesSearch && matchesVisible;
-  });
+  if (editing)
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          ref={inputRef}
+          type="number"
+          inputMode="numeric"
+          min="0"
+          step="1"
+          aria-label="จำนวนสต็อก"
+          className={cn("input h-9 w-20 px-2 py-1 text-sm", !valid && "input-error")}
+          value={value}
+          disabled={saving}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              save();
+            }
+            if (e.key === "Escape") cancel();
+          }}
+        />
+        <button className="btn btn-primary btn-icon btn-sm" onClick={save} disabled={saving || !valid} aria-label="บันทึกสต็อก">
+          {saving ? <Spinner className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+        </button>
+        <button className="btn btn-ghost btn-icon btn-sm" onClick={cancel} disabled={saving} aria-label="ยกเลิก">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
-      <Navbar />
-      <div className="flex">
-        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden" 
-            onClick={() => setSidebarOpen(false)}
-          ></div>
-        )}
+    <button
+      onClick={start}
+      title="คลิกเพื่อแก้ไขสต็อก"
+      className={cn(
+        "group inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold ring-1 transition hover:ring-brand-300",
+        stock <= 0
+          ? "bg-red-50 text-red-700 ring-red-200"
+          : stock <= LOW_STOCK
+            ? "bg-amber-50 text-amber-700 ring-amber-200"
+            : "bg-white text-slate-800 ring-slate-200"
+      )}
+    >
+      {stock <= 0 ? "หมด" : stock.toLocaleString("th-TH")}
+      <Pencil className="h-3 w-3 opacity-40 group-hover:opacity-100" />
+    </button>
+  );
+}
 
-        {/* Main content */}
-        <div className="flex-1 min-w-0 p-4 md:p-6">
-          {/* Hamburger for mobile */}
-          <button 
-            className="md:hidden mb-4 p-3 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow" 
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-6 h-6 text-gray-700" />
-          </button>
+function RowActions({ product, onDelete, deleting }) {
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <Link href={`/admin/product/edit/${product.id}`} className="btn btn-ghost btn-icon btn-sm" title="แก้ไข" aria-label="แก้ไข">
+        <Pencil className="h-4 w-4" />
+      </Link>
+      <a
+        href={`/product/${product.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn btn-ghost btn-icon btn-sm"
+        title="ดูบนหน้าร้าน"
+        aria-label="ดูบนหน้าร้าน"
+      >
+        <ExternalLink className="h-4 w-4" />
+      </a>
+      <button
+        className="btn btn-ghost btn-icon btn-sm text-red-600 hover:bg-red-50"
+        onClick={() => onDelete(product)}
+        disabled={deleting}
+        title="ลบ"
+        aria-label="ลบสินค้า"
+      >
+        {deleting ? <Spinner className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
 
-          {/* Header Section */}
-          <div className="mb-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl shadow-lg">
-                  <ShoppingBag className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                    จัดการสินค้า
-                  </h1>
-                  <p className="text-gray-600 text-sm">จัดการรายการสินค้าและราคา</p>
-                </div>
-              </div>
-              <Link 
-                href="/admin/product/add" 
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-              >
-                <Plus className="w-5 h-5" />
-                เพิ่มสินค้า
-              </Link>
-            </div>
+function ListSkeleton() {
+  return (
+    <div className="card divide-y divide-slate-100">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 p-4">
+          <div className="skeleton h-12 w-12 rounded-xl" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 w-1/2" />
+            <div className="skeleton h-3 w-1/4" />
           </div>
+          <div className="skeleton hidden h-6 w-20 sm:block" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 mb-6">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">สินค้าทั้งหมด</p>
-                  <p className="text-3xl font-bold text-orange-600">{products.length}</p>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl">
-                  <Package className="w-8 h-8 text-orange-600" />
-                </div>
-              </div>
-            </div>
+export default function AdminProductsPage() {
+  const toast = useToast();
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("");
+  const [tab, setTab] = useState("all");
+  const [page, setPage] = useState(1);
+  const [busy, setBusy] = useState({});
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">แสดงบนเว็บ</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {products.filter(p => p.visible === 0).length}
-                  </p>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-green-100 to-green-200 rounded-xl">
-                  <Eye className="w-8 h-8 text-green-600" />
-                </div>
-              </div>
-            </div>
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [rows, cats] = await Promise.all([api("/api/admin/product"), api("/api/admin/categories")]);
+      setProducts(Array.isArray(rows) ? rows : []);
+      setCategories(Array.isArray(cats) ? cats : []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">ซ่อนไว้</p>
-                  <p className="text-3xl font-bold text-gray-600">
-                    {products.filter(p => p.visible === 1).length}
-                  </p>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl">
-                  <EyeOff className="w-8 h-8 text-gray-600" />
-                </div>
-              </div>
-            </div>
+  useEffect(() => {
+    load();
+  }, [load]);
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">แสดงผล</p>
-                  <p className="text-3xl font-bold text-amber-600">{filteredProducts.length}</p>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl">
-                  <DollarSign className="w-8 h-8 text-amber-600" />
-                </div>
-              </div>
-            </div>
+  useEffect(() => setPage(1), [q, cat, tab]);
+
+  const base = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return products.filter((p) => {
+      if (cat && String(p.categoryId) !== cat) return false;
+      if (!term) return true;
+      return `${p.pro_name || ""} ${p.codename || ""}`.toLowerCase().includes(term);
+    });
+  }, [products, q, cat]);
+
+  const tabs = useMemo(
+    () =>
+      [
+        { value: "all", label: "ทั้งหมด" },
+        { value: "shown", label: "แสดง" },
+        { value: "hidden", label: "ซ่อน" },
+        { value: "low", label: `สต็อกต่ำ (≤${LOW_STOCK})` },
+        { value: "ask", label: "สอบถามราคา" },
+      ].map((t) => ({ ...t, count: base.filter(TAB_FILTERS[t.value]).length })),
+    [base]
+  );
+
+  const filtered = useMemo(() => base.filter(TAB_FILTERS[tab]), [base, tab]);
+  const { rows, pageCount } = paginate(filtered, page, PAGE_SIZE);
+
+  const patch = (id, data) => setProducts((list) => list.map((p) => (p.id === id ? { ...p, ...data } : p)));
+  const setBusyFor = (id, v) => setBusy((b) => ({ ...b, [id]: v }));
+
+  const toggleVisible = async (product) => {
+    const prev = product.visible;
+    const next = isShown(product) ? 1 : 0;
+    patch(product.id, { visible: next });
+    setBusyFor(product.id, "visible");
+    try {
+      const res = await api(`/api/admin/product/${product.id}`, { method: "PUT", body: { visible: next } });
+      toast.success(res?.message || (next ? "ซ่อนสินค้าแล้ว" : "แสดงสินค้าแล้ว"));
+    } catch (err) {
+      patch(product.id, { visible: prev });
+      toast.error(err.message);
+    } finally {
+      setBusyFor(product.id, null);
+    }
+  };
+
+  const saveStock = async (product, stock) => {
+    try {
+      const res = await api(`/api/admin/product/${product.id}`, { method: "PUT", body: { stock } });
+      patch(product.id, { stock });
+      toast.success(res?.message || "อัปเดตสต็อกแล้ว");
+      return true;
+    } catch (err) {
+      toast.error(err.message);
+      return false;
+    }
+  };
+
+  const remove = async (product) => {
+    const ok = await toast.confirm({
+      title: "ลบสินค้านี้?",
+      message: `“${product.pro_name}” จะถูกลบออกจากระบบอย่างถาวร หากต้องการเพียงซ่อนจากหน้าร้าน ให้ปิดสวิตช์การแสดงผลแทน`,
+      confirmText: "ลบสินค้า",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setBusyFor(product.id, "delete");
+    try {
+      const res = await api(`/api/admin/product/${product.id}`, { method: "DELETE" });
+      setProducts((list) => list.filter((p) => p.id !== product.id));
+      toast.success(res?.message || "ลบสินค้าเรียบร้อย");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBusyFor(product.id, null);
+    }
+  };
+
+  const hasFilter = Boolean(q || cat || tab !== "all");
+  const clearFilters = () => {
+    setQ("");
+    setCat("");
+    setTab("all");
+  };
+
+  const visibilitySwitch = (p) => (
+    <Switch
+      checked={isShown(p)}
+      onChange={() => toggleVisible(p)}
+      disabled={busy[p.id] === "visible"}
+      label={`แสดง ${p.pro_name} บนหน้าร้าน`}
+    />
+  );
+
+  return (
+    <div>
+      <AdminHeader
+        title="สินค้า"
+        description={
+          loading ? "กำลังโหลด..." : `ทั้งหมด ${products.length} รายการ · แสดงบนหน้าร้าน ${products.filter(isShown).length} รายการ`
+        }
+        actions={
+          <Link href="/admin/product/add" className="btn btn-primary">
+            <Plus className="h-4 w-4" /> เพิ่มสินค้า
+          </Link>
+        }
+      />
+
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+        <SearchInput value={q} onChange={setQ} placeholder="ค้นหาชื่อสินค้า หรือรหัสสินค้า..." className="flex-1" />
+        <select className="input sm:w-64" value={cat} onChange={(e) => setCat(e.target.value)} aria-label="กรองตามหมวดหมู่">
+          <option value="">ทุกหมวดหมู่</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cate_name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="mb-4">
+        <FilterTabs tabs={tabs} value={tab} onChange={setTab} />
+      </div>
+
+      {loading ? (
+        <ListSkeleton />
+      ) : error ? (
+        <Alert tone="error" title="โหลดรายการสินค้าไม่สำเร็จ">
+          {error}
+          <div className="mt-3">
+            <button className="btn btn-secondary btn-sm" onClick={load}>
+              <RefreshCw className="h-4 w-4" /> ลองอีกครั้ง
+            </button>
           </div>
-
-          {/* Main Table Card */}
-          <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-3xl border border-white/50 overflow-hidden">
-            {/* Filter Section */}
-            <div className="bg-gradient-to-r from-orange-500 to-amber-600 p-4 md:p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={20} />
-                  <input
-                    type="text"
-                    placeholder="ค้นหาชื่อสินค้า..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
-                  />
-                </div>
-                <div className="relative">
-                  <Eye className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={20} />
-                  <select
-                    value={filterVisible}
-                    onChange={(e) => setFilterVisible(e.target.value)}
-                    className="w-full md:w-auto pl-10 pr-10 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all appearance-none cursor-pointer"
-                  >
-                    <option value="" className="text-gray-800">ทั้งหมด</option>
-                    <option value="visible" className="text-gray-800">แสดงบนเว็บ</option>
-                    <option value="hidden" className="text-gray-800">ซ่อนไว้</option>
-                  </select>
-                </div>
-                <button
-                  onClick={fetchProducts}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white font-semibold hover:bg-white/30 transition-all"
-                >
-                  <RefreshCw className="w-5 h-5" />
-                  <span className="hidden md:inline">รีเฟรช</span>
+        </Alert>
+      ) : filtered.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            icon={Package}
+            title={hasFilter ? "ไม่พบสินค้าที่ตรงกับเงื่อนไข" : "ยังไม่มีสินค้า"}
+            description={hasFilter ? "ลองเปลี่ยนคำค้นหาหรือตัวกรอง" : "เริ่มต้นเพิ่มสินค้าชิ้นแรกของร้าน"}
+            action={
+              hasFilter ? (
+                <button className="btn btn-secondary" onClick={clearFilters}>
+                  ล้างตัวกรอง
                 </button>
-              </div>
-            </div>
-            {/* Table Section */}
+              ) : (
+                <Link href="/admin/product/add" className="btn btn-primary">
+                  <Plus className="h-4 w-4" /> เพิ่มสินค้า
+                </Link>
+              )
+            }
+          />
+        </div>
+      ) : (
+        <>
+          {/* desktop table */}
+          <div className="card hidden overflow-hidden md:block">
             <div className="overflow-x-auto">
-              <table className="min-w-full">
+              <table className="table">
                 <thead>
-                  <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <span>#</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <ImageIcon className="w-4 h-4" />
-                        <span>รูปสินค้า</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4" />
-                        <span>ชื่อสินค้า</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4" />
-                        <span>ราคา</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4" />
-                        <span>ค่าจัดส่ง</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <span>ประกัน</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center justify-center gap-2">
-                        <Eye className="w-4 h-4" />
-                        <span>การมองเห็น</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      จัดการ
-                    </th>
+                  <tr>
+                    <th>สินค้า</th>
+                    <th>หมวดหมู่</th>
+                    <th className="text-right">ราคา</th>
+                    <th>สต็อก</th>
+                    <th>หน้าร้าน</th>
+                    <th className="text-right">จัดการ</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {loading ? (
-                    // Loading skeleton
-                    Array(5).fill(0).map((_, index) => (
-                      <tr key={index} className="animate-pulse">
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-8"></div></td>
-                        <td className="py-4 px-6"><div className="h-16 w-16 bg-gray-200 rounded"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-40"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-12 mx-auto"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
-                      </tr>
-                    ))
-                  ) : filteredProducts.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="py-12 text-center">
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="p-4 bg-gray-100 rounded-full mb-3">
-                            <AlertCircle className="w-12 h-12 text-gray-400" />
-                          </div>
-                          <p className="text-gray-500 font-medium">
-                            {searchTerm || filterVisible ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีสินค้า'}
-                          </p>
-                          {(searchTerm || filterVisible) && (
-                            <button
-                              onClick={() => { setSearchTerm(''); setFilterVisible(''); }}
-                              className="mt-3 text-orange-600 hover:text-orange-700 font-medium text-sm"
+                <tbody>
+                  {rows.map((p) => (
+                    <tr key={p.id} className={cn(!isShown(p) && "bg-slate-50/70")}>
+                      <td>
+                        <div className="flex min-w-[16rem] items-center gap-3">
+                          <Thumb product={p} />
+                          <div className="min-w-0">
+                            <Link
+                              href={`/admin/product/edit/${p.id}`}
+                              className="line-clamp-2 font-medium text-slate-900 hover:text-brand-700"
                             >
-                              ล้างการค้นหา
-                            </button>
-                          )}
+                              {p.pro_name}
+                            </Link>
+                            <p className="text-xs text-slate-500">{p.codename ? `รหัส ${p.codename}` : `#${p.id}`}</p>
+                          </div>
                         </div>
                       </td>
+                      <td className="text-sm text-slate-600">{p.cate_name || <span className="text-slate-400">ไม่มีหมวดหมู่</span>}</td>
+                      <td className="text-right whitespace-nowrap">
+                        {Number(p.price) > 0 ? (
+                          <span className="font-semibold text-slate-900">{priceLabel(p.price)}</span>
+                        ) : (
+                          <Badge tone="amber">สอบถามราคา</Badge>
+                        )}
+                      </td>
+                      <td>
+                        <StockCell product={p} onSave={saveStock} />
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          {visibilitySwitch(p)}
+                          <span className={cn("text-xs", isShown(p) ? "text-accent-700" : "text-slate-400")}>
+                            {isShown(p) ? "แสดง" : "ซ่อน"}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <RowActions product={p} onDelete={remove} deleting={busy[p.id] === "delete"} />
+                      </td>
                     </tr>
-                  ) : (
-                    filteredProducts.map((product, index) => (
-                      <tr 
-                        key={product.id} 
-                        className="hover:bg-orange-50/50 transition-colors group"
-                      >
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-br from-orange-100 to-amber-100 text-orange-600 rounded-lg font-bold text-sm group-hover:from-orange-200 group-hover:to-amber-200 transition-all">
-                            {index + 1}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="relative w-16 h-16 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow">
-                            <img 
-                              src={product.imageUrl || '/placeholder.png'} 
-                              alt={product.name} 
-                              className="w-full h-full object-cover"
-                              onError={e => { e.target.src = '/placeholder.png'; }}
-                            />
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="font-semibold text-gray-800">
-                            {product.pro_name || product.name}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">
-                            <DollarSign className="w-3 h-3" />
-                            {Number(product.price).toLocaleString()} บาท
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
-                            {product.delivery ? `${Number(product.delivery).toLocaleString()} บาท` : '-'}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-bold">
-                            {product.warranty ? `${product.warranty} เดือน` : '-'}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          <button
-                            onClick={() => handleToggleVisible(product.id, product.visible)}
-                            title={product.visible === 0 ? "คลิกเพื่อซ่อนสินค้า" : "คลิกเพื่อแสดงสินค้า"}
-                            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg font-semibold transition-all hover:scale-110"
-                          >
-                            {product.visible === 0 ? (
-                              <>
-                                <Eye className="w-5 h-5 text-green-600" />
-                                <span className="text-xs text-green-600 hidden lg:inline">แสดง</span>
-                              </>
-                            ) : (
-                              <>
-                                <EyeOff className="w-5 h-5 text-gray-400" />
-                                <span className="text-xs text-gray-400 hidden lg:inline">ซ่อน</span>
-                              </>
-                            )}
-                          </button>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center justify-center gap-2">
-                            <Link 
-                              href={`/admin/product/edit/${product.id}`} 
-                              className="inline-flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all"
-                            >
-                              <Edit className="w-4 h-4" />
-                              <span className="hidden sm:inline">แก้ไข</span>
-                            </Link>
-                            <button 
-                              onClick={() => handleDelete(product.id)} 
-                              className="inline-flex items-center gap-1 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              <span className="hidden sm:inline">ลบ</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
+            <Pager page={page} pageCount={pageCount} onChange={setPage} total={filtered.length} />
+          </div>
 
-            {/* Footer */}
-            {!loading && filteredProducts.length > 0 && (
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-sm text-gray-600">
-                    แสดง <span className="font-semibold text-gray-800">{filteredProducts.length}</span> จาก <span className="font-semibold text-gray-800">{products.length}</span> รายการ
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">
-                      <Eye className="w-3 h-3" />
-                      แสดง: {products.filter(p => p.visible === 0).length}
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold">
-                      <EyeOff className="w-3 h-3" />
-                      ซ่อน: {products.filter(p => p.visible === 1).length}
-                    </div>
+          {/* mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {rows.map((p) => (
+              <div key={p.id} className="card p-4">
+                <div className="flex gap-3">
+                  <Thumb product={p} className="h-16 w-16" />
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/admin/product/edit/${p.id}`} className="line-clamp-2 font-medium text-slate-900">
+                      {p.pro_name}
+                    </Link>
+                    <p className="text-xs text-slate-500">
+                      {p.codename ? `รหัส ${p.codename} · ` : ""}
+                      {p.cate_name || "ไม่มีหมวดหมู่"}
+                    </p>
+                    <p className={cn("mt-1 text-sm font-semibold", Number(p.price) > 0 ? "text-brand-700" : "text-amber-600")}>
+                      {priceLabel(p.price)}
+                    </p>
                   </div>
                 </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    สต็อก <StockCell product={p} onSave={saveStock} />
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    {isShown(p) ? "แสดง" : "ซ่อน"}
+                    {visibilitySwitch(p)}
+                  </div>
+                </div>
+                <div className="mt-2 border-t border-slate-100 pt-2">
+                  <RowActions product={p} onDelete={remove} deleting={busy[p.id] === "delete"} />
+                </div>
               </div>
-            )}
+            ))}
+            <div className="card">
+              <Pager page={page} pageCount={pageCount} onChange={setPage} total={filtered.length} />
+            </div>
           </div>
-        </div>
-      </div>
+
+          {tab === "low" && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> แสดงสินค้าที่มีสต็อกไม่เกิน {LOW_STOCK} ชิ้น (รวมสินค้าหมด)
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }

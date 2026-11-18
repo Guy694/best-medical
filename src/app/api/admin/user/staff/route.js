@@ -1,32 +1,26 @@
-import mysql from 'mysql2/promise';
-import pool from '@/app/lib/db';
-import bcrypt from 'bcryptjs';
+import { query } from "@/app/lib/db";
+import { route, json } from "@/app/lib/api";
+import { parseStaff } from "@/app/lib/staff";
 
-export async function GET(req) {
-  try {
-    const [rows] = await pool.execute(
-      "SELECT id, name, email, password, phone, address, role FROM user WHERE role != 'CUSTOMER' ORDER BY createdAt DESC"
+// ADMIN only (also enforced by middleware)
+export const GET = route(
+  async () => {
+    const rows = await query(
+      "SELECT id, name, email, phone, address, role, createdAt FROM user WHERE role IN ('ADMIN','STAFF') ORDER BY createdAt DESC"
     );
-    return new Response(JSON.stringify(rows), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-}
+    return json(rows);
+  },
+  { roles: ["ADMIN"] }
+);
 
-export async function POST(req) {
-  try {
-    const { name, email, password, phone, address, role } = await req.json();
-    // hash password ก่อนบันทึก
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const [result] = await pool.execute(
-      'INSERT INTO user (name, email, password, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, phone, address, role]
+export const POST = route(
+  async (req) => {
+    const s = await parseStaff(await req.json().catch(() => ({})), { requirePassword: true });
+    const result = await query(
+      "INSERT INTO user (name, email, password, phone, address, role, verified) VALUES (?, ?, ?, ?, ?, ?, 1)",
+      [s.name, s.email, s.passwordHash, s.phone, s.address, s.role]
     );
-    return new Response(JSON.stringify({ id: result.insertId, name, email, phone, address, role }), { status: 201 });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-}
+    return json({ success: true, message: "เพิ่มพนักงานเรียบร้อย", id: result.insertId }, { status: 201 });
+  },
+  { roles: ["ADMIN"] }
+);

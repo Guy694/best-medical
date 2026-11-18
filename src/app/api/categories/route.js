@@ -1,12 +1,12 @@
-import pool from '@/app/lib/db';
+import { query } from "@/app/lib/db";
+import { route, json } from "@/app/lib/api";
 
-export async function GET(req) {
-  try {
-    const [rows] = await pool.execute(
-      'SELECT * FROM category WHERE parentId IS NULL ORDER BY id ASC'
-    );
-    return new Response(JSON.stringify(rows), { status: 200 });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-}
+// GET /api/categories – top-level categories with visible product counts
+export const GET = route(async () => {
+  const rows = await query(
+    `SELECT c.id, c.cate_name, c.cate_img, c.parentId,
+            (SELECT COUNT(*) FROM product p WHERE p.categoryId = c.id AND p.visible = 0) AS product_count
+     FROM category c WHERE c.parentId IS NULL ORDER BY c.cate_name ASC`
+  );
+  return json(rows);
+});

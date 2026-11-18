@@ -1,53 +1,44 @@
-import pool from '@/app/lib/db';
-import nodemailer from 'nodemailer';
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { query } from "@/app/lib/db";
+import { route, json, HttpError, str, email as parseEmail, rateLimit } from "@/app/lib/api";
+import { sendMail, siteUrl, templates } from "@/app/lib/mailer";
 
-export async function POST(req) {
-  try {
-    const { name, email, password } = await req.json();
+// POST /api/register  { name, email, password }
+export const POST = route(async (req) => {
+  rateLimit(req, "register", { limit: 5, windowMs: 15 * 60_000 });
+  const body = await req.json().catch(() => ({}));
+  const name = str(body.name, { required: true, max: 100, label: "ชื่อ-นามสกุล" });
+  const emailAddr = parseEmail(body.email);
+  const password = String(body.password || "");
+  if (password.length < 8) throw new HttpError(400, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
 
-    // เข้ารหัสรหัสผ่าน
-    const hashedPassword = await bcrypt.hash(password, 10);
+  const existing = await query("SELECT id, verified FROM user WHERE email = ?", [emailAddr]);
+  if (existing.length) throw new HttpError(409, "อีเมลนี้ถูกใช้งานแล้ว");
 
-    // สร้างโค้ดยืนยัน
-    const verifyToken = crypto.randomBytes(24).toString('hex');
+  const hashed = await bcrypt.hash(password, 10);
+  const verifyToken = crypto.randomBytes(24).toString("hex");
+  const smtpReady = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
 
-    // บันทึกข้อมูลลง MySQL
-    
-    // ตรวจสอบอีเมลซ้ำ
-    const [existingUser] = await pool.execute('SELECT id FROM user WHERE email = ?', [email]);
-    if (existingUser.length > 0) {
-      return new Response(JSON.stringify({ error: "อีเมลนี้ถูกใช้งานแล้ว" }), { status: 400 });
-    }
-    await pool.execute(
-      'INSERT INTO user (name, email, password, verify_token, verified) VALUES (?, ?, ?, ?, 0)',
-      [name, email, hashedPassword, verifyToken]
-    );
+  // If email is not configured (e.g. local dev) accounts are auto-verified so they can log in.
+  await query(
+    "INSERT INTO user (name, email, password, role, verify_token, verified) VALUES (?, ?, ?, 'CUSTOMER', ?, ?)",
+    [name, emailAddr, hashed, smtpReady ? verifyToken : null, smtpReady ? 0 : 1]
+  );
 
-    // สร้าง URL สำหรับยืนยัน
-    const verifyUrl = `https://best-medical-bm.com/api/verify?token=${verifyToken}`;
-
-    // ส่งอีเมลยืนยัน
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'chakrit694@gmail.com', // เปลี่ยนเป็นอีเมลของคุณ
-        pass: 'nqjo cxbr howx mnvr',    // ใช้ App Password จาก Google
-        
-      },
-      tls: { rejectUnauthorized: false }
-    });
-
-    await transporter.sendMail({
-      from: 'chakrit694@gmail.com',
-      to: email,
-      subject: 'ยืนยันการสมัครสมาชิก',
-      html: `<p>ขอบคุณที่สมัครสมาชิก กรุณาคลิก <a href="${verifyUrl}">ที่นี่</a> เพื่อยืนยันอีเมลของคุณ</p>`
-    });
-
-    return new Response(JSON.stringify({ message: "สมัครสมาชิกสำเร็จ กรุณาตรวจสอบอีเมลเพื่อยืนยันตัวตน" }), { status: 201 });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  if (smtpReady) {
+    const url = `${siteUrl()}/api/verify?token=${verifyToken}`;
+    await sendMail({ to: emailAddr, subject: "ยืนยันการสมัครสมาชิก - Best Medical", title: "ยืนยันอีเมลของคุณ", html: templates.verify(url) });
   }
-}
+
+  return json(
+    {
+      success: true,
+      needVerify: smtpReady,
+      message: smtpReady
+        ? "สมัครสมาชิกสำเร็จ กรุณาตรวจสอบอีเมลเพื่อยืนยันตัวตน"
+        : "สมัครสมาชิกสำเร็จ สามารถเข้าสู่ระบบได้ทันที",
+    },
+    { status: 201 }
+  );
+});

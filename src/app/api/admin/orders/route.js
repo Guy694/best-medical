@@ -1,93 +1,49 @@
-import pool from '@/app/lib/db';
-import { NextResponse } from 'next/server';
+import { query, transaction } from "@/app/lib/db";
+import { route, json, HttpError, int, str } from "@/app/lib/api";
+import { STAFF_ROLES } from "@/app/lib/auth";
+import { changeOrderStatus, ORDER_STATUSES } from "@/app/lib/orders";
+import { serializeOrder } from "@/app/lib/orderView";
 
-export async function GET(req) {
-  try {
-    const [rows] = await pool.execute(`
-      SELECT 
-        o.order_id,
-        o.order_code,
-        o.fullName,
-        o.order_email,
-        o.order_phone,
-        o.totalPrice,
-        o.status,
-        o.shippingAddress,
-        o.transfer_slip_file,
-        o.items,
-        o.paidAtdate,
-        o.paidAttime,
-        o.createdAt,
-        DATE_FORMAT(o.createdAt, '%d/%m/%Y %H:%i') as orderDate
-      FROM \`order\` o
-      ORDER BY o.createdAt DESC
-    `);
-
-    console.log('Fetched orders:', rows.length);
-
-    return NextResponse.json(rows);
-  } catch (error) {
-    console.error('Orders API Error:', error);
-    return NextResponse.json({ error: error.message, details: error.stack }, { status: 500 });
-  }
-}
-
-export async function PUT(req) {
-  try {
-    const { order_id, status, note } = await req.json();
-    
-    if (!order_id || !status) {
-      return NextResponse.json({ error: 'Missing order_id or status' }, { status: 400 });
+// GET /api/admin/orders?status=&q=&verify=1
+export const GET = route(
+  async (req) => {
+    const sp = req.nextUrl.searchParams;
+    const where = [];
+    const params = [];
+    const status = sp.get("status");
+    if (ORDER_STATUSES.includes(status)) {
+      where.push("status = ?");
+      params.push(status);
     }
-
-    // ถ้าเปลี่ยนสถานะเป็น PAID ให้ตัด stock
-    if (status === 'PAID') {
-      // ดึงข้อมูล order เพื่อเอา items
-      const [orderData] = await pool.execute(
-        'SELECT items FROM `order` WHERE order_id = ?',
-        [order_id]
-      );
-      
-      if (orderData.length > 0) {
-        let items = orderData[0].items;
-        if (typeof items === 'string') {
-          items = JSON.parse(items);
-        }
-        
-        // ตัด stock สำหรับแต่ละสินค้า
-        for (const item of items) {
-          if (
-            typeof item.product_id !== 'undefined' && item.product_id !== null &&
-            typeof item.quantity !== 'undefined' && item.quantity !== null
-          ) {
-            await pool.execute(
-              'UPDATE product SET stock = stock - ? WHERE id = ? AND stock >= ?',
-              [item.quantity, item.product_id, item.quantity]
-            );
-          } else {
-            console.warn('Order item missing product_id or quantity:', item);
-          }
-        }
-      }
+    if (sp.get("verify") === "1") where.push("status = 'PENDING' AND paidAtdate IS NOT NULL");
+    const q = (sp.get("q") || "").trim().slice(0, 100);
+    if (q) {
+      where.push("(order_code LIKE ? OR order_email LIKE ? OR fullName LIKE ? OR order_phone LIKE ?)");
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
     }
-    
-    // อัปเดตสถานะ order
-    await pool.execute(
-      'UPDATE `order` SET status = ? WHERE order_id = ?',
-      [status, order_id]
+    const rows = await query(
+      `SELECT * FROM \`order\` ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY createdAt DESC LIMIT 1000`,
+      params
     );
+    return json(rows.map((o) => serializeOrder(o, { full: true })));
+  },
+  { roles: STAFF_ROLES }
+);
 
-    // บันทึก history และ note (ถ้ามี)
-    if (note || status === 'CANCELLED') {
-      await pool.execute(
-        'INSERT INTO order_status_history (order_id, status, note, created_at) VALUES (?, ?, ?, NOW())',
-        [order_id, status, note || null]
-      );
-    }
-    
-    return NextResponse.json({ message: 'Order updated successfully', success: true });
-  } catch (error) {
-    console.error('Update Order Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
+// PUT /api/admin/orders  { order_id, status, note?, tracking_number?, shipping_company? }
+export const PUT = route(
+  async (req, { user }) => {
+    const body = await req.json().catch(() => ({}));
+    const orderId = int(body.order_id, { min: 1, label: "รหัสคำสั่งซื้อ" });
+    if (!ORDER_STATUSES.includes(body.status)) throw new HttpError(400, "สถานะไม่ถูกต้อง");
+    const extra = {
+      note: str(body.note, { max: 1000, label: "หมายเหตุ" }),
+      tracking_number: str(body.tracking_number, { max: 100, label: "เลขพัสดุ" }),
+      shipping_company: str(body.shipping_company, { max: 100, label: "บริษัทขนส่ง" }),
+    };
+    if (body.status === "CANCELLED" && !extra.note) throw new HttpError(400, "กรุณาระบุเหตุผลในการยกเลิก");
+    const updated = await transaction((conn) => changeOrderStatus(conn, orderId, body.status, user, extra));
+    return json({ success: true, message: "อัปเดตสถานะเรียบร้อย", order: serializeOrder(updated, { full: true }) });
+  },
+  { roles: STAFF_ROLES }
+);

@@ -1,651 +1,339 @@
 "use client";
-import { useState, useEffect } from 'react';
-import Navbar from '../../components/Nav';
-import Sidebar from '../../components/Sidebar';
-import { 
-  Plus, Edit, Trash2, Eye, EyeOff, Calendar, Upload,
-  Search, Filter, Save, X, Clock, User, Tag
-} from 'lucide-react';
 
-export default function AdminArticlesPage() {
-  const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingArticle, setEditingArticle] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [uploading, setUploading] = useState(false);
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Eye, FileText, Pencil, Plus, Trash2, Send, EyeOff } from "lucide-react";
+import { AdminHeader, SearchInput, FilterTabs, Pager, paginate } from "@/app/components/admin";
+import { Badge, EmptyState, Alert, Modal, Field, Spinner } from "@/app/components/ui";
+import { ImagePicker } from "@/app/components/admin/FormParts";
+import TiptapEditor from "@/app/components/TiptapEditor";
+import { useToast } from "@/app/components/Providers";
+import { api, formatDate, imgSrc } from "@/app/lib/format";
 
-  // Form state
-  const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    excerpt: '',
-    category: '',
-    status: 'draft',
-    published_at: ''
-  });
+const STATUS = {
+  published: { label: "เผยแพร่", tone: "emerald" },
+  draft: { label: "ฉบับร่าง", tone: "slate" },
+  scheduled: { label: "ตั้งเวลา", tone: "amber" },
+};
+
+const EMPTY = { title: "", category: "", excerpt: "", banner: "", status: "published", published_at: "", content: "" };
+
+const toLocalInput = (d) => {
+  if (!d) return "";
+  const x = new Date(d);
+  if (isNaN(x)) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}T${pad(x.getHours())}:${pad(x.getMinutes())}`;
+};
+
+function ArticleEditor({ open, article, categories, onClose, onSaved }) {
+  const toast = useToast();
+  const [form, setForm] = useState(EMPTY);
   const [bannerFile, setBannerFile] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchArticles();
-  }, []);
-
-  const fetchArticles = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/articles?status=all&page=1&limit=50');
-      const data = await response.json();
-      
-      console.log('Articles API response:', data);
-      
-      if (data.success) {
-        setArticles(data.articles || []);
-      } else {
-        console.error('API Error:', data.error);
-        setArticles([]);
-      }
-    } catch (error) {
-      console.error('Error fetching articles:', error);
-      setArticles([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setBannerFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setBannerPreview(e.target.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const uploadBanner = async () => {
-    if (!bannerFile) return null;
-
-    setUploading(true);
-    const uploadFormData = new FormData();
-    uploadFormData.append('file', bannerFile);
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: uploadFormData,
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        return data.url;
-      }
-    } catch (error) {
-      console.error('Error uploading banner:', error);
-    } finally {
-      setUploading(false);
-    }
-    return null;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validation
-    if (!formData.title.trim()) {
-      alert('กรุณากรอกชื่อบทความ');
-      return;
-    }
-    if (!formData.content.trim()) {
-      alert('กรุณากรอกเนื้อหาบทความ');
-      return;
-    }
-
-    setUploading(true);
-    
-    let bannerUrl = editingArticle?.banner || '';
-    if (bannerFile) {
-      const uploadedUrl = await uploadBanner();
-      if (uploadedUrl) {
-        bannerUrl = uploadedUrl;
-      } else {
-        alert('การอัปโหลดรูปภาพล้มเหลว');
-        setUploading(false);
-        return;
-      }
-    }
-
-    const articleData = {
-      ...formData,
-      banner: bannerUrl,
-      excerpt: formData.excerpt || formData.content.substring(0, 200) + '...'
-    };
-
-    try {
-      const url = editingArticle 
-        ? `/api/articles/${editingArticle.id}` 
-        : '/api/articles';
-      
-      const method = editingArticle ? 'PUT' : 'POST';
-
-      console.log('Saving article:', { method, url, articleData });
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(articleData),
-      });
-
-      // เช็คว่า response เป็น JSON หรือไม่
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON response:', text.substring(0, 200));
-        alert('เกิดข้อผิดพลาด: Server ตอบกลับไม่ถูกต้อง (ไม่ใช่ JSON)');
-        return;
-      }
-
-      const data = await response.json();
-      
-      console.log('Save response:', data);
-      
-      if (response.ok && data.success) {
-        await fetchArticles();
-        resetForm();
-        setShowModal(false);
-        alert(editingArticle ? 'แก้ไขบทความสำเร็จ' : 'สร้างบทความสำเร็จ');
-      } else {
-        alert('เกิดข้อผิดพลาด: ' + (data.message || data.error || 'Unknown error'));
-        console.error('Save error:', data);
-      }
-    } catch (error) {
-      console.error('Error saving article:', error);
-      alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleEdit = (article) => {
-    setEditingArticle(article);
-    setFormData({
-      title: article.title,
-      content: article.content,
-      excerpt: article.excerpt,
-      category: article.category || '',
-      status: article.status,
-      published_at: article.published_at ? 
-        new Date(article.published_at).toISOString().slice(0, 16) : ''
-    });
-    setBannerPreview(article.banner || '');
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบบทความนี้? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
-
-    setLoading(true);
-    try {
-      console.log('Deleting article:', id);
-      
-      const response = await fetch(`/api/articles/${id}`, {
-        method: 'DELETE',
-      });
-
-      // เช็คว่า response เป็น JSON หรือไม่
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON response:', text.substring(0, 200));
-        alert('เกิดข้อผิดพลาด: Server ตอบกลับไม่ถูกต้อง (ไม่ใช่ JSON)');
-        return;
-      }
-
-      const data = await response.json();
-      
-      console.log('Delete response:', data);
-      
-      if (response.ok && data.success) {
-        await fetchArticles();
-        alert('ลบบทความสำเร็จ');
-      } else {
-        alert('เกิดข้อผิดพลาด: ' + (data.message || data.error || 'Unknown error'));
-        console.error('Delete error:', data);
-      }
-    } catch (error) {
-      console.error('Error deleting article:', error);
-      alert('เกิดข้อผิดพลาดในการลบ: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleStatus = async (article) => {
-    const newStatus = article.status === 'published' ? 'draft' : 'published';
-    
-    try {
-      console.log('Toggling status:', { articleId: article.id, currentStatus: article.status, newStatus });
-      
-      const response = await fetch(`/api/articles/${article.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          status: newStatus,
-          title: article.title,
-          content: article.content
-        }),
-      });
-
-      // เช็คว่า response เป็น JSON หรือไม่
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON response:', text.substring(0, 200));
-        alert('เกิดข้อผิดพลาด: Server ตอบกลับไม่ถูกต้อง (ไม่ใช่ JSON)');
-        return;
-      }
-
-      const data = await response.json();
-      
-      console.log('Toggle status response:', data);
-      
-      if (response.ok && data.success) {
-        await fetchArticles();
-        alert(`เปลี่ยนสถานะเป็น "${newStatus === 'published' ? 'เผยแพร่' : 'แบบร่าง'}" สำเร็จ`);
-      } else {
-        alert('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ: ' + (data.message || data.error || 'Unknown error'));
-        console.error('Toggle status error:', data);
-      }
-    } catch (error) {
-      console.error('Error toggling status:', error);
-      alert('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ: ' + error.message);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      content: '',
-      excerpt: '',
-      category: '',
-      status: 'draft',
-      published_at: ''
-    });
+    if (!open) return;
+    setError("");
     setBannerFile(null);
-    setBannerPreview('');
-    setEditingArticle(null);
+    if (!article) {
+      setForm(EMPTY);
+      return;
+    }
+    setLoading(true);
+    api(`/api/articles/${article.id}`)
+      .then(({ article: a }) =>
+        setForm({
+          title: a.title || "",
+          category: a.category || "",
+          excerpt: a.excerpt || "",
+          banner: a.banner || "",
+          status: a.status || "draft",
+          published_at: toLocalInput(a.published_at),
+          content: a.content || "",
+        })
+      )
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [open, article]);
+
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? e.target.value : e }));
+
+  const save = async (e) => {
+    e?.preventDefault();
+    if (saving) return;
+    setError("");
+    if (!form.title.trim()) return setError("กรุณากรอกหัวข้อบทความ");
+    if (!form.content.replace(/<[^>]*>/g, "").trim() && !/<img/i.test(form.content)) return setError("กรุณากรอกเนื้อหาบทความ");
+    if (form.status === "scheduled" && !form.published_at) return setError("กรุณาระบุวันเวลาที่ต้องการเผยแพร่");
+    setSaving(true);
+    try {
+      let banner = form.banner || null;
+      if (bannerFile) {
+        const fd = new FormData();
+        fd.append("file", bannerFile);
+        fd.append("folder", "articles");
+        banner = (await api("/api/upload", { method: "POST", body: fd })).url;
+      }
+      const body = {
+        title: form.title,
+        category: form.category || null,
+        excerpt: form.excerpt || null,
+        banner,
+        status: form.status,
+        content: form.content,
+        ...(form.published_at ? { published_at: new Date(form.published_at).toISOString() } : {}),
+      };
+      const res = article
+        ? await api(`/api/articles/${article.id}`, { method: "PUT", body })
+        : await api("/api/articles", { method: "POST", body });
+      toast.success(res.message || "บันทึกบทความเรียบร้อย");
+      onSaved();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
-
-  const filteredArticles = articles.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !filterStatus || article.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  if (loading) {
-    return <div className="text-gray-600 min-h-screen flex items-center justify-center">
-      <div className="text-xl">กำลังโหลด...</div>
-    </div>;
-  }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
-      <div className="flex">
-        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>
-        )}
-        {/* Main content */}
-        <div className="flex-1 min-w-0 p-4 md:p-6">
-          <div className="max-w-full mx-auto bg-white shadow-md rounded-lg p-4 md:p-6 mt-4">
-            {/* Hamburger for mobile */}
-            <button className="md:hidden mb-4 px-3 py-2 bg-gray-200 rounded-lg" onClick={() => setSidebarOpen(true)}>
-              <span className="block w-6 h-0.5 bg-gray-700 mb-1"></span>
-              <span className="block w-6 h-0.5 bg-gray-700 mb-1"></span>
-              <span className="block w-6 h-0.5 bg-gray-700"></span>
-            </button>
-
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-              <h1 className="text-xl md:text-2xl font-semibold text-gray-800">จัดการบทความ</h1>
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus size={20} />
-                เพิ่มบทความใหม่
-              </button>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="text"
-                      placeholder="ค้นหาบทความ..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">สถานะทั้งหมด</option>
-                  {/* <option value="draft">แบบร่าง</option> */}
-                  <option value="published">เผยแพร่</option>
-                  <option value="scheduled">ตั้งเวลา</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Articles Table */}
-            <div className="overflow-x-auto -mx-4 md:mx-0">
-              <div className="min-w-full inline-block align-middle">
-                {loading ? (
-                  <div className="p-8 text-center text-gray-500">
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
-                      กำลังโหลดข้อมูล...
-                    </div>
-                  </div>
-                ) : filteredArticles.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    ไม่พบบทความ
-                  </div>
-                ) : (
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          บทความ
-                        </th>
-                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          หมวดหมู่
-                        </th>
-                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          สถานะ
-                        </th>
-                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          วันที่
-                        </th>
-                        <th className="py-3 px-3 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          การดำเนินการ
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredArticles.map((article) => (
-                        <tr key={article.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              {article.banner && (
-                                <img
-                                  src={article.banner}
-                                  alt={article.title}
-                                  className="w-16 h-16 object-cover rounded-lg mr-4"
-                                />
-                              )}
-                              <div>
-                                <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
-                                  {article.title}
-                                </div>
-                                <div className="text-sm text-gray-500 max-w-xs truncate">
-                                  {article.excerpt}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {article.category && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {article.category}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              article.status === 'published' 
-                                ? 'bg-green-100 text-green-800'
-                                : article.status === 'scheduled'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {article.status === 'published' ? 'เผยแพร่' : 
-                               article.status === 'scheduled' ? 'ตั้งเวลา' : 'แบบร่าง'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(article.published_at || article.createdAt)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => toggleStatus(article)}
-                                className={`p-2 rounded-lg transition-colors ${
-                                  article.status === 'published'
-                                    ? 'text-green-600 hover:bg-green-100'
-                                    : 'text-gray-600 hover:bg-gray-100'
-                                }`}
-                                title={article.status === 'published' ? 'ซ่อน' : 'เผยแพร่'}
-                              >
-                                {article.status === 'published' ? <Eye size={16} /> : <EyeOff size={16} />}
-                              </button>
-                              
-                              <button
-                                onClick={() => handleEdit(article)}
-                                className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                                title="แก้ไข"
-                              >
-                                <Edit size={16} />
-                              </button>
-                              
-                              <button
-                                onClick={() => handleDelete(article.id)}
-                                className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                title="ลบ"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
+    <Modal
+      open={open}
+      onClose={() => !saving && onClose()}
+      size="lg"
+      title={article ? "แก้ไขบทความ" : "เขียนบทความใหม่"}
+      footer={
+        <>
+          <button className="btn btn-secondary" onClick={onClose} disabled={saving}>ยกเลิก</button>
+          <button className="btn btn-primary" onClick={save} disabled={saving || loading}>
+            {saving && <Spinner className="h-4 w-4" />} บันทึกบทความ
+          </button>
+        </>
+      }
+    >
+      {loading ? (
+        <div className="space-y-3">
+          <div className="skeleton h-10" />
+          <div className="skeleton h-40" />
+          <div className="skeleton h-64" />
         </div>
-      </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="text-gray-700 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">
-                  {editingArticle ? 'แก้ไขบทความ' : 'เพิ่มบทความใหม่'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Banner Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  รูปปก
-                </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-                </div>
-                {bannerPreview && (
-                  <div className="mt-2">
-                    <img
-                      src={bannerPreview}
-                      alt="Preview"
-                      className="w-32 h-32 object-cover rounded-lg"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  หัวข้อ *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  หมวดหมู่
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="เช่น สุขภาพ, เวชภัณฑ์"
-                />
-              </div>
-
-              {/* Excerpt */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  สรุปย่อ
-                </label>
-                <textarea
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
-                  rows={3}
-                  className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="สรุปย่อของบทความ (ถ้าไม่ระบุจะใช้ 200 ตัวอักษรแรกของเนื้อหา)"
-                />
-              </div>
-
-              {/* Content */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  เนื้อหา *
-                </label>
-                <textarea
-                  required
-                  value={formData.content}
-                  onChange={(e) => setFormData({...formData, content: e.target.value})}
-                  rows={10}
-                  className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    สถานะ
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {/* <option value="draft">แบบร่าง</option> */}
+      ) : (
+        <form onSubmit={save} className="space-y-5">
+          {error && <Alert tone="error">{error}</Alert>}
+          <Field label="หัวข้อบทความ" required>
+            <input className="input" value={form.title} onChange={set("title")} maxLength={255} required />
+          </Field>
+          <div className="grid gap-5 md:grid-cols-[1fr_260px]">
+            <div className="space-y-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="หมวดหมู่">
+                  <input className="input" list="article-cats" value={form.category} onChange={set("category")} maxLength={100} placeholder="เช่น ความรู้สุขภาพ" />
+                  <datalist id="article-cats">
+                    {categories.map((c) => <option key={c} value={c} />)}
+                  </datalist>
+                </Field>
+                <Field label="สถานะ">
+                  <select className="input" value={form.status} onChange={set("status")}>
                     <option value="published">เผยแพร่ทันที</option>
+                    <option value="draft">ฉบับร่าง</option>
                     <option value="scheduled">ตั้งเวลาเผยแพร่</option>
                   </select>
-                </div>
-
-                {/* Publish Date */}
-                {formData.status === 'scheduled' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      วันที่เผยแพร่
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={formData.published_at}
-                      onChange={(e) => setFormData({...formData, published_at: e.target.value})}
-                      className="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                )}
+                </Field>
               </div>
-
-              {/* Submit Button */}
-              <div className="flex justify-end gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploading}
-                  className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  <Save size={16} />
-                  {uploading ? 'กำลังอัปโหลด...' : 'บันทึก'}
-                </button>
-              </div>
-            </form>
+              {(form.status === "scheduled" || form.published_at) && (
+                <Field label="วันเวลาเผยแพร่" required={form.status === "scheduled"}>
+                  <input type="datetime-local" className="input" value={form.published_at} onChange={set("published_at")} />
+                </Field>
+              )}
+              <Field label="คำโปรย" help="แสดงในหน้ารวมบทความ (เว้นว่างเพื่อสร้างจากเนื้อหาอัตโนมัติ)">
+                <textarea className="input" rows={3} value={form.excerpt} onChange={set("excerpt")} maxLength={1000} />
+              </Field>
+            </div>
+            <Field label="รูปปก">
+              <ImagePicker
+                file={bannerFile}
+                currentUrl={form.banner}
+                onChange={setBannerFile}
+                onRemove={() => {
+                  setBannerFile(null);
+                  setForm((f) => ({ ...f, banner: "" }));
+                }}
+                aspect="aspect-video"
+              />
+            </Field>
           </div>
-        </div>
+          <Field label="เนื้อหา" required>
+            <TiptapEditor content={form.content} onUpdate={set("content")} />
+          </Field>
+        </form>
       )}
+    </Modal>
+  );
+}
+
+export default function AdminArticlesPage() {
+  const toast = useToast();
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState("");
+  const [tab, setTab] = useState("all");
+  const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const [editor, setEditor] = useState({ open: false, article: null });
+
+  const load = useCallback(async () => {
+    try {
+      setError("");
+      const data = await api("/api/articles?status=all&limit=100");
+      setRows(data.articles || []);
+    } catch (e) {
+      setError(e.message);
+      setRows([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+  useEffect(() => setPage(1), [tab, q]);
+
+  const categories = useMemo(() => [...new Set((rows || []).map((r) => r.category).filter(Boolean))].sort(), [rows]);
+
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return (rows || []).filter(
+      (r) => (tab === "all" || r.status === tab) && (!s || r.title?.toLowerCase().includes(s) || r.category?.toLowerCase().includes(s))
+    );
+  }, [rows, tab, q]);
+  const { rows: pageRows, pageCount } = paginate(filtered, page, 15);
+
+  const count = (s) => (rows || []).filter((r) => r.status === s).length;
+
+  const togglePublish = async (a) => {
+    const next = a.status === "published" ? "draft" : "published";
+    try {
+      await api(`/api/articles/${a.id}`, { method: "PUT", body: { status: next } });
+      toast.success(next === "published" ? "เผยแพร่บทความแล้ว" : "ย้ายเป็นฉบับร่างแล้ว");
+      load();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  const remove = async (a) => {
+    const ok = await toast.confirm({ title: "ลบบทความ", message: `ต้องการลบ "${a.title}" ใช่หรือไม่? ไม่สามารถกู้คืนได้`, confirmText: "ลบ", tone: "danger" });
+    if (!ok) return;
+    try {
+      await api(`/api/articles/${a.id}`, { method: "DELETE" });
+      toast.success("ลบบทความเรียบร้อย");
+      load();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  return (
+    <div>
+      <AdminHeader
+        title="บทความและข่าวสาร"
+        description="เขียน แก้ไข และเผยแพร่บทความบนหน้าเว็บไซต์"
+        actions={
+          <button className="btn btn-primary" onClick={() => setEditor({ open: true, article: null })}>
+            <Plus className="h-4 w-4" /> เขียนบทความ
+          </button>
+        }
+      />
+
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <FilterTabs
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { value: "all", label: "ทั้งหมด", count: rows?.length ?? 0 },
+            { value: "published", label: "เผยแพร่", count: count("published") },
+            { value: "draft", label: "ฉบับร่าง", count: count("draft") },
+            { value: "scheduled", label: "ตั้งเวลา", count: count("scheduled") },
+          ]}
+        />
+        <SearchInput value={q} onChange={setQ} placeholder="ค้นหาหัวข้อหรือหมวดหมู่" className="lg:w-72" />
+      </div>
+
+      {error && <Alert tone="error" className="mb-4">{error}</Alert>}
+
+      <div className="card overflow-hidden">
+        {rows === null ? (
+          <div className="space-y-3 p-5">
+            {Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton h-16" />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="ไม่พบบทความ"
+            description={q || tab !== "all" ? "ลองเปลี่ยนตัวกรองหรือคำค้นหา" : "เริ่มเขียนบทความแรกของคุณ"}
+            action={<button className="btn btn-primary" onClick={() => setEditor({ open: true, article: null })}><Plus className="h-4 w-4" /> เขียนบทความ</button>}
+          />
+        ) : (
+          <>
+            <ul className="divide-y divide-slate-100">
+              {pageRows.map((a) => {
+                const st = STATUS[a.status] || { label: a.status, tone: "slate" };
+                return (
+                  <li key={a.id} className="flex flex-col gap-3 p-4 transition-colors hover:bg-slate-50/70 sm:flex-row sm:items-center">
+                    <div className="h-16 w-28 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                      {a.banner ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={imgSrc(a.banner)} alt="" className="h-full w-full object-cover" onError={(e) => (e.currentTarget.src = "/placeholder.png")} />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-slate-300"><FileText className="h-6 w-6" /></div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge tone={st.tone}>{st.label}</Badge>
+                        {a.category && <span className="text-xs font-medium text-accent-700">{a.category}</span>}
+                      </div>
+                      <p className="mt-1 line-clamp-1 font-medium text-slate-900">{a.title}</p>
+                      <p className="text-xs text-slate-500">
+                        {formatDate(a.published_at || a.created_at)} · {a.author_name || "-"} · เข้าชม {Number(a.views || 0).toLocaleString("th-TH")} ครั้ง
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-1">
+                      <button className="btn btn-ghost btn-sm" onClick={() => togglePublish(a)} title={a.status === "published" ? "ย้ายเป็นฉบับร่าง" : "เผยแพร่"}>
+                        {a.status === "published" ? <EyeOff className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                        {a.status === "published" ? "ซ่อน" : "เผยแพร่"}
+                      </button>
+                      {a.status === "published" && (
+                        <Link href={`/article/${a.id}`} target="_blank" className="btn btn-ghost btn-sm" title="ดูหน้าเว็บ">
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      )}
+                      <button className="btn btn-ghost btn-sm" onClick={() => setEditor({ open: true, article: a })} title="แก้ไข">
+                        <Pencil className="h-4 w-4" /> แก้ไข
+                      </button>
+                      <button className="btn btn-ghost btn-sm text-red-600 hover:bg-red-50" onClick={() => remove(a)} title="ลบ">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <Pager page={page} pageCount={pageCount} onChange={setPage} total={filtered.length} />
+          </>
+        )}
+      </div>
+
+      <ArticleEditor
+        open={editor.open}
+        article={editor.article}
+        categories={categories}
+        onClose={() => setEditor({ open: false, article: null })}
+        onSaved={() => {
+          setEditor({ open: false, article: null });
+          load();
+        }}
+      />
     </div>
   );
 }

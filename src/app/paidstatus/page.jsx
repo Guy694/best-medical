@@ -1,257 +1,158 @@
-// src/app/paidstatus/page.jsx
 "use client";
-import Navbar from './../components/Nav';
-import OrderTimeline from '../components/OrderTimeline';
-import { useState } from "react";
-import { Package, Truck, CheckCircle, XCircle, Clock, CreditCard, MapPin, Phone, Mail, Calendar } from 'lucide-react';
 
-export default function PaidStatus() {
-  const [orderCode, setOrderCode] = useState('');
-  const [orderData, setOrderData] = useState(null);
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Lock, Mail, PackageSearch, Search } from "lucide-react";
+import { Alert, EmptyState, PageHeader, PageLoader, Spinner } from "@/app/components/ui";
+import { OrderDetail } from "@/app/components/order/OrderParts";
+import { api } from "@/app/lib/format";
+
+function PaidStatusContent() {
+  const sp = useSearchParams();
+  const router = useRouter();
+  const initialCode = (sp.get("code") || "").trim().toUpperCase();
+
+  const [code, setCode] = useState(initialCode);
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [order, setOrder] = useState(null);
+  const autoRan = useRef(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!orderCode.trim()) {
-      setError('กรุณากรอกเลขที่ใบสั่งซื้อ');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setOrderData(null);
-
-    try {
-      const response = await fetch(`/api/order-status?order_code=${encodeURIComponent(orderCode)}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setOrderData(data.order);
-      } else {
-        setError(data.error || 'เกิดข้อผิดพลาดในการค้นหา');
+  const search = useCallback(
+    async (c, em) => {
+      const orderCode = String(c || "").trim().toUpperCase();
+      if (!orderCode) {
+        setError("กรุณากรอกเลขที่ใบสั่งซื้อ");
+        return;
       }
-    } catch (err) {
-      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-    } finally {
-      setLoading(false);
+      setLoading(true);
+      setError("");
+      try {
+        const qs = new URLSearchParams({ order_code: orderCode });
+        if (em?.trim()) qs.set("email", em.trim());
+        const res = await api(`/api/order-status?${qs}`);
+        setOrder(res.order);
+        router.replace(`/paidstatus?code=${encodeURIComponent(orderCode)}`, { scroll: false });
+      } catch (err) {
+        setOrder(null);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [router]
+  );
+
+  useEffect(() => {
+    if (initialCode && !autoRan.current) {
+      autoRan.current = true;
+      search(initialCode, "");
     }
+  }, [initialCode, search]);
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    if (!loading) search(code, email);
   };
 
-  const getStepIcon = (step, currentStep, status) => {
-    if (status === 'CANCELLED') {
-      return <XCircle className="w-6 h-6 text-red-500" />;
-    }
-    
-    if (step <= currentStep) {
-      return <CheckCircle className="w-6 h-6 text-green-500" />;
-    }
-    return <Clock className="w-6 h-6 text-gray-400" />;
-  };
+  const isFull = order && "order_email" in order;
 
   return (
     <div>
-      <Navbar />
-      <div className='min-h-screen bg-gray-50'>
-        {/* Header */}
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-blue-900 text-center mb-8">
-            ตรวจสอบสถานะการสั่งซื้อ
-          </h1>
-
-          <div className="max-w-4xl mx-auto space-y-8">
-            {/* Search Form */}
-            <section className="bg-white rounded-xl shadow-lg">
-              <div className="header bg-gradient-to-r from-blue-600 to-blue-900 p-6 rounded-t-xl">
-                <h2 className="text-2xl font-semibold text-white text-center">
-                  <Package className="inline-block w-8 h-8 mr-2" />
-                  ค้นหาใบสั่งซื้อ
-                </h2>
+      <PageHeader
+        title="ตรวจสอบสถานะการสั่งซื้อ"
+        subtitle="กรอกเลขที่ใบสั่งซื้อเพื่อติดตามสถานะคำสั่งซื้อของคุณ"
+        icon={PackageSearch}
+        breadcrumb={[{ label: "หน้าแรก", href: "/" }, { label: "ตรวจสอบสถานะ" }]}
+      />
+      <div className="container-page space-y-6 py-8">
+        <form onSubmit={onSubmit} className="card card-body no-print">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">ค้นหาใบสั่งซื้อ</h2>
+          <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-start">
+            <div>
+              <label htmlFor="ps-code" className="label">
+                เลขที่ใบสั่งซื้อ <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="ps-code"
+                  className="input pl-9 font-mono uppercase"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  placeholder="เช่น ORD20261118ABC123"
+                  autoComplete="off"
+                  required
+                />
               </div>
-            
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">
-                    เลขที่ใบสั่งซื้อ <span className='text-red-500 text-xl'>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={orderCode}
-                    onChange={(e) => setOrderCode(e.target.value)}
-                    className="text-gray-700 w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="กรอกเลขที่ใบสั่งซื้อ เช่น ORD-2024-001"
-                  />
-                </div>
-                
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      กำลังค้นหา...
-                    </>
-                  ) : (
-                    <>
-                      <Package className="w-5 h-5 mr-2" />
-                      ตรวจสอบสถานะ
-                    </>
-                  )}
-                </button>
-              </form>
-            </section>
-
-            {/* Order Status Results */}
-            {orderData && (
-              <section className="bg-white rounded-xl shadow-lg overflow-hidden">
-                {/* Status Header */}
-                <div className={`p-6 text-white ${orderData.statusInfo.color}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-2xl font-bold">
-                        {orderData.statusInfo.text}
-                      </h3>
-                      <p className="text-blue-100 mt-1">
-                        {orderData.statusInfo.description}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold">
-                        {orderData.order_code}
-                      </div>
-                      <div className="text-sm text-blue-100">
-                        {new Date(orderData.created_at).toLocaleDateString('th-TH')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Timeline */}
-                <div className="p-6 border-b">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-4">ติดตามสถานะ</h4>
-                  <OrderTimeline 
-                    currentStatus={orderData.status} 
-                    history={orderData.history || []} 
-                  />
-                </div>
-
-                {/* Order Details */}
-                <div className="p-6 space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Customer Info */}
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <Mail className="w-5 h-5 mr-2 text-blue-600" />
-                        ข้อมูลลูกค้า
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center">
-                          <span className="text-gray-600 w-20">ชื่อ:</span>
-                          <span className="text-gray-800">{orderData.fullname}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                          <span className="text-gray-800">{orderData.email}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                          <span className="text-gray-800">{orderData.order_phone}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Order Info */}
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
-                        ข้อมูลคำสั่งซื้อ
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">ยอดรวม:</span>
-                          <span className="text-gray-800 font-semibold">
-                            ฿{Number(orderData.total_amount).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">วิธีชำระเงิน:</span>
-                          <span className="text-gray-800">{orderData.payment_method}</span>
-                        </div>
-                        {orderData.tracking_number && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">เลขติดตาม:</span>
-                            <span className="text-blue-600 font-mono">{orderData.tracking_number}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Shipping Address */}
-                  {orderData.shipping_address && (
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <MapPin className="w-5 h-5 mr-2 text-blue-600" />
-                        ที่อยู่จัดส่ง
-                      </h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-gray-700">{orderData.shipping_address}</p>
-                      </div>
-                      <div className="mt-2 text-xs text-red-500">
-                       หมายเหตุ: แจ้งเปลี่ยนที่อยู่ ติดต่อแอดมิน
-                    </div>
-                    </div>
-                  )}
-
-                  {/* Order Items */}
-                  {orderData.items && orderData.items.length > 0 && (
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                        <Package className="w-5 h-5 mr-2 text-blue-600" />
-                        สินค้าที่สั่งซื้อ
-                      </h4>
-                      <div className="bg-gray-50 rounded-lg overflow-hidden">
-                        <div className="divide-y divide-gray-200">
-                          {orderData.items.map((item, index) => (
-                            <div key={index} className="p-4 flex items-center space-x-4">
-                              {item.product_image && (
-                                <img 
-                                  src={item.product_image} 
-                                  alt={item.product_name}
-                                  className="w-12 h-12 object-cover rounded-lg"
-                                />
-                              )}
-                              <div className="flex-1">
-                                <h5 className="font-medium text-gray-800">{item.product_name}</h5>
-                                <p className="text-sm text-gray-600">
-                                  จำนวน: {item.quantity} x ฿{Number(item.price).toLocaleString()}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <span className="font-semibold text-gray-800">
-                                  ฿{(item.quantity * item.price).toLocaleString()}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
+            </div>
+            <div>
+              <label htmlFor="ps-email" className="label">
+                อีเมลที่ใช้สั่งซื้อ <span className="font-normal text-slate-400">(ไม่บังคับ)</span>
+              </label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="ps-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  className="input pl-9"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </div>
+              <p className="help">กรอกอีเมลที่ใช้สั่งซื้อเพื่อดูรายละเอียดผู้รับและที่อยู่</p>
+            </div>
+            <button type="submit" className="btn btn-primary w-full md:mt-6 md:w-auto" disabled={loading}>
+              {loading ? <Spinner className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+              {loading ? "กำลังค้นหา..." : "ตรวจสอบสถานะ"}
+            </button>
           </div>
-        </div>
+        </form>
+
+        {error && !loading && (
+          <Alert tone="error" title="ไม่พบข้อมูล">
+            {error}
+          </Alert>
+        )}
+
+        {loading && !order ? (
+          <PageLoader label="กำลังค้นหาใบสั่งซื้อ..." />
+        ) : order ? (
+          <div className="animate-fade-in space-y-4">
+            {!isFull && (
+              <Alert tone="info" className="no-print">
+                <span className="inline-flex items-start gap-2">
+                  <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+                  แสดงเฉพาะสถานะและรายการสินค้า หากต้องการดูข้อมูลผู้รับและที่อยู่จัดส่ง กรุณากรอกอีเมลที่ใช้สั่งซื้อแล้วค้นหาอีกครั้ง
+                </span>
+              </Alert>
+            )}
+            <OrderDetail order={order} />
+          </div>
+        ) : (
+          !error && (
+            <div className="card">
+              <EmptyState
+                icon={PackageSearch}
+                title="ติดตามคำสั่งซื้อของคุณ"
+                description="กรอกเลขที่ใบสั่งซื้อที่ได้รับทางอีเมล ระบบจะแสดงข้อมูลสถานะการสั่งซื้อ"
+              />
+            </div>
+          )
+        )}
       </div>
     </div>
+  );
+}
+
+export default function PaidStatusPage() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <PaidStatusContent />
+    </Suspense>
   );
 }

@@ -1,56 +1,19 @@
-import { NextResponse } from 'next/server';
-import { query } from '@/app/lib/db';
+import { query } from "@/app/lib/db";
+import { route, json, str, email as parseEmail, phone as parsePhone, rateLimit } from "@/app/lib/api";
 
-export async function POST(request) {
-  try {
-    const { name, email, phone, article, detail } = await request.json();
+// POST /api/contacts – public contact form
+export const POST = route(async (req) => {
+  rateLimit(req, "contact", { limit: 5, windowMs: 10 * 60_000 });
+  const body = await req.json().catch(() => ({}));
+  const name = str(body.name, { required: true, max: 150, label: "ชื่อ" });
+  const emailAddr = parseEmail(body.email);
+  const phoneNo = parsePhone(body.phone);
+  const article = str(body.article, { required: true, max: 191, label: "หัวข้อ" });
+  const detail = str(body.detail, { required: true, max: 5000, label: "รายละเอียด" });
 
-    // Validate required fields
-    if (!name || !email || !article || !detail) {
-      return NextResponse.json(
-        { error: 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน' },
-        { status: 400 }
-      );
-    }
-
-    // Insert contact data
-    const insertQuery = `
-      INSERT INTO contact (name, email, phone, article, detail, createdAt)
-      VALUES (?, ?, ?, ?, ?, NOW())
-    `;
-
-    const result = await query(insertQuery, [
-      name,
-      email,
-      phone || null,
-      article,
-      detail
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      message: 'บันทึกข้อความเรียบร้อยแล้ว',
-      id: result.insertId
-    });
-
-  } catch (error) {
-    console.error('Error saving contact:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET() {
-  try {
-    const contacts = await query('SELECT * FROM contact ORDER BY createdAt DESC');
-    return NextResponse.json(contacts);
-  } catch (error) {
-    console.error('Error fetching contacts:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' },
-      { status: 500 }
-    );
-  }
-}
+  const result = await query(
+    "INSERT INTO contact (name, email, phone, article, detail, createdAt) VALUES (?, ?, ?, ?, ?, NOW(3))",
+    [name, emailAddr, phoneNo, article, detail]
+  );
+  return json({ success: true, message: "ส่งข้อความเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด", id: result.insertId });
+});

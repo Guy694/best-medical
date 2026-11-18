@@ -1,17 +1,26 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import Link from "next/link";
+import { useEffect } from "react";
+import { AlertTriangle, RotateCcw } from "lucide-react";
 
 export default function Error({ error, reset }) {
   useEffect(() => {
-    console.error('Error caught by error.js:', error);
+    console.error(error);
   }, [error]);
-
   return (
-     <div style={{ textAlign: 'center', padding: '4rem' }} className='text-gray-700 space-y-4'>
-      <h1 style={{ fontSize: '3rem' }}>เกิดข้อผิดพลาดในหน้านี้ 😥</h1>
-      <p style={{ fontSize: '1.25rem' }}>{error.message}</p>
-      <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" onClick={() => reset()}>ลองใหม่</button>
+    <div className="container-page flex min-h-[60vh] flex-col items-center justify-center py-16 text-center">
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+        <AlertTriangle className="h-8 w-8" />
+      </div>
+      <h1 className="text-2xl font-bold text-slate-900">เกิดข้อผิดพลาดบางอย่าง</h1>
+      <p className="mt-2 max-w-md text-slate-500">ขออภัยในความไม่สะดวก กรุณาลองใหม่อีกครั้ง หากยังพบปัญหาโปรดติดต่อเจ้าหน้าที่</p>
+      <div className="mt-6 flex gap-3">
+        <button onClick={() => reset()} className="btn btn-primary">
+          <RotateCcw className="h-4 w-4" /> ลองใหม่
+        </button>
+        <Link href="/" className="btn btn-secondary">กลับหน้าหลัก</Link>
+      </div>
     </div>
   );
 }

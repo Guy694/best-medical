@@ -1,254 +1,87 @@
-import { NextResponse } from 'next/server';
-import { query } from '@/app/lib/db';
-import { writeFile } from 'fs/promises';
-import path from 'path';
+import { transaction } from "@/app/lib/db";
+import { route, json, HttpError, str, email as parseEmail, phone as parsePhone, money, rateLimit } from "@/app/lib/api";
+import { saveImage } from "@/app/lib/upload";
 
-export async function POST(request) {
-  try {
-    // Check if request is FormData (file upload) or JSON
-    const contentType = request.headers.get('content-type');
-    let formData;
-    let transferSlipFile = null;
-    let transferSlipPath = null;
+/**
+ * POST /api/payment-notice  (multipart/form-data)
+ * Customer reports a bank transfer. The order stays PENDING ("รอตรวจสอบ") until staff
+ * confirms it in the back office – customers can no longer mark their own order as PAID.
+ */
+export const POST = route(async (req) => {
+  rateLimit(req, "payment-notice", { limit: 10, windowMs: 10 * 60_000 });
+  const fd = await req.formData();
 
-    if (contentType && contentType.includes('multipart/form-data')) {
-      // Handle FormData (with file upload)
-      const formDataRequest = await request.formData();
-      
-      formData = {
-        order_code: formDataRequest.get('order_code'),
-        fullName: formDataRequest.get('fullName'),
-        order_email: formDataRequest.get('order_email'),
-        order_phone: formDataRequest.get('order_phone'), // เพิ่ม order_phone
-        totalPrice: formDataRequest.get('totalPrice'),
-        transfer_date: formDataRequest.get('transfer_date'),
-        transfer_time: formDataRequest.get('transfer_time'),
-        shippingAddress: formDataRequest.get('shippingAddress')
-      };
+  const order_code = str(fd.get("order_code"), { required: true, max: 60, label: "เลขที่ใบสั่งซื้อ" }).toUpperCase();
+  const fullName = str(fd.get("fullName"), { required: true, max: 150, label: "ชื่อ-นามสกุล" });
+  const order_email = parseEmail(fd.get("order_email"));
+  const order_phone = parsePhone(fd.get("order_phone"), { required: true });
+  const totalPrice = money(fd.get("totalPrice"), { label: "จำนวนเงิน" });
+  const transfer_date = str(fd.get("transfer_date"), { required: true, max: 10, label: "วันที่โอน" });
+  const transfer_time = str(fd.get("transfer_time"), { required: true, max: 8, label: "เวลาที่โอน" });
+  const shippingAddress = str(fd.get("shippingAddress"), { required: true, max: 1000, label: "ที่อยู่จัดส่ง" });
 
-      // Handle file upload
-      transferSlipFile = formDataRequest.get('transfer_slip_file');
-      
-      if (transferSlipFile && transferSlipFile.size > 0) {
-        // Create unique filename
-        const timestamp = Date.now();
-        const originalName = transferSlipFile.name;
-        const extension = path.extname(originalName);
-        const fileName = `payment_slip_${timestamp}${extension}`;
-        
-        // Save file to public/payments directory
-        const bytes = await transferSlipFile.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        
-        transferSlipPath = path.join(process.cwd(), 'public/payments', fileName);
-        await writeFile(transferSlipPath, buffer);
-        
-        // Store relative path for database
-        transferSlipPath = `/payments/${fileName}`;
-      }
-    } else {
-      // Handle JSON request (backward compatibility)
-      formData = await request.json();
-    }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(transfer_date)) throw new HttpError(400, "วันที่โอนไม่ถูกต้อง");
+  if (!/^\d{2}:\d{2}(:\d{2})?$/.test(transfer_time)) throw new HttpError(400, "เวลาที่โอนไม่ถูกต้อง");
+  if (new Date(transfer_date) > new Date(Date.now() + 86400000)) throw new HttpError(400, "วันที่โอนต้องไม่เป็นวันในอนาคต");
 
-    const {
-      order_code,
-      fullName,
-      order_email,
-      order_phone,
-      totalPrice,
-      transfer_date,
-      transfer_time,
-      shippingAddress
-    } = formData;
-
-    // Debug: Log received data
-    console.log('Received payment notice data:', {
-      order_code,
-      fullName,
-      order_email,
-      order_phone,
-      totalPrice,
-      transfer_date,
-      transfer_time,
-      shippingAddress,
-      hasFile: !!transferSlipFile
-    });
-
-    // Validate required fields
-    if (!order_code || !fullName || !order_email || !order_phone || !totalPrice || !transfer_date || !transfer_time || !shippingAddress) {
-      const missingFields = [];
-      if (!order_code) missingFields.push('เลขที่ใบสั่งซื้อ');
-      if (!fullName) missingFields.push('ชื่อ-นามสกุล');
-      if (!order_email) missingFields.push('อีเมล');
-      if (!order_phone) missingFields.push('เบอร์โทรศัพท์');
-      if (!totalPrice) missingFields.push('จำนวนเงิน');
-      if (!transfer_date) missingFields.push('วันที่โอน');
-      if (!transfer_time) missingFields.push('เวลาที่โอน');
-      if (!shippingAddress) missingFields.push('ที่อยู่จัดส่ง');
-      
-      console.log('Missing fields:', missingFields);
-      
-      return NextResponse.json(
-        { 
-          error: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-          missingFields: missingFields
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if order exists and get order details
-    const orderQuery = `
-      SELECT 
-        o.order_id,
-        o.order_code,
-        o.order_email,
-        o.totalPrice as order_total,
-        o.status,
-        u.name As firstname,
-        u.email as user_email
-    FROM \`order\` o
-          LEFT JOIN user u ON o.order_email = u.email
-      WHERE o.order_code = ?
-    `;
-
-    const orders = await query(orderQuery, [order_code]);
-
-    if (orders.length === 0) {
-      return NextResponse.json(
-        { error: 'ไม่พบเลขที่ใบสั่งซื้อนี้ในระบบ' },
-        { status: 404 }
-      );
-    }
-
-    const order = orders[0];
-
-    // Debug: Log email comparison
-    console.log('Email comparison:', {
-      fromOrder: order.order_email,
-      fromForm: order_email,
-      trimmedOrder: order.order_email?.trim()?.toLowerCase(),
-      trimmedForm: order_email?.trim()?.toLowerCase()
-    });
-
-    // Check if email matches (case-insensitive and trimmed)
-    const orderEmailNormalized = (order.order_email || '').trim().toLowerCase();
-    const formEmailNormalized = (order_email || '').trim().toLowerCase();
-    
-    if (orderEmailNormalized !== formEmailNormalized) {
-      return NextResponse.json(
-        { 
-          error: `อีเมลไม่ตรงกับในระบบ (ระบบ: ${order.order_email})`,
-          orderEmail: order.order_email,
-          providedEmail: order_email
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if total price matches
-    if (parseFloat(order.order_total) !== parseFloat(totalPrice)) {
-      return NextResponse.json(
-        { 
-          error: `จำนวนเงินไม่ถูกต้อง ยอดที่ต้องชำระคือ ฿${Number(order.order_total).toLocaleString()}`,
-          expectedAmount: order.order_total
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if order is already paid
-    if (order.status === 'PAID' || order.status === 'SHIPPING' || order.status === 'COMPLETED') {
-      return NextResponse.json(
-        { error: 'ใบสั่งซื้อนี้ได้รับการชำระเงินแล้ว' },
-        { status: 400 }
-      );
-    }
-
-    // Check if order is cancelled
-    if (order.status === 'CANCELLED') {
-      return NextResponse.json(
-        { error: 'ใบสั่งซื้อนี้ถูกยกเลิกแล้ว' },
-        { status: 400 }
-      );
-    }
-
-    // Update order status and payment information
-    const updateQuery = `
-      UPDATE \`order\` 
-      SET 
-        status = 'PAID',
-        fullName = ?,
-        order_phone = ?,
-        paidAtdate = ?,
-        paidAttime = ?,
-        transfer_slip_file = ?,
-        shippingAddress = ?
-      WHERE order_code = ?
-    `;
-
-    await query(updateQuery, [
-      fullName,
-      order_phone,
-      transfer_date,
-      transfer_time,
-      transferSlipPath || null, // Save file path
-      shippingAddress,
-      order_code
-    ]);
-
-       const updateuser = `
-      UPDATE \`user\` 
-      SET 
-        phone = ?,
-        address = ?
-      WHERE email = ?
-    `;
-
-    await query(updateuser, [
-      order_phone,
-      shippingAddress,
-      order_email
-    ]);
-
-    // Log payment notification
-    const logQuery = `
-      INSERT INTO payment_notifications 
-      (order_id, order_code, customer_name, customer_email, customer_phone, amount, transfer_date, transfer_time, transfer_slip_file, shipping_address, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    `;
-
-    try {
-      await query(logQuery, [
-        order.order_id,
-        order_code,
-        fullName,
-        order_email,
-        order_phone,
-        totalPrice,
-        transfer_date,
-        transfer_time,
-        transferSlipPath || null, // Save file path in log too
-        shippingAddress
-      ]);
-    } catch (logError) {
-      // ถ้า table payment_notifications ไม่มี ก็ไม่ต้อง error
-      console.log('Payment log table not found, skipping log:', logError.message);
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'แจ้งชำระเงินเรียบร้อยแล้ว ระบบจะตรวจสอบและอัพเดตสถานะภายใน 24 ชั่วโมง',
-      order_code: order_code,
-      amount: totalPrice
-    });
-
-  } catch (error) {
-    console.error('Error processing payment notification:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการแจ้งชำระเงิน' },
-      { status: 500 }
-    );
+  const slipFile = fd.get("transfer_slip_file");
+  if (!slipFile || typeof slipFile === "string" || !slipFile.size) {
+    throw new HttpError(400, "กรุณาแนบหลักฐานการโอนเงิน (สลิป)");
   }
-}
+
+  // validate order before saving the file
+  const result = await transaction(async (conn) => {
+    const [rows] = await conn.execute("SELECT * FROM `order` WHERE order_code = ? FOR UPDATE", [order_code]);
+    if (!rows.length) throw new HttpError(404, "ไม่พบเลขที่ใบสั่งซื้อนี้ในระบบ");
+    const order = rows[0];
+
+    if ((order.order_email || "").trim().toLowerCase() !== order_email) {
+      throw new HttpError(400, "อีเมลไม่ตรงกับที่ใช้สั่งซื้อ");
+    }
+    if (order.status === "CANCELLED") throw new HttpError(400, "ใบสั่งซื้อนี้ถูกยกเลิกแล้ว");
+    if (order.status !== "PENDING") throw new HttpError(400, "ใบสั่งซื้อนี้ได้รับการยืนยันการชำระเงินแล้ว");
+    if (Math.abs(Number(order.totalPrice) - totalPrice) > 0.009) {
+      throw new HttpError(
+        400,
+        `จำนวนเงินไม่ตรงกับยอดที่ต้องชำระ (฿${Number(order.totalPrice).toLocaleString("th-TH", { minimumFractionDigits: 2 })})`,
+        { expectedAmount: Number(order.totalPrice) }
+      );
+    }
+
+    const slipPath = await saveImage(slipFile, "payments");
+
+    await conn.execute(
+      `UPDATE \`order\` SET fullName = ?, order_phone = ?, paidAtdate = ?, paidAttime = ?,
+         transfer_slip_file = ?, shippingAddress = ?, updatedAt = NOW(3)
+       WHERE order_id = ?`,
+      [fullName, order_phone, transfer_date, transfer_time, slipPath, shippingAddress, order.order_id]
+    );
+
+    // remember contact details on the customer account (if one exists)
+    await conn.execute(
+      "UPDATE `user` SET phone = COALESCE(phone, ?), address = COALESCE(address, ?) WHERE email = ?",
+      [order_phone, shippingAddress.slice(0, 191), order_email]
+    );
+
+    await conn.execute(
+      `INSERT INTO payment_notifications
+        (order_id, order_code, customer_name, customer_email, customer_phone, amount, transfer_date, transfer_time, transfer_slip_file, shipping_address)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [order.order_id, order_code, fullName, order_email, order_phone, totalPrice, transfer_date, transfer_time, slipPath, shippingAddress]
+    );
+
+    await conn.execute(
+      `INSERT INTO order_status_history (order_id, order_code, status, previous_status, note, changed_by, created_at)
+       VALUES (?, ?, 'PENDING', 'PENDING', ?, 'customer', NOW())`,
+      [order.order_id, order_code, `ลูกค้าแจ้งชำระเงิน ฿${totalPrice.toLocaleString("th-TH")} (${transfer_date} ${transfer_time})`]
+    ).catch(() => {});
+
+    return { order_code };
+  });
+
+  return json({
+    success: true,
+    message: "แจ้งชำระเงินเรียบร้อยแล้ว ร้านค้าจะตรวจสอบและยืนยันภายใน 24 ชั่วโมง",
+    order_code: result.order_code,
+  });
+});

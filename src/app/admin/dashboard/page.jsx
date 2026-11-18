@@ -1,378 +1,427 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import Navbar from '@/app/components/Nav';
-import Sidebar from '@/app/components/Sidebar';
-import { TrendingUp, ShoppingCart, Package, DollarSign, Calendar, Filter } from 'lucide-react';
-import { sessionManager } from '@/app/lib/sessionTimeout';
-import { useRouter } from 'next/navigation';
 
-export default function AdminDashboard() {
-  const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [dashboardData, setDashboardData] = useState({
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    monthlyData: [],
-    recentOrders: [],
-    topProducts: []
-  });
-  const [dataLoading, setDataLoading] = useState(true);
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Wallet, ShoppingBag, CreditCard, Truck, Users, MessageSquare, RefreshCw, TrendingUp, PackageX, Trophy, ArrowRight,
+} from "lucide-react";
+import { AdminHeader, StatCard } from "@/app/components/admin";
+import { Alert, EmptyState, StatusBadge } from "@/app/components/ui";
+import { ORDER_STATUS, api, cn, formatDate, formatTHB, imgSrc } from "@/app/lib/format";
 
-  // Check authentication
-  useEffect(() => {
-    const userData = sessionManager.getSession();
-    
-    if (!userData || sessionManager.isSessionExpired()) {
-      router.push('/login');
-      return;
-    }
+const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+const THAI_MONTHS_FULL = [
+  "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+  "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม",
+];
+const STATUS_ORDER = ["PENDING", "PAID", "SHIPPING", "COMPLETED", "CANCELLED"];
+const STATUS_COLORS = {
+  PENDING: "#f59e0b",
+  PAID: "#1d4ed8",
+  SHIPPING: "#8b5cf6",
+  COMPLETED: "#10b981",
+  CANCELLED: "#ef4444",
+};
+const num = (n) => Number(n || 0).toLocaleString("th-TH");
+const beYear = (y) => Number(y) + 543;
 
-    // อนุญาตเฉพาะ ADMIN และ STAFF
-    if (userData.role !== 'ADMIN' && userData.role !== 'STAFF') {
-      router.push('/user/history');
-      return;
-    }
+function Skeleton({ className }) {
+  return <div className={cn("skeleton", className)} />;
+}
 
-    setUser(userData);
-    setLoading(false);
-  }, [router]);
-
-  // Fetch dashboard data
-  useEffect(() => {
-    if (!loading && user) {
-      fetchDashboardData();
-    }
-  }, [selectedYear, loading, user]);
-
-  // สร้างปีให้เลือกย้อนหลัง 5 ปี
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
-
-  const fetchDashboardData = async () => {
-    setDataLoading(true);
-    try {
-      const res = await fetch(`/api/admin/dashboard?year=${selectedYear}`);
-      const data = await res.json();
-      if (res.ok) {
-        setDashboardData(data);
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setDataLoading(false);
-    }
-  };
-
-  // Show loading while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">กำลังตรวจสอบการเข้าสู่ระบบ...</p>
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="card card-body flex items-start gap-4">
+            <Skeleton className="h-12 w-12 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-6 w-32" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="card card-body lg:col-span-2">
+          <Skeleton className="mb-6 h-5 w-40" />
+          <Skeleton className="h-56 w-full" />
+        </div>
+        <div className="card card-body">
+          <Skeleton className="mb-6 h-5 w-32" />
+          <Skeleton className="mx-auto h-40 w-40 rounded-full" />
         </div>
       </div>
-    );
-  }
+      <div className="card card-body space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
-  // If not authenticated, redirect will happen automatically
-  if (!user) {
-    return null;
-  }
-
-  const months = [
-    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-  ];
+function RevenueChart({ data, year }) {
+  const [active, setActive] = useState(null);
+  const max = Math.max(1, ...data.map((m) => m.revenue));
+  const totalOrders = data.reduce((s, m) => s + m.orders, 0);
+  const shown = active != null ? data[active] : null;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
-      <div className="flex">
-        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden" onClick={() => setSidebarOpen(false)}></div>
-        )}
-
-        {/* Main content */}
-        <div className="flex-1 min-w-0 p-4 md:p-6">
-          <div className="max-w-full mx-auto">
-            {/* Hamburger for mobile */}
-            <button className="md:hidden mb-4 px-3 py-2 bg-gray-200 rounded-lg" onClick={() => setSidebarOpen(true)}>
-              <span className="block w-6 h-0.5 bg-gray-700 mb-1"></span>
-              <span className="block w-6 h-0.5 bg-gray-700 mb-1"></span>
-              <span className="block w-6 h-0.5 bg-gray-700"></span>
-            </button>
-
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">แดชบอร์ด</h1>
-              
-              {/* Year Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-gray-600" />
-                <select 
-                  value={selectedYear} 
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
-                >
-                  {years.map(year => (
-                    <option key={year} value={year}>ปี {year}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {dataLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">กำลังโหลดข้อมูล...</p>
-              </div>
-            ) : (
-              <>
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-                  {/* Total Orders */}
-                  <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs md:text-sm font-medium text-gray-600">ยอดขายทั้งหมด</p>
-                        <p className="text-xl md:text-3xl font-bold text-gray-900 truncate">{dashboardData.totalOrders.toLocaleString()}</p>
-                        <p className="text-xs md:text-sm text-gray-500">รายการ</p>
-                      </div>
-                      <div className="bg-blue-100 p-2 md:p-3 rounded-full flex-shrink-0">
-                        <ShoppingCart className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Total Revenue */}
-                  <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs md:text-sm font-medium text-gray-600">ยอดขายทั้งหมด</p>
-                        <p className="text-xl md:text-3xl font-bold text-green-600 truncate">฿{dashboardData.totalRevenue.toLocaleString()}</p>
-                        <p className="text-xs md:text-sm text-gray-500">บาท</p>
-                      </div>
-                      <div className="bg-green-100 p-2 md:p-3 rounded-full flex-shrink-0">
-                        <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-green-600" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pending Orders */}
-                  <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs md:text-sm font-medium text-gray-600">รอจัดส่ง</p>
-                        <p className="text-xl md:text-3xl font-bold text-orange-600 truncate">{dashboardData.pendingOrders.toLocaleString()}</p>
-                        <p className="text-xs md:text-sm text-gray-500">รายการ</p>
-                      </div>
-                      <div className="bg-orange-100 p-2 md:p-3 rounded-full flex-shrink-0">
-                        <Package className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Monthly Sales Chart */}
-                <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 md:mb-8">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 md:mb-6 gap-2">
-                    <h2 className="text-lg md:text-xl font-semibold text-gray-800">ยอดขายรายเดือน ปี {selectedYear}</h2>
-                    <Calendar className="h-5 w-5 text-gray-600" />
-                  </div>
-                  
-                  <div className="h-60 md:h-80 relative overflow-hidden">
-                    {/* Simple Bar Chart */}
-                    <div className="flex items-end justify-between h-48 md:h-64 border-b border-gray-200 overflow-x-auto">
-                      {dashboardData.monthlyData.map((data, index) => (
-                        <div key={index} className="flex flex-col items-center flex-1 min-w-0 mx-0.5 md:mx-1">
-                          <div 
-                            className="bg-blue-500 rounded-t-lg w-full transition-all duration-300 hover:bg-blue-600 relative group min-h-[10px]"
-                            style={{ 
-                              height: `${Math.max((data.revenue / Math.max(...dashboardData.monthlyData.map(d => d.revenue))) * 180, 10)}px` 
-                            }}
-                          >
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                              ฿{data.revenue.toLocaleString()}
-                            </div>
-                          </div>
-                          <span className="text-xs text-gray-600 mt-2 transform -rotate-45 origin-top-left whitespace-nowrap">
-                            {months[index]}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Y-axis labels */}
-                    <div className="absolute left-0 top-0 h-48 md:h-64 flex flex-col justify-between text-xs text-gray-500 -ml-8 md:-ml-12">
-                      <span className="text-xs">฿{Math.max(...dashboardData.monthlyData.map(d => d.revenue)).toLocaleString()}</span>
-                      <span className="text-xs">฿{Math.round(Math.max(...dashboardData.monthlyData.map(d => d.revenue)) / 2).toLocaleString()}</span>
-                      <span className="text-xs">฿0</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Top Products Table */}
-                <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 md:mb-8">
-                  <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">สินค้าที่มียอดสั่งซื้อสูงสุด (Top 10)</h2>
-                  <div className="overflow-x-auto -mx-4 md:mx-0">
-                    <div className="min-w-full inline-block align-middle">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              อันดับ
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              รูปภาพ
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              ชื่อสินค้า
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              ราคา/ชิ้น
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              จำนวนที่ขาย
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              ยอดขายรวม
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {dataLoading ? (
-                            <tr>
-                              <td colSpan="6" className="px-3 md:px-6 py-4 text-center text-gray-500">
-                                กำลังโหลดข้อมูล...
-                              </td>
-                            </tr>
-                          ) : dashboardData.topProducts && dashboardData.topProducts.length > 0 ? (
-                            dashboardData.topProducts.map((product, index) => (
-                              <tr key={product.id}>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm font-bold text-gray-900">
-                                  #{index + 1}
-                                </td>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap">
-                                  <img 
-                                    src={product.image} 
-                                    alt={product.name}
-                                    className="h-12 w-12 object-cover rounded"
-                                  />
-                                </td>
-                                <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-gray-900">
-                                  {product.name}
-                                </td>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
-                                  ฿{product.price.toLocaleString()}
-                                </td>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm font-semibold text-blue-600">
-                                  {product.quantity.toLocaleString()} ชิ้น
-                                </td>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm font-semibold text-green-600">
-                                  ฿{product.totalRevenue.toLocaleString()}
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan="6" className="px-3 md:px-6 py-4 text-center text-gray-500">
-                                ไม่มีข้อมูลสินค้า
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Orders Table */}
-                <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
-                  <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">รายการสั่งซื้อล่าสุด</h2>
-                  <div className="overflow-x-auto -mx-4 md:mx-0">
-                    <div className="min-w-full inline-block align-middle">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              รหัสคำสั่งซื้อ
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              อีเมลลูกค้า
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              ยอดรวม
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              สถานะ
-                            </th>
-                            <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              วันที่สั่งซื้อ
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {dataLoading ? (
-                            <tr>
-                              <td colSpan="5" className="px-3 md:px-6 py-4 text-center text-gray-500">
-                                กำลังโหลดข้อมูล...
-                              </td>
-                            </tr>
-                          ) : dashboardData.recentOrders && dashboardData.recentOrders.length > 0 ? (
-                            dashboardData.recentOrders.map((order) => (
-                              <tr key={order.order_id}>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm font-medium text-gray-900">
-                                  {order.order_code}
-                                </td>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm text-gray-500 max-w-[150px] truncate">
-                                  {order.order_email}
-                                </td>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
-                                  ฿{order.totalPrice.toLocaleString()}
-                                </td>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap">
-                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                    order.status === 'PENDING' 
-                                      ? 'bg-yellow-100 text-yellow-800' 
-                                      : order.status === 'COMPLETED'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {order.status}
-                                  </span>
-                                </td>
-                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
-                                  {order.createdAt}
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan="5" className="px-3 md:px-6 py-4 text-center text-gray-500">
-                                ไม่มีรายการสั่งซื้อ
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-
-              </>
-            )}
-          </div>
+    <div className="card card-body lg:col-span-2">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+            <TrendingUp className="h-5 w-5 text-brand-700" /> ยอดขายรายเดือน ปี {beYear(year)}
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-500">นับเฉพาะคำสั่งซื้อที่ชำระเงินแล้ว · คำสั่งซื้อทั้งปี {num(totalOrders)} รายการ</p>
+        </div>
+        <div className="min-h-[2.5rem] rounded-xl bg-slate-50 px-3 py-1.5 text-right text-sm" aria-live="polite">
+          {shown ? (
+            <>
+              <p className="font-semibold text-slate-900">{formatTHB(shown.revenue)}</p>
+              <p className="text-xs text-slate-500">
+                {THAI_MONTHS_FULL[active]} · {num(shown.orders)} คำสั่งซื้อ
+              </p>
+            </>
+          ) : (
+            <p className="py-1.5 text-xs text-slate-400">ชี้ที่แท่งกราฟเพื่อดูรายละเอียด</p>
+          )}
         </div>
       </div>
+
+      <div className="flex h-60 gap-1.5 sm:gap-3">
+        {data.map((m, i) => {
+          const h = (m.revenue / max) * 100;
+          return (
+            <button
+              type="button"
+              key={m.month}
+              className="group flex h-full flex-1 flex-col items-center justify-end gap-1.5 focus:outline-none"
+              title={`${THAI_MONTHS_FULL[i]}: ${formatTHB(m.revenue)} (${num(m.orders)} คำสั่งซื้อ)`}
+              aria-label={`${THAI_MONTHS_FULL[i]} ยอดขาย ${formatTHB(m.revenue)} จำนวน ${m.orders} คำสั่งซื้อ`}
+              onMouseEnter={() => setActive(i)}
+              onMouseLeave={() => setActive(null)}
+              onFocus={() => setActive(i)}
+              onBlur={() => setActive(null)}
+            >
+              <span className={cn("text-[10px] font-medium text-slate-500", m.orders ? "" : "invisible")}>{m.orders}</span>
+              <div className="relative flex w-full flex-1 items-end overflow-hidden rounded-lg bg-slate-50">
+                <div
+                  className={cn(
+                    "w-full rounded-lg bg-gradient-to-t transition-all duration-500",
+                    active === i ? "from-accent-600 to-accent-400" : "from-brand-700 to-brand-500 group-hover:opacity-90",
+                    m.revenue > 0 ? "" : "opacity-0"
+                  )}
+                  style={{ height: `${Math.max(m.revenue > 0 ? 3 : 0, h)}%` }}
+                />
+              </div>
+              <span className={cn("text-[10px] sm:text-xs", active === i ? "font-semibold text-brand-700" : "text-slate-500")}>
+                {THAI_MONTHS[i]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-[11px] text-slate-400">ตัวเลขเหนือแท่ง = จำนวนคำสั่งซื้อในเดือนนั้น</p>
+    </div>
+  );
+}
+
+function StatusBreakdown({ counts }) {
+  const total = STATUS_ORDER.reduce((s, k) => s + (counts?.[k] || 0), 0);
+  let acc = 0;
+  const stops = STATUS_ORDER.map((k) => {
+    const start = (acc / Math.max(total, 1)) * 360;
+    acc += counts?.[k] || 0;
+    const end = (acc / Math.max(total, 1)) * 360;
+    return `${STATUS_COLORS[k]} ${start}deg ${end}deg`;
+  });
+  const gradient = total ? `conic-gradient(${stops.join(", ")})` : "conic-gradient(#e2e8f0 0deg 360deg)";
+
+  return (
+    <div className="card card-body">
+      <h2 className="mb-5 font-semibold text-slate-900">สถานะคำสั่งซื้อ</h2>
+      <div className="flex flex-col items-center gap-6 sm:flex-row lg:flex-col">
+        <div className="relative h-40 w-40 shrink-0 rounded-full" style={{ background: gradient }} role="img" aria-label="สัดส่วนสถานะคำสั่งซื้อ">
+          <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white">
+            <span className="text-2xl font-bold text-slate-900">{num(total)}</span>
+            <span className="text-xs text-slate-500">คำสั่งซื้อ</span>
+          </div>
+        </div>
+        <ul className="w-full space-y-2.5">
+          {STATUS_ORDER.map((k) => {
+            const c = counts?.[k] || 0;
+            const pct = total ? Math.round((c / total) * 100) : 0;
+            return (
+              <li key={k}>
+                <Link href={`/admin/orders?status=${k}`} className="group block">
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-slate-600 group-hover:text-brand-700">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS[k] }} />
+                      {ORDER_STATUS[k].label}
+                    </span>
+                    <span className="font-medium text-slate-900">
+                      {num(c)} <span className="text-xs font-normal text-slate-400">({pct}%)</span>
+                    </span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: STATUS_COLORS[k] }} />
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminDashboardPage() {
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async (y) => {
+    setLoading(true);
+    setError("");
+    try {
+      setData(await api(`/api/admin/dashboard?year=${y}`));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load(year);
+  }, [year, load]);
+
+  const years = useMemo(() => (data?.years?.length ? data.years : [year]), [data, year]);
+
+  return (
+    <div>
+      <AdminHeader
+        title="แดชบอร์ด"
+        description="ภาพรวมยอดขาย คำสั่งซื้อ และงานที่ต้องดำเนินการ"
+        actions={
+          <>
+            <label htmlFor="dash-year" className="sr-only">
+              เลือกปี
+            </label>
+            <select id="dash-year" className="input w-auto" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  ปี {beYear(y)}
+                </option>
+              ))}
+            </select>
+            <button className="btn btn-secondary" onClick={() => load(year)} disabled={loading}>
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> รีเฟรช
+            </button>
+          </>
+        }
+      />
+
+      {error && (
+        <Alert tone="error" title="โหลดข้อมูลไม่สำเร็จ" className="mb-6">
+          {error}
+        </Alert>
+      )}
+
+      {loading && !data ? (
+        <DashboardSkeleton />
+      ) : data ? (
+        <div className={cn("space-y-6 transition-opacity", loading && "opacity-60")}>
+          {data.awaitingVerification > 0 && (
+            <Link
+              href="/admin/payment-notice"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm text-sky-900 transition hover:bg-sky-100"
+            >
+              <span className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 shrink-0 text-sky-600" />
+                <span>
+                  มีการแจ้งชำระเงิน <b>{num(data.awaitingVerification)}</b> รายการที่รอตรวจสอบ
+                </span>
+              </span>
+              <span className="flex shrink-0 items-center gap-1 font-medium">
+                ตรวจสอบเลย <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <StatCard
+              icon={Wallet}
+              label={`ยอดขายปี ${beYear(data.year)}`}
+              value={formatTHB(data.totalRevenue)}
+              hint={`ชำระแล้ว ${num(data.paidOrders)} คำสั่งซื้อ`}
+              tone="emerald"
+            />
+            <StatCard
+              icon={ShoppingBag}
+              label="คำสั่งซื้อทั้งหมด"
+              value={num(data.totalOrders)}
+              hint={`รอชำระเงิน ${num(data.pendingOrders)} รายการ`}
+              tone="brand"
+              href="/admin/orders"
+            />
+            <div className={cn("rounded-2xl", data.awaitingVerification > 0 && "ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-50")}>
+              <StatCard
+                icon={CreditCard}
+                label="รอตรวจสอบการชำระ"
+                value={num(data.awaitingVerification)}
+                hint={data.awaitingVerification > 0 ? "คลิกเพื่อตรวจสอบสลิป" : "ไม่มีรายการค้าง"}
+                tone={data.awaitingVerification > 0 ? "sky" : "accent"}
+                href="/admin/payment-notice"
+              />
+            </div>
+            <StatCard
+              icon={Truck}
+              label="รอจัดส่ง"
+              value={num(data.statusCounts?.PAID)}
+              hint="ชำระเงินแล้ว รอส่งสินค้า"
+              tone="violet"
+              href="/admin/orders?status=PAID"
+            />
+            <StatCard icon={Users} label="ลูกค้า" value={num(data.counts?.customers)} hint="สมาชิกที่ลงทะเบียน" tone="accent" href="/admin/user/customer" />
+            <StatCard
+              icon={MessageSquare}
+              label="ข้อความใหม่"
+              value={num(data.counts?.unreadContacts)}
+              hint="ข้อความที่ยังไม่อ่าน"
+              tone={data.counts?.unreadContacts > 0 ? "amber" : "brand"}
+              href="/admin/contacts"
+            />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <RevenueChart data={data.monthlyData || []} year={data.year} />
+            <StatusBreakdown counts={data.statusCounts} />
+          </div>
+
+          <div className="card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h2 className="font-semibold text-slate-900">คำสั่งซื้อล่าสุด</h2>
+              <Link href="/admin/orders" className="link text-sm">
+                ดูทั้งหมด
+              </Link>
+            </div>
+            {data.recentOrders?.length ? (
+              <div className="overflow-x-auto">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>รหัสคำสั่งซื้อ</th>
+                      <th>ลูกค้า</th>
+                      <th className="text-right">ยอดรวม</th>
+                      <th>สถานะ</th>
+                      <th>วันที่สั่งซื้อ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.recentOrders.map((o) => (
+                      <tr key={o.order_id}>
+                        <td>
+                          <Link href={`/admin/orders?q=${encodeURIComponent(o.order_code)}`} className="link font-mono text-sm">
+                            {o.order_code}
+                          </Link>
+                        </td>
+                        <td>
+                          <p className="font-medium text-slate-800">{o.fullName || "-"}</p>
+                          <p className="text-xs text-slate-500">{o.order_email}</p>
+                        </td>
+                        <td className="text-right font-medium whitespace-nowrap">{formatTHB(o.totalPrice)}</td>
+                        <td>
+                          <StatusBadge order={{ status: o.status, paidAtdate: o.paidAtdate }} />
+                        </td>
+                        <td className="whitespace-nowrap text-slate-500">{formatDate(o.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState icon={ShoppingBag} title="ยังไม่มีคำสั่งซื้อ" />
+            )}
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="card">
+              <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+                <Trophy className="h-5 w-5 text-amber-500" />
+                <h2 className="font-semibold text-slate-900">สินค้าขายดี ปี {beYear(data.year)}</h2>
+              </div>
+              {data.topProducts?.length ? (
+                <ul className="divide-y divide-slate-100">
+                  {data.topProducts.map((p, i) => (
+                    <li key={p.id} className="flex items-center gap-3 px-5 py-3">
+                      <span className={cn("w-5 text-center text-sm font-bold", i < 3 ? "text-amber-500" : "text-slate-400")}>{i + 1}</span>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imgSrc(p.image)}
+                        alt=""
+                        className="h-11 w-11 shrink-0 rounded-lg border border-slate-100 object-cover"
+                        onError={(e) => (e.currentTarget.src = "/placeholder.png")}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-slate-800">{p.name}</p>
+                        <p className="text-xs text-slate-500">ขายได้ {num(p.quantity)} ชิ้น</p>
+                      </div>
+                      <span className="text-sm font-semibold whitespace-nowrap text-slate-900">{formatTHB(p.totalRevenue)}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState icon={Trophy} title="ยังไม่มีข้อมูลยอดขาย" description="ข้อมูลจะแสดงเมื่อมีคำสั่งซื้อที่ชำระเงินแล้ว" />
+              )}
+            </div>
+
+            <div className="card">
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+                  <PackageX className="h-5 w-5 text-red-500" /> สินค้าใกล้หมดสต็อก
+                </h2>
+                <Link href="/admin/product" className="link text-sm">
+                  จัดการสินค้า
+                </Link>
+              </div>
+              {data.lowStock?.length ? (
+                <ul className="divide-y divide-slate-100">
+                  {data.lowStock.map((p) => (
+                    <li key={p.id}>
+                      <Link href={`/admin/product/edit/${p.id}`} className="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imgSrc(p.imageUrl)}
+                          alt=""
+                          className="h-11 w-11 shrink-0 rounded-lg border border-slate-100 object-cover"
+                          onError={(e) => (e.currentTarget.src = "/placeholder.png")}
+                        />
+                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{p.pro_name}</p>
+                        <span
+                          className={cn(
+                            "badge",
+                            Number(p.stock) <= 0 ? "bg-red-50 text-red-700 ring-red-600/20" : "bg-amber-50 text-amber-700 ring-amber-600/20"
+                          )}
+                        >
+                          {Number(p.stock) <= 0 ? "หมดสต็อก" : `เหลือ ${num(p.stock)} ชิ้น`}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState icon={PackageX} title="สต็อกสินค้าเพียงพอ" description="ไม่มีสินค้าที่แสดงอยู่และเหลือไม่เกิน 5 ชิ้น" />
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

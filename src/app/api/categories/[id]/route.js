@@ -1,47 +1,16 @@
-import mysql from 'mysql2/promise';
-import pool from '@/app/lib/db';
+import { query } from "@/app/lib/db";
+import { route, json, HttpError } from "@/app/lib/api";
 
-export async function GET(req, context) {
-  try {
-    const { params } = await context; // ต้อง await context
- 
-    const [rows] = await pool.execute(
-      'SELECT * FROM `category` INNER join product ON category.id = product.categoryId WHERE category.id = ? AND product.visible = 0',
-      [params.id]
-    );
-
-    if (rows.length === 0) {
-      return new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } });
-    }
-    return new Response(JSON.stringify(rows), { status: 200, headers: { "Content-Type": "application/json" } });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-}
-
-export async function PUT(req, context) {
-  try {
-    const { params } = await context;
-    const data = await req.json();
-    await pool.execute(
-      'UPDATE Product SET pro_name = ?, description = ?, price = ?, stock = ?, imageUrl = ? WHERE id = ?',
-      [data.pro_name, data.description, data.price, data.stock, data.imageUrl, params.id]
-    );
-    return new Response(JSON.stringify({ message: "Product updated successfully" }), { status: 200 });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 400 });
-  }
-}
-
-export async function DELETE(req, context) {
-  try {
-    const { params } = await context;
-    const [rows] = await pool.execute(
-      'DELETE FROM Product WHERE id = ?',
-      [params.id]
-    );
-    return new Response(JSON.stringify({ message: "Product deleted successfully" }), { status: 200 });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 400 });
-  }
-}
+// GET /api/categories/:id – { category, products }
+export const GET = route(async (req, { params }) => {
+  const id = Number(params.id);
+  if (!Number.isInteger(id) || id <= 0) throw new HttpError(404, "ไม่พบหมวดหมู่");
+  const cats = await query("SELECT id, cate_name, cate_img FROM category WHERE id = ?", [id]);
+  if (!cats.length) throw new HttpError(404, "ไม่พบหมวดหมู่");
+  const products = await query(
+    `SELECT id, pro_name, codename, price, stock, imageUrl, createdAt, categoryId
+     FROM product WHERE categoryId = ? AND visible = 0 ORDER BY createdAt DESC, id DESC`,
+    [id]
+  );
+  return json({ category: cats[0], products });
+});

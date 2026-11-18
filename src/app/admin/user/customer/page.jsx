@@ -1,310 +1,321 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import Navbar from '@/app/components/Nav';
-import Sidebar from '@/app/components/Sidebar';
-import { 
-  Users, Search, Calendar, Mail, Phone, MapPin, 
-  UserCheck, Filter, Download, RefreshCw, Menu
-} from 'lucide-react';
 
-export default function CustomerList() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [users, setUsers] = useState([]);
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Users, RefreshCw, Download, Mail, Phone, MapPin, ShoppingBag, CalendarDays, BadgeCheck, UserPlus, Wallet } from "lucide-react";
+import { AdminHeader, Pager, SearchInput, StatCard, paginate } from "@/app/components/admin";
+import { Alert, Badge, EmptyState, Modal } from "@/app/components/ui";
+import { api, cn, formatDate, formatDateTime, formatTHB } from "@/app/lib/format";
+
+const PAGE_SIZE = 20;
+const SORTS = {
+  newest: { label: "สมัครล่าสุด", fn: (a, b) => new Date(b.createdAt) - new Date(a.createdAt) },
+  spent: { label: "ยอดซื้อสูงสุด", fn: (a, b) => b.total_spent - a.total_spent },
+  orders: { label: "สั่งซื้อบ่อยที่สุด", fn: (a, b) => b.order_count - a.order_count },
+  recent: { label: "สั่งซื้อล่าสุด", fn: (a, b) => new Date(b.last_order_at || 0) - new Date(a.last_order_at || 0) },
+};
+const isVerified = (c) => Number(c.verified) === 1 || c.verified === true;
+const initial = (name) => (name || "?").trim().charAt(0).toUpperCase();
+
+function exportCsv(rows) {
+  const esc = (v) => `"${String(v ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+  const head = ["ชื่อ-นามสกุล", "อีเมล", "เบอร์โทร", "ที่อยู่", "ยืนยันอีเมล", "จำนวนคำสั่งซื้อ", "ยอดซื้อรวม", "สั่งซื้อล่าสุด", "วันที่สมัคร"];
+  const lines = rows.map((c) =>
+    [
+      c.name,
+      c.email,
+      c.phone,
+      c.address,
+      isVerified(c) ? "ยืนยันแล้ว" : "ยังไม่ยืนยัน",
+      c.order_count,
+      c.total_spent,
+      c.last_order_at ? formatDateTime(c.last_order_at) : "",
+      formatDateTime(c.createdAt),
+    ]
+      .map(esc)
+      .join(",")
+  );
+  const blob = new Blob(["\uFEFF" + [head.map(esc).join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `customers-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export default function AdminCustomerPage() {
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterDate, setFilterDate] = useState('');
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("newest");
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  async function fetchUsers() {
+  const load = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
-      const res = await fetch('/api/admin/user/customer');
-      const data = await res.json();
-      setUsers(Array.isArray(data) ? data : []);
+      const data = await api("/api/admin/user/customer");
+      setCustomers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Error fetching users:', err);
-      setUsers([]);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = !searchTerm || 
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone?.includes(searchTerm);
-    
-    const matchesDate = !filterDate || 
-      (user.createdAt && new Date(user.createdAt).toLocaleDateString('en-CA') === filterDate);
-    
-    return matchesSearch && matchesDate;
-  });
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const rows = q
+      ? customers.filter((c) => [c.name, c.email, c.phone, c.address].some((v) => String(v || "").toLowerCase().includes(q)))
+      : customers;
+    return [...rows].sort(SORTS[sort].fn);
+  }, [customers, search, sort]);
+
+  const stats = useMemo(() => {
+    const monthAgo = Date.now() - 30 * 24 * 3600 * 1000;
+    return {
+      total: customers.length,
+      buyers: customers.filter((c) => c.order_count > 0).length,
+      newMonth: customers.filter((c) => new Date(c.createdAt).getTime() >= monthAgo).length,
+      spent: customers.reduce((s, c) => s + (Number(c.total_spent) || 0), 0),
+    };
+  }, [customers]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const { rows } = paginate(filtered, safePage, PAGE_SIZE);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Navbar />
-      <div className="flex">
-        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden" 
-            onClick={() => setSidebarOpen(false)}
-          ></div>
-        )}
+    <div>
+      <AdminHeader
+        title="ลูกค้า"
+        description="ข้อมูลลูกค้าที่ลงทะเบียนและสถิติการสั่งซื้อ"
+        actions={
+          <>
+            <button className="btn btn-secondary" onClick={() => exportCsv(filtered)} disabled={!filtered.length}>
+              <Download className="h-4 w-4" /> ส่งออก CSV
+            </button>
+            <button className="btn btn-secondary" onClick={load} disabled={loading}>
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> รีเฟรช
+            </button>
+          </>
+        }
+      />
 
-        {/* Main content */}
-        <div className="flex-1 min-w-0 p-4 md:p-6">
-          {/* Hamburger for mobile */}
-          <button 
-            className="md:hidden mb-4 p-3 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow" 
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-6 h-6 text-gray-700" />
-          </button>
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard icon={Users} label="ลูกค้าทั้งหมด" value={stats.total.toLocaleString("th-TH")} tone="brand" />
+        <StatCard icon={ShoppingBag} label="เคยสั่งซื้อ" value={stats.buyers.toLocaleString("th-TH")} tone="accent" />
+        <StatCard icon={UserPlus} label="สมัครใหม่ 30 วัน" value={stats.newMonth.toLocaleString("th-TH")} tone="violet" />
+        <StatCard icon={Wallet} label="ยอดซื้อรวม" value={formatTHB(stats.spent)} tone="emerald" />
+      </div>
 
-          {/* Header Section */}
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  รายการลูกค้า
-                </h1>
-                <p className="text-gray-600 text-sm">จัดการข้อมูลลูกค้าที่ลงทะเบียน</p>
-              </div>
-            </div>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder="ค้นหาชื่อ, อีเมล, เบอร์โทร..."
+          className="sm:w-80"
+        />
+        <div className="flex items-center gap-2">
+          <label htmlFor="cust-sort" className="text-sm whitespace-nowrap text-slate-500">
+            เรียงตาม
+          </label>
+          <select id="cust-sort" className="input w-auto" value={sort} onChange={(e) => setSort(e.target.value)}>
+            {Object.entries(SORTS).map(([k, s]) => (
+              <option key={k} value={k}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <Alert tone="error" title="โหลดข้อมูลไม่สำเร็จ" className="mb-4">
+          {error}
+        </Alert>
+      )}
+
+      <div className="card overflow-hidden">
+        {loading && !customers.length ? (
+          <div className="space-y-3 p-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="skeleton h-12 w-full" />
+            ))}
           </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">ลูกค้าทั้งหมด</p>
-                  <p className="text-3xl font-bold text-blue-600">{users.length}</p>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl">
-                  <UserCheck className="w-8 h-8 text-blue-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">ลงทะเบียนวันนี้</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {users.filter(u => u.createdAt && new Date(u.createdAt).toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA')).length}
-                  </p>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-green-100 to-green-200 rounded-xl">
-                  <Calendar className="w-8 h-8 text-green-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">แสดงผล</p>
-                  <p className="text-3xl font-bold text-purple-600">{filteredUsers.length}</p>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl">
-                  <Filter className="w-8 h-8 text-purple-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Table Card */}
-          <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-3xl border border-white/50 overflow-hidden">
-            {/* Filter Section */}
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 md:p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={20} />
-                  <input
-                    type="text"
-                    placeholder="ค้นหาชื่อ, อีเมล, เบอร์โทร..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
-                  />
-                </div>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={20} />
-                  <input
-                    type="date"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                    className="w-full md:w-auto pl-10 pr-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
-                  />
-                </div>
-                <button
-                  onClick={fetchUsers}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white font-semibold hover:bg-white/30 transition-all"
-                >
-                  <RefreshCw className="w-5 h-5" />
-                  <span className="hidden md:inline">รีเฟรช</span>
+        ) : !filtered.length ? (
+          <EmptyState
+            icon={Users}
+            title={customers.length ? "ไม่พบข้อมูลที่ค้นหา" : "ยังไม่มีข้อมูลลูกค้า"}
+            action={
+              search ? (
+                <button className="btn btn-secondary" onClick={() => setSearch("")}>
+                  ล้างการค้นหา
                 </button>
-              </div>
-            </div>
-            {/* Table Section */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
+              ) : null
+            }
+          />
+        ) : (
+          <>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="table">
                 <thead>
-                  <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <span>#</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        <span>ชื่อ-นามสกุล</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        <span>อีเมล</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4" />
-                        <span>เบอร์โทร</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span>ที่อยู่</span>
-                      </div>
-                    </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>วันที่สมัคร</span>
-                      </div>
-                    </th>
+                  <tr>
+                    <th>ลูกค้า</th>
+                    <th>เบอร์โทร</th>
+                    <th>สถานะ</th>
+                    <th className="text-right">คำสั่งซื้อ</th>
+                    <th className="text-right">ยอดซื้อรวม</th>
+                    <th>สั่งซื้อล่าสุด</th>
+                    <th>วันที่สมัคร</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {loading ? (
-                    // Loading skeleton
-                    Array(5).fill(0).map((_, index) => (
-                      <tr key={index} className="animate-pulse">
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-8"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-40"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-                        <td className="py-4 px-6 hidden lg:table-cell"><div className="h-4 bg-gray-200 rounded w-48"></div></td>
-                        <td className="py-4 px-6"><div className="h-4 bg-gray-200 rounded w-28"></div></td>
-                      </tr>
-                    ))
-                  ) : filteredUsers.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-12 text-center">
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="p-4 bg-gray-100 rounded-full mb-3">
-                            <Users className="w-12 h-12 text-gray-400" />
+                <tbody>
+                  {rows.map((c) => (
+                    <tr
+                      key={c.id}
+                      className="cursor-pointer hover:bg-slate-50"
+                      onClick={() => setSelected(c)}
+                      tabIndex={0}
+                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setSelected(c))}
+                    >
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 font-semibold text-brand-700">
+                            {initial(c.name)}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-800">{c.name || "-"}</p>
+                            <p className="text-xs text-slate-500">{c.email}</p>
                           </div>
-                          <p className="text-gray-500 font-medium">
-                            {searchTerm || filterDate ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลลูกค้า'}
-                          </p>
-                          {(searchTerm || filterDate) && (
-                            <button
-                              onClick={() => { setSearchTerm(''); setFilterDate(''); }}
-                              className="mt-3 text-blue-600 hover:text-blue-700 font-medium text-sm"
-                            >
-                              ล้างการค้นหา
-                            </button>
-                          )}
                         </div>
                       </td>
+                      <td className="whitespace-nowrap text-slate-600">{c.phone || "-"}</td>
+                      <td>{isVerified(c) ? <Badge tone="emerald">ยืนยันแล้ว</Badge> : <Badge tone="amber">ยังไม่ยืนยัน</Badge>}</td>
+                      <td className="text-right">{c.order_count}</td>
+                      <td className="text-right font-medium whitespace-nowrap">{formatTHB(c.total_spent)}</td>
+                      <td className="whitespace-nowrap text-slate-500">{c.last_order_at ? formatDate(c.last_order_at) : "-"}</td>
+                      <td className="whitespace-nowrap text-slate-500">{formatDate(c.createdAt)}</td>
                     </tr>
-                  ) : (
-                    filteredUsers.map((user, index) => (
-                      <tr 
-                        key={user.id || user.email} 
-                        className="hover:bg-blue-50/50 transition-colors group"
-                      >
-                        <td className="py-4 px-6">
-                          <span className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 rounded-lg font-bold text-sm group-hover:from-blue-200 group-hover:to-indigo-200 transition-all">
-                            {index + 1}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                              {user.name?.charAt(0).toUpperCase() || 'U'}
-                            </div>
-                            <span className="font-semibold text-gray-800">{user.name || '-'}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2 text-gray-700">
-                            <Mail className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm">{user.email || '-'}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2 text-gray-700">
-                            <Phone className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm">{user.phone || '-'}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 hidden lg:table-cell">
-                          <div className="flex items-center gap-2 text-gray-700 max-w-xs">
-                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                            <span className="text-sm truncate" title={user.address}>
-                              {user.address || '-'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              {user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              }) : '-'}
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
+            <ul className="divide-y divide-slate-100 md:hidden">
+              {rows.map((c) => (
+                <li key={c.id}>
+                  <button className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50" onClick={() => setSelected(c)}>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 font-semibold text-brand-700">
+                      {initial(c.name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-slate-800">{c.name || "-"}</p>
+                      <p className="truncate text-xs text-slate-500">{c.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-slate-900">{formatTHB(c.total_spent)}</p>
+                      <p className="text-xs text-slate-500">{c.order_count} คำสั่งซื้อ</p>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <Pager page={safePage} pageCount={pageCount} onChange={setPage} total={filtered.length} />
+          </>
+        )}
+      </div>
 
-            {/* Footer */}
-            {!loading && filteredUsers.length > 0 && (
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-sm text-gray-600">
-                    แสดง <span className="font-semibold text-gray-800">{filteredUsers.length}</span> จาก <span className="font-semibold text-gray-800">{users.length}</span> รายการ
-                  </p>
-              
+      <Modal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title="ข้อมูลลูกค้า"
+        footer={
+          selected && (
+            <>
+              <button className="btn btn-secondary" onClick={() => setSelected(null)}>
+                ปิด
+              </button>
+              <Link href={`/admin/orders?q=${encodeURIComponent(selected.email)}`} className="btn btn-primary">
+                <ShoppingBag className="h-4 w-4" /> ดูคำสั่งซื้อของลูกค้า
+              </Link>
+            </>
+          )
+        }
+      >
+        {selected && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-4">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-700 text-xl font-semibold text-white">
+                {initial(selected.name)}
+              </span>
+              <div className="min-w-0">
+                <p className="text-lg font-semibold text-slate-900">{selected.name || "-"}</p>
+                <div className="mt-1">
+                  {isVerified(selected) ? (
+                    <Badge tone="emerald">
+                      <BadgeCheck className="h-3.5 w-3.5" /> ยืนยันอีเมลแล้ว
+                    </Badge>
+                  ) : (
+                    <Badge tone="amber">ยังไม่ยืนยันอีเมล</Badge>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-lg font-bold text-slate-900">{selected.order_count}</p>
+                <p className="text-xs text-slate-500">คำสั่งซื้อ</p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-lg font-bold text-emerald-600">{formatTHB(selected.total_spent, { decimals: 0 })}</p>
+                <p className="text-xs text-slate-500">ยอดซื้อรวม</p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-sm font-bold text-slate-900">{selected.last_order_at ? formatDate(selected.last_order_at) : "-"}</p>
+                <p className="text-xs text-slate-500">สั่งซื้อล่าสุด</p>
+              </div>
+            </div>
+
+            <dl className="space-y-3 text-sm">
+              <div className="flex gap-3">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <a href={`mailto:${selected.email}`} className="link break-all">
+                  {selected.email}
+                </a>
+              </div>
+              <div className="flex gap-3">
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                {selected.phone ? (
+                  <a href={`tel:${selected.phone}`} className="link">
+                    {selected.phone}
+                  </a>
+                ) : (
+                  <span className="text-slate-500">ไม่ระบุ</span>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <span className="whitespace-pre-line text-slate-700">{selected.address || "ไม่ระบุที่อยู่"}</span>
+              </div>
+              <div className="flex gap-3">
+                <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <span className="text-slate-700">สมัครสมาชิกเมื่อ {formatDateTime(selected.createdAt)}</span>
+              </div>
+            </dl>
           </div>
-        </div>
-      </div>
+        )}
+      </Modal>
     </div>
   );
 }

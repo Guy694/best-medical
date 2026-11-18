@@ -1,274 +1,237 @@
 "use client";
+
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { UserPlus, Mail, Lock, User, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
-import Navbar from "../components/Nav";
+import Link from "next/link";
+import { CheckCircle2, Lock, Mail, MailCheck, User, UserPlus } from "lucide-react";
+import { useAuth } from "@/app/components/Providers";
+import { Alert, Spinner } from "@/app/components/ui";
+import { api } from "@/app/lib/format";
+import AuthBrandPanel, { PasswordInput, StrengthMeter } from "@/app/components/auth/AuthBrandPanel";
 
-export default function Register() {
- const [form, setForm] = useState({
-   name: "",
-   email: "",
-   password: "",
-   confirmPassword: "",
- });
- const [loading, setLoading] = useState(false);
- const [message, setMessage] = useState("");
- const [showPassword, setShowPassword] = useState(false);
- const [showConfirmPassword, setShowConfirmPassword] = useState(false);
- const router = useRouter();
-const handleChange = (e) => {
-  const { name, value } = e.target;
-  setForm((prev) => ({ ...prev, [name]: value }));
-};
+const EMPTY = { name: "", email: "", password: "", confirm: "" };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (form.password !== form.confirmPassword) {
-    setMessage("รหัสผ่านไม่ตรงกัน");
-    return;
-  }
+export default function RegisterPage() {
+  const { user } = useAuth();
+  const [form, setForm] = useState(EMPTY);
+  const [accept, setAccept] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(null);
 
-  setLoading(true);
-  setMessage("");
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+    if (errors[name]) setErrors((er) => ({ ...er, [name]: undefined }));
+  };
 
-  try {
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        name: form.name,
-        email: form.email, 
-        password: form.password 
-      }),
-    });
+  const validate = () => {
+    const er = {};
+    if (!form.name.trim()) er.name = "กรุณากรอกชื่อ-นามสกุล";
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) er.email = "รูปแบบอีเมลไม่ถูกต้อง";
+    if (form.password.length < 8) er.password = "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
+    if (form.confirm !== form.password) er.confirm = "รหัสผ่านทั้งสองช่องไม่ตรงกัน";
+    if (!accept) er.accept = "กรุณายอมรับเงื่อนไขการใช้งานและนโยบายความเป็นส่วนตัว";
+    setErrors(er);
+    return !Object.keys(er).length;
+  };
 
-    const data = await res.json();
-
-    if (res.ok) {
-      setMessage("สมัครสมาชิกสำเร็จ! กรุณาตรวจสอบอีเมลเพื่อยืนยันตัวตน");
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
-    } else {
-      setMessage(data.error || "เกิดข้อผิดพลาด");
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (submitting || !validate()) return;
+    setSubmitting(true);
+    setApiError("");
+    try {
+      const res = await api("/api/register", {
+        method: "POST",
+        body: { name: form.name.trim(), email: form.email.trim(), password: form.password },
+      });
+      setDone({ ...res, email: form.email.trim() });
+      setForm(EMPTY);
+    } catch (err) {
+      setApiError(err.message);
+    } finally {
+      setSubmitting(false);
     }
-  } catch (error) {
-    setMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen relative overflow-hidden">
-      {/* Decorative background patterns */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-      
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-      
-      {/* Content */}
-      <div className="relative z-10">
-      <Navbar />
-     
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="max-w-md mx-auto">
-            {/* Header Section */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-                <UserPlus className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">สมัครสมาชิก</h1>
-              <p className="text-gray-600">สร้างบัญชีใหม่เพื่อเริ่มใช้งาน</p>
-            </div>
+    <div className="container-page py-8 sm:py-12">
+      <div className="card mx-auto grid max-w-5xl animate-fade-in overflow-hidden lg:grid-cols-2">
+        <AuthBrandPanel title="สมัครสมาชิกฟรี" subtitle="สร้างบัญชีเพื่อสั่งซื้อสินค้าได้สะดวกขึ้น และติดตามสถานะคำสั่งซื้อทั้งหมดในที่เดียว" />
 
-            {/* Form Card */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="p-8">
-                {message && (
-                  <div className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${
-                    message.includes("สำเร็จ") 
-                      ? "bg-green-50 border border-green-200" 
-                      : "bg-red-50 border border-red-200"
-                  }`}>
-                    {message.includes("สำเร็จ") ? (
-                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    )}
-                    <span className={message.includes("สำเร็จ") ? "text-green-700" : "text-red-700"}>
-                      {message}
-                    </span>
-                  </div>
-                )}
-                
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* Name Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ชื่อ-นามสกุล <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        name="name"
-                        placeholder="กรอกชื่อ-นามสกุล"
-                        value={form.name}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-700"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Email Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      อีเมล <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="example@email.com"
-                        value={form.email}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-700"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      รหัสผ่าน <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        placeholder="กรอกรหัสผ่าน"
-                        value={form.password}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-700"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                        ) : (
-                          <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Confirm Password Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ยืนยันรหัสผ่าน <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        name="confirmPassword"
-                        placeholder="กรอกรหัสผ่านอีกครั้ง"
-                        value={form.confirmPassword}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-700"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                        ) : (
-                          <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <button 
-                    type="submit" 
-                    disabled={loading}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed font-medium shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>กำลังสมัคร...</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-5 h-5" />
-                        <span>สมัครสมาชิก</span>
-                      </>
-                    )}
-                  </button>
-                </form>
-
-                {/* Divider */}
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-500">มีบัญชีอยู่แล้ว?</span>
-                  </div>
-                </div>
-
-                {/* Login Link */}
-                <div className="text-center">
-                  <button
-                    onClick={() => router.push("/login")}
-                    className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition"
-                  >
-                    เข้าสู่ระบบที่นี่
-                  </button>
-                </div>
-              </div>
-
-              {/* Footer Note */}
-              <div className="bg-gray-50 px-8 py-4 border-t border-gray-100">
-                <p className="text-xs text-gray-600 text-center">
-                  การสมัครสมาชิกแสดงว่าคุณยอมรับ{" "}
-                  <a href="#" className="text-blue-600 hover:underline">ข้อกำหนดการใช้งาน</a>
-                  {" "}และ{" "}
-                  <a href="#" className="text-blue-600 hover:underline">นโยบายความเป็นส่วนตัว</a>
+        <div className="p-6 sm:p-10">
+          {done ? (
+            <div className="flex h-full flex-col items-center justify-center py-8 text-center">
+              <span className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                {done.needVerify ? <MailCheck className="h-8 w-8" /> : <CheckCircle2 className="h-8 w-8" />}
+              </span>
+              <h1 className="text-2xl font-bold text-slate-900">{done.needVerify ? "กรุณาตรวจสอบอีเมลของคุณ" : "สมัครสมาชิกสำเร็จ"}</h1>
+              <p className="mt-2 max-w-sm text-slate-600">{done.message}</p>
+              {done.needVerify && (
+                <p className="mt-3 max-w-sm text-sm text-slate-500">
+                  เราได้ส่งลิงก์ยืนยันไปที่ <span className="font-medium text-slate-700">{done.email}</span> หากไม่พบ
+                  กรุณาตรวจสอบในโฟลเดอร์จดหมายขยะ
                 </p>
-              </div>
+              )}
+              <Link href="/login" className="btn btn-primary mt-8">
+                ไปหน้าเข้าสู่ระบบ
+              </Link>
             </div>
-          </div>
+          ) : (
+            <>
+              <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
+                <UserPlus className="h-6 w-6" />
+              </span>
+              <h1 className="text-2xl font-bold text-slate-900">สมัครสมาชิก</h1>
+              <p className="mt-1 text-sm text-slate-500">สร้างบัญชีใหม่เพื่อเริ่มใช้งาน</p>
+
+              {user && (
+                <Alert tone="info" className="mt-6">
+                  คุณเข้าสู่ระบบอยู่แล้วในชื่อ {user.name || user.email}
+                </Alert>
+              )}
+              {apiError && (
+                <Alert tone="error" className="mt-6" title="สมัครสมาชิกไม่สำเร็จ">
+                  {apiError}
+                </Alert>
+              )}
+
+              <form onSubmit={onSubmit} className="mt-6 space-y-5" noValidate>
+                <div>
+                  <label htmlFor="name" className="label">
+                    ชื่อ-นามสกุล <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="name"
+                      name="name"
+                      autoComplete="name"
+                      required
+                      maxLength={100}
+                      value={form.name}
+                      onChange={onChange}
+                      className={`input pl-10 ${errors.name ? "input-error" : ""}`}
+                      placeholder="กรอกชื่อ-นามสกุล"
+                      aria-invalid={!!errors.name}
+                    />
+                  </div>
+                  {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="label">
+                    อีเมล <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      required
+                      value={form.email}
+                      onChange={onChange}
+                      className={`input pl-10 ${errors.email ? "input-error" : ""}`}
+                      placeholder="you@example.com"
+                      aria-invalid={!!errors.email}
+                    />
+                  </div>
+                  {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="label">
+                    รหัสผ่าน <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute top-1/2 left-3 z-10 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                    <PasswordInput
+                      id="password"
+                      name="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                      value={form.password}
+                      onChange={onChange}
+                      show={showPw}
+                      onToggle={() => setShowPw((s) => !s)}
+                      className={`pl-10 ${errors.password ? "input-error" : ""}`}
+                      placeholder="อย่างน้อย 8 ตัวอักษร"
+                      aria-invalid={!!errors.password}
+                    />
+                  </div>
+                  {errors.password ? <p className="mt-1 text-xs text-red-600">{errors.password}</p> : <StrengthMeter password={form.password} />}
+                </div>
+
+                <div>
+                  <label htmlFor="confirm" className="label">
+                    ยืนยันรหัสผ่าน <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute top-1/2 left-3 z-10 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                    <PasswordInput
+                      id="confirm"
+                      name="confirm"
+                      autoComplete="new-password"
+                      required
+                      value={form.confirm}
+                      onChange={onChange}
+                      show={showPw}
+                      onToggle={() => setShowPw((s) => !s)}
+                      className={`pl-10 ${errors.confirm ? "input-error" : ""}`}
+                      placeholder="กรอกรหัสผ่านอีกครั้ง"
+                      aria-invalid={!!errors.confirm}
+                    />
+                  </div>
+                  {errors.confirm ? (
+                    <p className="mt-1 text-xs text-red-600">{errors.confirm}</p>
+                  ) : (
+                    form.confirm &&
+                    form.confirm === form.password && <p className="mt-1 text-xs text-emerald-600">รหัสผ่านตรงกัน</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={accept}
+                      onChange={(e) => {
+                        setAccept(e.target.checked);
+                        if (errors.accept) setErrors((er) => ({ ...er, accept: undefined }));
+                      }}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-700 accent-brand-700"
+                      required
+                    />
+                    <span>
+                      ฉันยอมรับเงื่อนไขการใช้งานและนโยบายความเป็นส่วนตัวของ บริษัท เบสท เมดิคอล จำกัด
+                      และยินยอมให้ใช้ข้อมูลเพื่อการให้บริการและจัดส่งสินค้า
+                    </span>
+                  </label>
+                  {errors.accept && <p className="mt-1 text-xs text-red-600">{errors.accept}</p>}
+                </div>
+
+                <button type="submit" disabled={submitting} className="btn btn-primary btn-lg w-full">
+                  {submitting ? <Spinner /> : <UserPlus className="h-5 w-5" />}
+                  {submitting ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
+                </button>
+              </form>
+
+              <p className="mt-8 text-center text-sm text-slate-600">
+                มีบัญชีอยู่แล้ว?{" "}
+                <Link href="/login" className="link font-medium">
+                  เข้าสู่ระบบ
+                </Link>
+              </p>
+            </>
+          )}
         </div>
       </div>
-    </div> 
+    </div>
   );
 }

@@ -1,262 +1,359 @@
-// src/app/admin/payment-notice/page.jsx
 "use client";
-import React, { useState, useEffect } from "react";
-import Navbar from '@/app/components/Nav';
-import Sidebar from '@/app/components/Sidebar';
-import { Eye, Download, Check, X } from 'lucide-react';
 
-export default function AdminPaymentNotice() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedPayment, setSelectedPayment] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  CreditCard, RefreshCw, CheckCircle2, XCircle, Phone, Mail, MapPin, CalendarClock, AlertTriangle, ExternalLink, ImageOff, User,
+} from "lucide-react";
+import { AdminHeader, FilterTabs, Pager, SearchInput, paginate } from "@/app/components/admin";
+import { Alert, EmptyState, Field, Modal, Spinner, StatusBadge } from "@/app/components/ui";
+import { useToast } from "@/app/components/Providers";
+import { api, cn, formatDate, formatDateTime, formatTHB, slipSrc } from "@/app/lib/format";
 
-  useEffect(() => {
-    fetchPayments();
-  }, []);
+const PAGE_SIZE = 12;
+const isAwaiting = (n) => n.status === "PENDING" && !!n.paidAtdate;
+const timeLabel = (t) => (t ? `${String(t).slice(0, 5)} น.` : "");
 
-  const fetchPayments = async () => {
-    try {
-      const response = await fetch('/api/admin/payment-notice');
-      const data = await response.json();
-      setPayments(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error fetching payments:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updatePaymentStatus = async (orderId, status) => {
-    try {
-      const response = await fetch('/api/admin/payment-notice', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderId, status }),
-      });
-
-      if (response.ok) {
-        fetchPayments(); // Refresh the list
-        setModalOpen(false);
-      }
-    } catch (error) {
-      console.error('Error updating payment status:', error);
-    }
-  };
-
-  const viewPaymentDetail = (payment) => {
-    setSelectedPayment(payment);
-    setModalOpen(true);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('th-TH');
-  };
-
-  const formatTime = (timeString) => {
-    return timeString ? timeString.substring(0, 5) : '';
-  };
+function NoticeCard({ notice, busy, onApprove, onReject, onViewSlip }) {
+  const slip = slipSrc(notice.transfer_slip_file);
+  const awaiting = isAwaiting(notice);
+  const mismatch = notice.order_total != null && Math.abs(Number(notice.amount) - Number(notice.order_total)) > 0.009;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex">
-        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <div className="flex-1 p-6">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b">
-              <h1 className="text-2xl font-bold text-gray-800">การแจ้งชำระเงิน</h1>
-              <p className="text-gray-600 mt-2">จัดการหลักฐานการชำระเงินจากลูกค้า</p>
-            </div>
+    <article className={cn("card flex flex-col overflow-hidden", awaiting && "ring-2 ring-sky-200")}>
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
+        <Link href={`/admin/orders?q=${encodeURIComponent(notice.order_code)}`} className="link font-mono text-sm font-semibold">
+          {notice.order_code}
+        </Link>
+        {notice.status ? <StatusBadge order={{ status: notice.status, paidAtdate: notice.paidAtdate }} /> : <span className="text-xs text-slate-400">ไม่พบคำสั่งซื้อ</span>}
+      </div>
 
-            <div className="p-6">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-gray-600 mt-2">กำลังโหลด...</p>
-                </div>
-              ) : payments.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-600">ไม่มีการแจ้งชำระเงิน</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-left p-3 font-semibold">รหัสใบสั่งซื้อ</th>
-                        <th className="text-left p-3 font-semibold">ชื่อลูกค้า</th>
-                        <th className="text-left p-3 font-semibold">จำนวนเงิน</th>
-                        <th className="text-left p-3 font-semibold">วันที่โอน</th>
-                        <th className="text-left p-3 font-semibold">สถานะ</th>
-                        <th className="text-left p-3 font-semibold">หลักฐาน</th>
-                        <th className="text-left p-3 font-semibold">การดำเนินการ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payments.map((payment) => (
-                        <tr key={payment.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3">{payment.orderCode}</td>
-                          <td className="p-3">{payment.customer_name}</td>
-                          <td className="p-3">฿{Number(payment.amount).toLocaleString()}</td>
-                          <td className="p-3">
-                            {formatDate(payment.transfer_date)} {formatTime(payment.transfer_time)}
-                          </td>
-                          <td className="p-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              payment.status === 'PAID' 
-                                ? 'bg-green-100 text-green-800'
-                                : payment.status === 'PENDING'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {payment.status === 'PAID' ? 'ยืนยันแล้ว' : 
-                               payment.status === 'PENDING' ? 'รอตรวจสอบ' : 'ยกเลิก'}
-                            </span>
-                          </td>
-                          <td className="p-3">
-                            {payment.transfer_slip_file ? (
-                              <button
-                                onClick={() => viewPaymentDetail(payment)}
-                                className="text-blue-600 hover:text-blue-800 flex items-center"
-                              >
-                                <Eye className="w-4 h-4 mr-1" />
-                                ดูหลักฐาน
-                              </button>
-                            ) : (
-                              <span className="text-gray-400">ไม่มีไฟล์</span>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            <button
-                              onClick={() => viewPaymentDetail(payment)}
-                              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                            >
-                              ดูรายละเอียด
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+      <div className="flex flex-1 gap-4 p-5">
+        <button
+          type="button"
+          onClick={() => slip && onViewSlip(notice)}
+          disabled={!slip}
+          className="group relative h-32 w-24 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 sm:h-36 sm:w-28"
+          aria-label="ดูหลักฐานการโอน"
+        >
+          {slip ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={slip} alt="สลิปการโอนเงิน" className="h-full w-full object-cover transition group-hover:scale-105" />
+          ) : (
+            <span className="flex h-full flex-col items-center justify-center gap-1 text-xs text-slate-400">
+              <ImageOff className="h-5 w-5" /> ไม่มีไฟล์
+            </span>
+          )}
+        </button>
+
+        <div className="min-w-0 flex-1 space-y-1.5 text-sm">
+          <div>
+            <p className={cn("text-xl font-bold", mismatch ? "text-amber-600" : "text-slate-900")}>{formatTHB(notice.amount)}</p>
+            {notice.order_total != null && (
+              <p className={cn("text-xs", mismatch ? "font-medium text-amber-700" : "text-slate-500")}>
+                {mismatch ? (
+                  <span className="inline-flex items-center gap-1">
+                    <AlertTriangle className="h-3.5 w-3.5" /> ไม่ตรงกับยอดคำสั่งซื้อ {formatTHB(notice.order_total)}
+                  </span>
+                ) : (
+                  "ตรงกับยอดคำสั่งซื้อ"
+                )}
+              </p>
+            )}
           </div>
+          <p className="flex items-center gap-2 text-slate-700">
+            <CalendarClock className="h-4 w-4 shrink-0 text-slate-400" />
+            โอน {formatDate(notice.transfer_date)} {timeLabel(notice.transfer_time)}
+          </p>
+          <p className="flex items-center gap-2 truncate font-medium text-slate-800">
+            <User className="h-4 w-4 shrink-0 text-slate-400" /> {notice.customer_name || "-"}
+          </p>
+          {notice.customer_phone && (
+            <a href={`tel:${notice.customer_phone}`} className="flex items-center gap-2 text-slate-600 hover:text-brand-700">
+              <Phone className="h-4 w-4 shrink-0 text-slate-400" /> {notice.customer_phone}
+            </a>
+          )}
+          {notice.customer_email && (
+            <a href={`mailto:${notice.customer_email}`} className="flex min-w-0 items-center gap-2 text-slate-600 hover:text-brand-700">
+              <Mail className="h-4 w-4 shrink-0 text-slate-400" /> <span className="truncate">{notice.customer_email}</span>
+            </a>
+          )}
         </div>
       </div>
 
-      {/* Modal for payment details */}
-      {modalOpen && selectedPayment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full m-4 max-h-screen overflow-y-auto">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold">รายละเอียดการแจ้งชำระเงิน</h2>
-            </div>
-            
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">รหัสใบสั่งซื้อ</label>
-                  <p className="mt-1 text-gray-900">{selectedPayment.orderCode}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">ชื่อลูกค้า</label>
-                  <p className="mt-1 text-gray-900">{selectedPayment.customer_name}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">อีเมล</label>
-                  <p className="mt-1 text-gray-900">{selectedPayment.customer_email}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">จำนวนเงิน</label>
-                  <p className="mt-1 text-gray-900 font-bold">฿{Number(selectedPayment.amount).toLocaleString()}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">วันที่โอน</label>
-                  <p className="mt-1 text-gray-900">{formatDate(selectedPayment.transfer_date)}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">เวลาที่โอน</label>
-                  <p className="mt-1 text-gray-900">{formatTime(selectedPayment.transfer_time)}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">ธนาคาร</label>
-                  <p className="mt-1 text-gray-900">{selectedPayment.bank_account || '-'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">เลขที่อ้างอิง</label>
-                  <p className="mt-1 text-gray-900">{selectedPayment.transfer_slip || '-'}</p>
-                </div>
+      {notice.shipping_address && (
+        <p className="mx-5 mb-4 flex gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+          <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
+          <span className="line-clamp-3 whitespace-pre-line">{notice.shipping_address}</span>
+        </p>
+      )}
+
+      <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3">
+        <span className="text-xs text-slate-500">แจ้งเมื่อ {formatDateTime(notice.created_at)}</span>
+        {awaiting ? (
+          <div className="flex gap-2">
+            <button className="btn btn-danger-soft btn-sm" onClick={() => onReject(notice)} disabled={busy}>
+              <XCircle className="h-4 w-4" /> ปฏิเสธ
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={() => onApprove(notice)} disabled={busy}>
+              {busy ? <Spinner className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />} ยืนยันการชำระเงิน
+            </button>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-400">ดำเนินการแล้ว</span>
+        )}
+      </div>
+    </article>
+  );
+}
+
+export default function AdminPaymentNoticePage() {
+  const toast = useToast();
+  const [notices, setNotices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [tab, setTab] = useState("awaiting");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [busyId, setBusyId] = useState(null);
+  const [slipView, setSlipView] = useState(null);
+  const [rejecting, setRejecting] = useState(null);
+  const [reason, setReason] = useState("");
+  const [rejectError, setRejectError] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await api("/api/admin/payment-notice");
+      setNotices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const searched = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return notices;
+    return notices.filter((n) =>
+      [n.order_code, n.customer_name, n.customer_email, n.customer_phone].some((v) => String(v || "").toLowerCase().includes(q))
+    );
+  }, [notices, search]);
+
+  // only the latest notice per order is actionable in the "awaiting" tab
+  const awaiting = useMemo(() => {
+    const seen = new Set();
+    return searched.filter((n) => {
+      if (!isAwaiting(n) || seen.has(n.order_id)) return false;
+      seen.add(n.order_id);
+      return true;
+    });
+  }, [searched]);
+
+  const list = tab === "awaiting" ? awaiting : searched;
+  const pageCount = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const { rows } = paginate(list, safePage, PAGE_SIZE);
+
+  const approve = async (n) => {
+    const ok = await toast.confirm({
+      title: "ยืนยันการชำระเงิน",
+      message: `ยืนยันว่าได้รับยอดโอน ${formatTHB(n.amount)} สำหรับคำสั่งซื้อ ${n.order_code} แล้ว? ระบบจะเปลี่ยนสถานะเป็น "ชำระเงินแล้ว" และตัดสต็อกสินค้า`,
+      confirmText: "ยืนยันการชำระเงิน",
+    });
+    if (!ok) return;
+    setBusyId(n.id);
+    try {
+      const res = await api("/api/admin/payment-notice", { method: "PUT", body: { orderId: n.order_id, action: "approve" } });
+      toast.success(res?.message || "ยืนยันการชำระเงินเรียบร้อย");
+      await load();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const openReject = (n) => {
+    setRejecting(n);
+    setReason("");
+    setRejectError("");
+  };
+
+  const submitReject = async (e) => {
+    e.preventDefault();
+    if (!rejecting || busyId) return;
+    if (!reason.trim()) {
+      setRejectError("กรุณาระบุเหตุผลที่ปฏิเสธ");
+      return;
+    }
+    setBusyId(rejecting.id);
+    try {
+      const res = await api("/api/admin/payment-notice", {
+        method: "PUT",
+        body: { orderId: rejecting.order_id, action: "reject", note: reason.trim() },
+      });
+      toast.success(res?.message || "ปฏิเสธการแจ้งชำระเงินแล้ว");
+      setRejecting(null);
+      await load();
+    } catch (err) {
+      setRejectError(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div>
+      <AdminHeader
+        title="ตรวจสอบการชำระเงิน"
+        description="ตรวจสอบหลักฐานการโอนเงินจากลูกค้า และยืนยันหรือปฏิเสธการชำระเงิน"
+        actions={
+          <button className="btn btn-secondary" onClick={load} disabled={loading}>
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> รีเฟรช
+          </button>
+        }
+      />
+
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <FilterTabs
+          tabs={[
+            { value: "awaiting", label: "รอตรวจสอบ", count: awaiting.length },
+            { value: "all", label: "ทั้งหมด", count: searched.length },
+          ]}
+          value={tab}
+          onChange={(v) => {
+            setTab(v);
+            setPage(1);
+          }}
+        />
+        <SearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder="ค้นหารหัสคำสั่งซื้อ, ชื่อ, อีเมล, เบอร์โทร..."
+          className="sm:w-80"
+        />
+      </div>
+
+      {error && (
+        <Alert tone="error" title="โหลดข้อมูลไม่สำเร็จ" className="mb-4">
+          {error}
+        </Alert>
+      )}
+
+      {loading && !notices.length ? (
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="card card-body flex gap-4">
+              <div className="skeleton h-36 w-28 rounded-xl" />
+              <div className="flex-1 space-y-3">
+                <div className="skeleton h-6 w-32" />
+                <div className="skeleton h-4 w-full" />
+                <div className="skeleton h-4 w-2/3" />
               </div>
-
-              {/* Payment slip file */}
-              {selectedPayment.transfer_slip_file && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">หลักฐานการโอน</label>
-                  <div className="border rounded-lg p-4">
-                    <img
-                      src={selectedPayment.transfer_slip_file}
-                      alt="หลักฐานการโอน"
-                      className="max-w-full h-auto max-h-96 mx-auto"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
-                    />
-                    <div style={{display: 'none'}} className="text-center text-gray-500">
-                      ไม่สามารถแสดงไฟล์ได้
-                    </div>
-                    <div className="mt-2 text-center">
-                      <a
-                        href={selectedPayment.transfer_slip_file}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-blue-600 hover:text-blue-800"
-                      >
-                        <Download className="w-4 h-4 mr-1" />
-                        ดาวน์โหลด
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Action buttons */}
-              {selectedPayment.status === 'PENDING' && (
-                <div className="flex gap-3 mb-4">
-                  <button
-                    onClick={() => updatePaymentStatus(selectedPayment.order_id, 'PAID')}
-                    className="flex items-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                  >
-                    <Check className="w-4 h-4 mr-2" />
-                    ยืนยันการชำระเงิน
-                  </button>
-                  <button
-                    onClick={() => updatePaymentStatus(selectedPayment.order_id, 'CANCELLED')}
-                    className="flex items-center bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    ปฏิเสธ
-                  </button>
-                </div>
-              )}
             </div>
+          ))}
+        </div>
+      ) : !list.length ? (
+        <div className="card">
+          <EmptyState
+            icon={tab === "awaiting" ? CheckCircle2 : CreditCard}
+            title={tab === "awaiting" ? "ไม่มีรายการรอตรวจสอบ" : "ไม่มีการแจ้งชำระเงิน"}
+            description={tab === "awaiting" ? "ตรวจสอบการแจ้งชำระเงินครบทุกรายการแล้ว" : search ? "ลองเปลี่ยนคำค้นหา" : undefined}
+          />
+        </div>
+      ) : (
+        <>
+          <div className={cn("grid gap-4 md:grid-cols-2 2xl:grid-cols-3", loading && "opacity-60")}>
+            {rows.map((n) => (
+              <NoticeCard key={n.id} notice={n} busy={busyId === n.id} onApprove={approve} onReject={openReject} onViewSlip={setSlipView} />
+            ))}
+          </div>
+          {pageCount > 1 && (
+            <div className="card mt-4">
+              <Pager page={safePage} pageCount={pageCount} onChange={setPage} total={list.length} />
+            </div>
+          )}
+        </>
+      )}
 
-            <div className="p-6 border-t flex justify-end">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-              >
+      <Modal
+        open={!!slipView}
+        onClose={() => setSlipView(null)}
+        title={slipView ? `หลักฐานการโอน · ${slipView.order_code}` : ""}
+        footer={
+          slipView && (
+            <>
+              <a href={slipSrc(slipView.transfer_slip_file)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                <ExternalLink className="h-4 w-4" /> เปิดในแท็บใหม่
+              </a>
+              <button className="btn btn-primary" onClick={() => setSlipView(null)}>
                 ปิด
               </button>
+            </>
+          )
+        }
+      >
+        {slipView && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap justify-between gap-2 text-sm text-slate-600">
+              <span>
+                ยอดโอน <b className="text-slate-900">{formatTHB(slipView.amount)}</b>
+              </span>
+              <span>
+                {formatDate(slipView.transfer_date)} {timeLabel(slipView.transfer_time)}
+              </span>
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={slipSrc(slipView.transfer_slip_file)} alt="หลักฐานการโอนเงิน" className="mx-auto max-h-[65vh] rounded-xl border border-slate-200 object-contain" />
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
+
+      <Modal
+        open={!!rejecting}
+        onClose={() => !busyId && setRejecting(null)}
+        size="sm"
+        title="ปฏิเสธการแจ้งชำระเงิน"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setRejecting(null)} disabled={!!busyId}>
+              ยกเลิก
+            </button>
+            <button type="submit" form="reject-form" className="btn btn-danger" disabled={!!busyId}>
+              {busyId && <Spinner className="h-4 w-4" />} ปฏิเสธ
+            </button>
+          </>
+        }
+      >
+        {rejecting && (
+          <form id="reject-form" onSubmit={submitReject} className="space-y-4">
+            <p className="text-sm text-slate-600">
+              คำสั่งซื้อ <b className="font-mono">{rejecting.order_code}</b> จะกลับเป็นสถานะ &quot;รอชำระเงิน&quot; และลูกค้าสามารถแจ้งชำระใหม่ได้
+            </p>
+            <Field label="เหตุผลที่ปฏิเสธ" required error={rejectError}>
+              <textarea
+                className={cn("input min-h-[100px]", rejectError && "input-error")}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="เช่น ยอดเงินไม่ตรง, สลิปไม่ชัดเจน, ไม่พบยอดเงินเข้าบัญชี"
+                maxLength={1000}
+                required
+                autoFocus
+              />
+            </Field>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

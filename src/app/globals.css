@@ -1,137 +1,194 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============ Design tokens ============ */
+@theme {
+  --font-sans: var(--font-prompt), ui-sans-serif, system-ui, "Segoe UI", Tahoma, sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Brand – royal blue from the logo */
+  --color-brand-50: #eef3ff;
+  --color-brand-100: #dbe5ff;
+  --color-brand-200: #bfd0ff;
+  --color-brand-300: #93b0fd;
+  --color-brand-400: #6085f9;
+  --color-brand-500: #3b5cf4;
+  --color-brand-600: #2440e0;
+  --color-brand-700: #1c30bd;
+  --color-brand-800: #1b2a99;
+  --color-brand-900: #1b2878;
+  --color-brand-950: #131a49;
+
+  /* Accent – medical teal from the banner */
+  --color-accent-50: #effefb;
+  --color-accent-100: #c8fff4;
+  --color-accent-200: #91fee9;
+  --color-accent-300: #53f5db;
+  --color-accent-400: #1fe0c6;
+  --color-accent-500: #06c4ad;
+  --color-accent-600: #029e8e;
+  --color-accent-700: #077e73;
+  --color-accent-800: #0b645d;
+  --color-accent-900: #0e534d;
+
+  /* Logo red – prices / highlights */
+  --color-rose-brand: #ef3b3b;
+
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.06);
+  --shadow-lift: 0 10px 30px -8px rgb(28 48 189 / 0.25);
+
+  --animate-fade-in: fade-in 0.25s ease-out both;
+  --animate-slide-up: slide-up 0.3s ease-out both;
+  --animate-slide-in-right: slide-in-right 0.25s ease-out both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Text clamping utilities for article previews */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Article content styling */
-.prose {
-  line-height: 1.75;
-}
-
-.prose h1,
-.prose h2,
-.prose h3,
-.prose h4,
-.prose h5,
-.prose h6 {
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.prose p {
-  margin-bottom: 1em;
-}
-
-.prose ul,
-.prose ol {
-  margin-bottom: 1em;
-  padding-left: 1.5em;
-}
-
-.prose li {
-  margin-bottom: 0.25em;
-}
-
-.prose img {
-  margin: 1.5em 0;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-.prose blockquote {
-  border-left: 4px solid #3b82f6;
-  padding-left: 1em;
-  margin: 1.5em 0;
-  font-style: italic;
-  color: #6b7280;
-}
-
-.prose code {
-  background-color: #f3f4f6;
-  padding: 0.2em 0.4em;
-  border-radius: 0.25rem;
-  font-size: 0.875em;
-  color: #e11d48;
-}
-
-/* Smooth transitions for interactive elements */
-.hover-scale {
-  transition: transform 0.2s ease-in-out;
-}
-
-.hover-scale:hover {
-  transform: scale(1.02);
-}
-
-/* Loading animation for article cards */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+/* ============ Base ============ */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
   }
-  50% {
-    opacity: 0.5;
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+    font-family: var(--font-sans);
+  }
+  ::selection {
+    @apply bg-brand-200 text-brand-950;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
   }
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Floating blob animation for background */
-@keyframes blob {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
+/* ============ Components ============ */
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
+
+  .card {
+    @apply rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-soft)];
   }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
+  .card-body {
+    @apply p-5 sm:p-6;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium whitespace-nowrap
+      transition-all duration-150 select-none disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98];
+  }
+  .btn-sm { @apply rounded-lg px-3 py-1.5 text-xs; }
+  .btn-lg { @apply rounded-xl px-6 py-3 text-base; }
+  .btn-icon { @apply rounded-xl p-2.5; }
+  .btn-primary { @apply bg-brand-700 text-white shadow-sm hover:bg-brand-800 hover:shadow-[var(--shadow-lift)]; }
+  .btn-accent { @apply bg-accent-600 text-white shadow-sm hover:bg-accent-700; }
+  .btn-secondary { @apply border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50; }
+  .btn-ghost { @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900; }
+  .btn-danger { @apply bg-red-600 text-white hover:bg-red-700; }
+  .btn-danger-soft { @apply bg-red-50 text-red-700 hover:bg-red-100; }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+  .input {
+    @apply block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900
+      placeholder:text-slate-400 transition
+      focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 focus:outline-none
+      disabled:bg-slate-100 disabled:text-slate-500;
+  }
+  .input-error {
+    @apply border-red-400 focus:border-red-500 focus:ring-red-500/15;
+  }
+  .help {
+    @apply mt-1 text-xs text-slate-500;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset;
+  }
+
+  .section-title {
+    @apply text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl;
+  }
+
+  .link {
+    @apply font-medium text-brand-700 hover:text-brand-800 hover:underline underline-offset-4;
+  }
+
+  /* data tables (admin) */
+  .table {
+    @apply w-full text-left text-sm;
+  }
+  .table thead th {
+    @apply bg-slate-50 px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase;
+  }
+  .table tbody td {
+    @apply border-t border-slate-100 px-4 py-3 align-middle;
+  }
+  .table tbody tr {
+    @apply transition-colors hover:bg-slate-50/70;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-lg bg-slate-200/70;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }
 
-.animate-blob {
-  animation: blob 7s infinite;
+/* ============ Rich text (articles / product descriptions) ============ */
+.prose-content {
+  @apply leading-relaxed text-slate-700;
+}
+.prose-content h1, .prose-content h2, .prose-content h3, .prose-content h4 {
+  @apply mt-6 mb-3 font-semibold text-slate-900;
+}
+.prose-content h1 { @apply text-2xl; }
+.prose-content h2 { @apply text-xl; }
+.prose-content h3 { @apply text-lg; }
+.prose-content p { @apply mb-4; }
+.prose-content ul { @apply mb-4 list-disc pl-6; }
+.prose-content ol { @apply mb-4 list-decimal pl-6; }
+.prose-content li { @apply mb-1; }
+.prose-content a { @apply text-brand-700 underline; }
+.prose-content img { @apply my-6 h-auto max-w-full rounded-xl shadow-md; }
+.prose-content blockquote { @apply my-6 border-l-4 border-brand-500 bg-brand-50/60 py-2 pl-4 text-slate-600 italic; }
+.prose-content code { @apply rounded bg-slate-100 px-1.5 py-0.5 text-sm text-rose-600; }
+.prose-content hr { @apply my-8 border-slate-200; }
+
+/* tiptap editor */
+.tiptap {
+  @apply min-h-[280px] outline-none;
+}
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply pointer-events-none float-left h-0 text-slate-400;
 }
 
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
+@media print {
+  .no-print { display: none !important; }
 }

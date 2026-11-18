@@ -1,330 +1,278 @@
 "use client";
-import Navbar from '@/app/components/Nav';
-import React from 'react';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Package, ShoppingCart, Menu, X, Grid, List, Search, Filter, Tag } from "lucide-react";
-import Breadcrumb from '@/app/components/Breadcrumb';
-import Link from 'next/link';
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
+import { ArrowRight, FolderX, LayoutGrid, PackageOpen, RotateCcw } from "lucide-react";
+import ProductCard, { ProductCardSkeleton } from "@/app/components/ProductCard";
+import { Alert, Breadcrumb, EmptyState, PageHeader } from "@/app/components/ui";
+import { api, cn, imgSrc } from "@/app/lib/format";
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "สินค้าใหม่ล่าสุด" },
+  { value: "price_asc", label: "ราคา: ต่ำ → สูง" },
+  { value: "price_desc", label: "ราคา: สูง → ต่ำ" },
+  { value: "name", label: "ชื่อสินค้า (ก-ฮ)" },
+];
+
+const byNewest = (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0) || Number(b.id) - Number(a.id);
+const SORTERS = {
+  newest: byNewest,
+  // "Contact for price" (0) items go last when sorting low → high.
+  price_asc: (a, b) => (Number(a.price) <= 0) - (Number(b.price) <= 0) || Number(a.price) - Number(b.price),
+  price_desc: (a, b) => Number(b.price) - Number(a.price),
+  name: (a, b) => String(a.pro_name).localeCompare(String(b.pro_name), "th"),
+};
 
 export default function CategoryPage() {
-  const params = useParams();
-  const id = params.id;
-  const [categoriesproduct, setCategoriesproduct] = useState([]);
-  const [error, setError] = useState(null);
-  const [showMenu, setShowMenu] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState([]);
-  const [currentCategory, setCurrentCategory] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("grid"); // grid or list
-
+  const { id } = useParams();
+  const [data, setData] = useState(null);
+  const [status, setStatus] = useState("loading"); // loading | ready | notfound | error
+  const [error, setError] = useState("");
+  const [categories, setCategories] = useState(null);
+  const [sort, setSort] = useState("newest");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    setStatus("loading");
+    setError("");
+    api(`/api/categories/${encodeURIComponent(id)}`)
+      .then((d) => {
+        if (cancelled) return;
+        setData({ category: d?.category || null, products: Array.isArray(d?.products) ? d.products : [] });
+        setStatus(d?.category ? "ready" : "notfound");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.message);
+        setStatus(err.status === 404 ? "notfound" : "error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, reloadKey]);
 
-    async function fetchCategories() {
-      try {
-        const res = await fetch("/api/categories");
-        const data = await res.json();
-        setCategories(data);
-        // Find current category
-        const current = data.find(cat => cat.id === parseInt(id));
-        setCurrentCategory(current);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  useEffect(() => {
+    api("/api/categories")
+      .then((d) => setCategories(Array.isArray(d) ? d : []))
+      .catch(() => setCategories([]));
+  }, []);
 
-    async function fetchCategoriesproduct() {
-      try {
-        const res = await fetch(`/api/categories/${id}`);
-        const data = await res.json();
-        console.log("id:", id);
-        console.log("data:", data);
-        if (Array.isArray(data)) {
-          setCategoriesproduct(data);
-        } else {
-          setCategoriesproduct([]);
-          setError(data.error || "ไม่พบหมวดหมู่");
-        }
-      } catch (error) {
-        setCategoriesproduct([]);
-        setError(error.message);
-        console.error("Error fetching categories:", error);
-      }
-    }
+  useEffect(() => {
+    if (status === "ready" && data?.category) document.title = `${data.category.cate_name} | Best Medical`;
+    else if (status === "notfound") document.title = "ไม่พบหมวดหมู่ | Best Medical";
+  }, [status, data]);
 
-    fetchCategories();
-    fetchCategoriesproduct();
+  const sorted = useMemo(() => (data ? [...data.products].sort(SORTERS[sort] || byNewest) : []), [data, sort]);
 
-  }, [id]);
-
-  // Filter products based on search term
-  const filteredProducts = categoriesproduct.filter(product =>
-    product.pro_name.toLowerCase().includes(searchTerm.toLowerCase())
+  const otherCategories = (
+    <CategoryChips categories={categories} activeId={String(id)} />
   );
 
+  if (status === "notfound") {
+    return (
+      <div className="container-page py-12">
+        <div className="card">
+          <EmptyState
+            icon={FolderX}
+            title="ไม่พบหมวดหมู่สินค้านี้"
+            description="หมวดหมู่นี้อาจถูกลบหรือลิงก์ไม่ถูกต้อง เลือกดูหมวดหมู่อื่นด้านล่าง หรือดูสินค้าทั้งหมด"
+            action={
+              <Link href="/product" className="btn btn-primary">
+                ดูสินค้าทั้งหมด <ArrowRight className="h-4 w-4" />
+              </Link>
+            }
+          />
+        </div>
+        <section className="mt-8">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">หมวดหมู่อื่น ๆ</h2>
+          {otherCategories}
+        </section>
+      </div>
+    );
+  }
+
+  const category = data?.category;
+  const loading = status === "loading";
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen relative overflow-hidden">
-      {/* Decorative background patterns */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-
-      {/* Content */}
-      <div className="relative z-10">
-        <Navbar />
-
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <Breadcrumb
-            items={[
-              { label: "หน้าหลัก", href: "/" },
-              { label: "สินค้าทั้งหมด", href: "/product" },
-              { label: currentCategory?.cate_name || "หมวดหมู่" }
-            ]}
-          />
-
-          {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 mb-8 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Package className="w-10 h-10" />
-                  <h1 className="text-4xl font-bold">{currentCategory?.cate_name || "สินค้าในหมวดหมู่"}</h1>
-                </div>
-                <p className="text-blue-100">สินค้าคุณภาพในหมวดหมู่นี้</p>
+    <div>
+      {loading || !category ? (
+        <section className="border-b border-slate-200 bg-gradient-to-br from-brand-50 via-white to-accent-50">
+          <div className="container-page py-8 sm:py-10">
+            <Breadcrumb items={[{ label: "หน้าหลัก", href: "/" }, { label: "สินค้าทั้งหมด", href: "/product" }, { label: "หมวดหมู่" }]} />
+            <div className="mt-3 flex items-center gap-4">
+              <div className="skeleton h-16 w-16 rounded-2xl" />
+              <div className="space-y-2">
+                <div className="skeleton h-7 w-56" />
+                <div className="skeleton h-4 w-32" />
               </div>
-              <button
-                className="md:hidden bg-white/20 backdrop-blur-sm rounded-xl p-3 hover:bg-white/30 transition"
-                onClick={() => setShowMenu(!showMenu)}
-                aria-label="เปิดเมนูหมวดหมู่"
-              >
-                {showMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <PageHeader
+          title={
+            <span className="flex items-center gap-4">
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imgSrc(category.cate_img)}
+                  alt=""
+                  onError={(e) => (e.currentTarget.src = "/placeholder.png")}
+                  className="h-full w-full object-contain p-1.5"
+                />
+              </span>
+              <span>{category.cate_name}</span>
+            </span>
+          }
+          subtitle={`สินค้าในหมวดหมู่นี้ ${data.products.length.toLocaleString("th-TH")} รายการ`}
+          breadcrumb={[
+            { label: "หน้าหลัก", href: "/" },
+            { label: "สินค้าทั้งหมด", href: "/product" },
+            { label: category.cate_name },
+          ]}
+        >
+          <Link href={`/product?category=${category.id}`} className="btn btn-secondary">
+            <LayoutGrid className="h-4 w-4" /> ค้นหา/กรองเพิ่มเติม
+          </Link>
+        </PageHeader>
+      )}
+
+      <div className="container-page py-8">
+        {/* Other categories */}
+        <section aria-label="หมวดหมู่อื่น ๆ">{otherCategories}</section>
+
+        {status === "error" ? (
+          <Alert tone="error" title="โหลดสินค้าไม่สำเร็จ" className="mt-6">
+            {error}
+            <div className="mt-3">
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReloadKey((k) => k + 1)}>
+                <RotateCcw className="h-4 w-4" /> ลองอีกครั้ง
               </button>
             </div>
-          </div>
-
-          {/* Search and Filter Bar */}
-          <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="relative flex-1 w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="ค้นหาสินค้าในหมวดหมู่นี้..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-gray-700"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-3 rounded-xl transition ${viewMode === "grid"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                >
-                  <Grid className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-3 rounded-xl transition ${viewMode === "list"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                >
-                  <List className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Sidebar */}
-            <aside
-              className={`lg:col-span-3 ${showMenu
-                  ? "fixed inset-0 bg-black/50 z-50 md:relative md:bg-transparent"
-                  : "hidden lg:block"
-                }`}
-              onClick={(e) => {
-                if (e.target === e.currentTarget) setShowMenu(false);
-              }}
-            >
-              <div
-                className={`${showMenu
-                    ? "fixed left-0 top-0 h-full w-80 bg-white shadow-2xl overflow-y-auto"
-                    : ""
-                  } lg:sticky lg:top-6`}
-              >
-                {/* Categories Card */}
-                <div className="bg-white rounded-2xl shadow-md overflow-hidden mb-6">
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-white">
-                        <Filter className="w-5 h-5" />
-                        <h2 className="text-xl font-semibold">หมวดหมู่สินค้า</h2>
-                      </div>
-                      {showMenu && (
-                        <button
-                          onClick={() => setShowMenu(false)}
-                          className="lg:hidden text-white hover:bg-white/20 rounded-lg p-1"
-                        >
-                          <X className="w-6 h-6" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <ul className="space-y-2">
-                      <li>
-                        <Link
-                          href="/product"
-                          className="flex items-center gap-2 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-100 transition"
-                        >
-                          <Tag className="w-4 h-4" />
-                          สินค้าทั้งหมด
-                        </Link>
-                      </li>
-                      {categories.map((category) => (
-                        <li key={category.id}>
-                          <Link
-                            href={`/category/${category.id}`}
-                            className={`flex items-center gap-2 px-4 py-3 rounded-xl transition ${category.id === parseInt(id)
-                                ? "bg-blue-50 text-blue-700 font-medium"
-                                : "text-gray-700 hover:bg-gray-100"
-                              }`}
-                          >
-                            <Tag className="w-4 h-4" />
-                            {category.cate_name}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Cart Card */}
-                <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-                  <div className="bg-gradient-to-r from-green-600 to-green-700 p-5">
-                    <div className="flex items-center gap-2 text-white">
-                      <ShoppingCart className="w-5 h-5" />
-                      <h2 className="text-xl font-semibold">ตะกร้าสินค้า</h2>
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    {cart.length === 0 ? (
-                      <div className="text-center py-8">
-                        <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500">ตะกร้าสินค้าว่างเปล่า</p>
-                      </div>
-                    ) : (
-                      <ul className="space-y-3">
-                        {cart.map((item, index) => (
-                          <li key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <span className="text-gray-700">{item.name}</span>
-                            <span className="text-green-600 font-semibold">{item.price} บาท</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="lg:col-span-9">
-              <div className="bg-white rounded-2xl shadow-md p-6">
+          </Alert>
+        ) : (
+          <>
+            {/* Toolbar */}
+            <div className="card card-body mt-6 flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:py-4">
+              <p className="text-sm text-slate-600" aria-live="polite">
                 {loading ? (
-                  <div className="text-center py-20">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-500 text-lg">กำลังโหลดสินค้า...</p>
-                  </div>
-                ) : filteredProducts.length === 0 ? (
-                  <div className="text-center py-20">
-                    <Package className="w-20 h-20 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">
-                      {searchTerm ? "ไม่พบสินค้าที่ค้นหา" : "ไม่มีสินค้าในหมวดหมู่นี้"}
-                    </p>
-                  </div>
+                  "กำลังโหลดสินค้า..."
                 ) : (
                   <>
-                    <div
-                      className={
-                        viewMode === "grid"
-                          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                          : "space-y-4"
-                      }
-                    >
-                      {filteredProducts.map((product) => (
-                        <Link
-                          key={product.id}
-                          href={`/product/${product.id}`}
-                          className={
-                            viewMode === "grid"
-                              ? "group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                              : "group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 flex gap-4 p-4"
-                          }
-                        >
-                          <div className={viewMode === "grid" ? "" : "w-32 h-32 flex-shrink-0"}>
-                            <img
-                              src={product.imageUrl || "/image.png"}
-                              alt={product.pro_name}
-                              className={
-                                viewMode === "grid"
-                                  ? "w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
-                                  : "w-full h-full object-cover rounded-xl"
-                              }
-                            />
-                          </div>
-                          <div className={viewMode === "grid" ? "p-4" : "flex-1 flex flex-col justify-center"}>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition line-clamp-2">
-                              {product.pro_name}
-                            </h3>
-                            <div className="flex items-center justify-between mt-auto">
-                              <span className="text-2xl font-bold text-blue-600">
-                                ฿{parseFloat(product.price) === 0 ? 'x.xx' : Number(product.price).toLocaleString()}
-                              </span>
-                              <div className="bg-blue-600 text-white px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                                ดูรายละเอียด
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-
-                    {/* Product Count */}
-                    <div className="mt-8 pt-6 border-t border-gray-200">
-                      <div className="flex items-center justify-between text-gray-600">
-                        <span className="flex items-center gap-2">
-                          <Package className="w-5 h-5" />
-                          แสดงผลลัพธ์: {filteredProducts.length} รายการ
-                        </span>
-                        {searchTerm && (
-                          <span className="text-sm">
-                            ค้นหา: <span className="font-semibold text-blue-600">"{searchTerm}"</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    พบ <span className="font-semibold text-slate-900">{sorted.length.toLocaleString("th-TH")}</span> รายการ
                   </>
                 )}
+              </p>
+              <div className="flex items-center gap-2">
+                <label htmlFor="category-sort" className="text-sm whitespace-nowrap text-slate-600">
+                  เรียงตาม
+                </label>
+                <select id="category-sort" className="input w-auto py-2" value={sort} onChange={(e) => setSort(e.target.value)}>
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </main>
-          </div>
-        </div>
+            </div>
+
+            <div className="mt-6">
+              {loading ? (
+                <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : sorted.length === 0 ? (
+                <div className="card">
+                  <EmptyState
+                    icon={PackageOpen}
+                    title="ยังไม่มีสินค้าในหมวดหมู่นี้"
+                    description="ทางร้านกำลังเพิ่มสินค้าใหม่อย่างต่อเนื่อง หากต้องการสินค้าในหมวดนี้ สามารถติดต่อสอบถามเจ้าหน้าที่ได้"
+                    action={
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <Link href="/product" className="btn btn-primary">
+                          ดูสินค้าทั้งหมด
+                        </Link>
+                        <Link href="/contact" className="btn btn-secondary">
+                          ติดต่อสอบถาม
+                        </Link>
+                      </div>
+                    }
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+                  {sorted.map((p) => (
+                    <ProductCard key={p.id} product={{ ...p, cate_name: p.cate_name || category?.cate_name }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function CategoryChips({ categories, activeId }) {
+  if (categories === null) {
+    return (
+      <div className="flex gap-2 overflow-hidden">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="skeleton h-10 w-32 shrink-0 rounded-full" />
+        ))}
+      </div>
+    );
+  }
+  if (!categories.length) return null;
+  return (
+    <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <Link
+        href="/product"
+        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pr-4 pl-1.5 text-sm text-slate-700 transition hover:border-brand-200 hover:text-brand-700"
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-700 text-white">
+          <LayoutGrid className="h-3.5 w-3.5" />
+        </span>
+        ทั้งหมด
+      </Link>
+      {categories.map((c) => {
+        const active = String(c.id) === activeId;
+        return (
+          <Link
+            key={c.id}
+            href={`/category/${c.id}`}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "inline-flex shrink-0 items-center gap-2 rounded-full border py-1.5 pr-3 pl-1.5 text-sm transition",
+              active
+                ? "border-brand-700 bg-brand-700 font-medium text-white"
+                : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 hover:text-brand-700"
+            )}
+          >
+            <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-slate-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imgSrc(c.cate_img)}
+                alt=""
+                loading="lazy"
+                onError={(e) => (e.currentTarget.src = "/placeholder.png")}
+                className="h-full w-full object-contain p-0.5"
+              />
+            </span>
+            <span className="whitespace-nowrap">{c.cate_name}</span>
+            <span className={cn("rounded-full px-1.5 text-xs", active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500")}>
+              {Number(c.product_count || 0).toLocaleString("th-TH")}
+            </span>
+          </Link>
+        );
+      })}
     </div>
   );
 }
