@@ -7,7 +7,6 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
-  output: "standalone",
   poweredByHeader: false,
   images: {
     remotePatterns: [
@@ -24,6 +23,7 @@ const nextConfig = {
         { source: "/pdimage/:file", destination: "/api/media/pdimage/:file" },
         { source: "/categoryimg/:file", destination: "/api/media/categoryimg/:file" },
         { source: "/uploads/articles/:file", destination: "/api/media/uploads/articles/:file" },
+        { source: "/payments/:file", destination: "/api/media/payments/:file" },
       ],
     };
   },

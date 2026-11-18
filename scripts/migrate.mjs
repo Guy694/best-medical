@@ -198,5 +198,40 @@ await db.query(`CREATE TABLE IF NOT EXISTS analytics_events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 log("analytics_events ready");
 
+// ---------------------------------------------------------------------------
+// 9) Payment slips: legacy files in public/payments were world-readable.
+//    Copy them to private storage/payments (staff-only via /api/media),
+//    verify each copy, then remove the public copy and repoint the DB.
+// ---------------------------------------------------------------------------
+{
+  const path = await import("path");
+  const pubDir = path.join(process.cwd(), "public", "payments");
+  const privDir = path.join(process.cwd(), "storage", "payments");
+  if (fs.existsSync(pubDir)) {
+    fs.mkdirSync(privDir, { recursive: true });
+    let moved = 0;
+    for (const name of fs.readdirSync(pubDir)) {
+      if (name.startsWith(".")) continue;
+      const src = path.join(pubDir, name);
+      const dst = path.join(privDir, name);
+      if (!fs.statSync(src).isFile()) continue;
+      if (!fs.existsSync(dst)) fs.copyFileSync(src, dst);
+      if (fs.statSync(dst).size === fs.statSync(src).size) {
+        fs.unlinkSync(src);
+        moved++;
+      }
+    }
+    if (moved) log(`moved ${moved} payment slip(s) to storage/payments`);
+    if (fs.readdirSync(pubDir).filter((n) => !n.startsWith(".")).length === 0) fs.rmSync(pubDir, { recursive: true, force: true });
+  }
+  for (const [table, col] of [["order", "transfer_slip_file"], ["payment_notifications", "transfer_slip_file"]]) {
+    const [r] = await db.query(
+      `UPDATE \`${table}\` SET \`${col}\` = CONCAT('/api/media/payments/', SUBSTRING_INDEX(\`${col}\`, '/', -1))
+       WHERE \`${col}\` REGEXP '(^|/)payments/[^/]+$' AND \`${col}\` NOT LIKE '/api/media/%'`
+    );
+    if (r.affectedRows) log(`repointed ${r.affectedRows} slip path(s) in ${table}`);
+  }
+}
+
 await db.end();
 console.log("✔ Database is up to date");

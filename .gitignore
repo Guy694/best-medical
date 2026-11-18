@@ -47,7 +47,11 @@ next-env.d.ts
 # local db backups
 /backups
 
-# uploaded files
+# uploaded files (live on the server, never in git)
+/public/pdimage/*
+/public/categoryimg/*
+/public/uploads/*
+/public/payments/*
 /storage/payments/*
 !/storage/payments/.gitkeep
 !.env.example
