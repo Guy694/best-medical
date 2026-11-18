@@ -173,5 +173,30 @@ await db.query(`CREATE TABLE IF NOT EXISTS order_status_history (
   INDEX idx_order_code (order_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
+// 8) analytics (self-hosted visitor statistics). Times stored in UTC.
+await db.query(`CREATE TABLE IF NOT EXISTS analytics_events (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  event VARCHAR(30) NOT NULL,
+  visitor_id CHAR(16) NOT NULL,
+  session_id CHAR(16) NOT NULL,
+  path VARCHAR(255) NULL,
+  product_id INT NULL,
+  search VARCHAR(100) NULL,
+  referrer VARCHAR(255) NULL,
+  source VARCHAR(100) NULL,
+  device VARCHAR(10) NULL,
+  browser VARCHAR(20) NULL,
+  os VARCHAR(20) NULL,
+  is_new TINYINT(1) NOT NULL DEFAULT 0,
+  value DECIMAL(12,2) NULL,
+  ref_code VARCHAR(60) NULL,
+  created_at DATETIME NOT NULL,
+  INDEX idx_ae_time (created_at),
+  INDEX idx_ae_event_time (event, created_at),
+  INDEX idx_ae_session (session_id),
+  INDEX idx_ae_product (product_id, event)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+log("analytics_events ready");
+
 await db.end();
 console.log("✔ Database is up to date");

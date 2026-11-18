@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, AlertCircle, Info, X, AlertTriangle } from "lucide-react";
+import { track } from "@/app/lib/analytics-client";
 
 /* =========================================================
    Toasts + confirm dialog
@@ -296,6 +297,7 @@ export function CartProvider({ children }) {
   }, [items, ready]);
 
   const add = useCallback((product, quantity = 1) => {
+    track("add_to_cart", { pid: Number(product.id), value: Number(product.price) * quantity });
     setItems((cur) => {
       const id = Number(product.id);
       const max = product.stock != null ? Math.max(1, Number(product.stock)) : 999;

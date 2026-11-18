@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FolderTree, Package, FileText, Users, UserCog, ShoppingBag, MessageSquare,
-  CreditCard, Menu, X, LogOut, Store, ChevronRight,
+  CreditCard, Menu, X, LogOut, Store, ChevronRight, BarChart3, TrendingUp, PackageSearch,
 } from "lucide-react";
 import { useAuth } from "@/app/components/Providers";
 import { PageLoader } from "@/app/components/ui";
@@ -13,6 +13,14 @@ import { cn } from "@/app/lib/format";
 
 const NAV = [
   { group: "ภาพรวม", items: [{ href: "/admin/dashboard", label: "แดชบอร์ด", icon: LayoutDashboard }] },
+  {
+    group: "วิเคราะห์ข้อมูล",
+    items: [
+      { href: "/admin/analytics", label: "สถิติผู้เข้าชม", icon: BarChart3, exact: true },
+      { href: "/admin/analytics/sales", label: "วิเคราะห์ยอดขาย", icon: TrendingUp },
+      { href: "/admin/analytics/products", label: "วิเคราะห์สินค้า", icon: PackageSearch },
+    ],
+  },
   {
     group: "การขาย",
     items: [
@@ -51,8 +59,8 @@ function SidebarContent({ pathname, isAdmin, onNavigate }) {
           <div key={g.group}>
             <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-brand-400 uppercase">{g.group}</p>
             <ul className="space-y-1">
-              {g.items.map(({ href, label, icon: Icon }) => {
-                const active = pathname === href || pathname.startsWith(href + "/");
+              {g.items.map(({ href, label, icon: Icon, exact }) => {
+                const active = pathname === href || (!exact && pathname.startsWith(href + "/"));
                 return (
                   <li key={href}>
                     <Link
@@ -94,7 +102,7 @@ export default function AdminLayout({ children }) {
 
   if (loading || !isStaff) return <PageLoader label="กำลังตรวจสอบสิทธิ์..." />;
 
-  const current = NAV.flatMap((g) => g.items).find((i) => pathname === i.href || pathname.startsWith(i.href + "/"));
+  const current = NAV.flatMap((g) => g.items).find((i) => pathname === i.href || (!i.exact && pathname.startsWith(i.href + "/")));
 
   return (
     <div className="min-h-screen bg-slate-100/70">

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Wallet, ShoppingBag, CreditCard, Truck, Users, MessageSquare, RefreshCw, TrendingUp, PackageX, Trophy, ArrowRight,
+  Wallet, ShoppingBag, CreditCard, Truck, Users, MessageSquare, RefreshCw, TrendingUp, PackageX, Trophy, ArrowRight, BarChart3,
 } from "lucide-react";
 import { AdminHeader, StatCard } from "@/app/components/admin";
 import { Alert, EmptyState, StatusBadge } from "@/app/components/ui";
@@ -250,6 +250,30 @@ export default function AdminDashboardPage() {
               </span>
               <span className="flex shrink-0 items-center gap-1 font-medium">
                 ตรวจสอบเลย <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          )}
+
+          {data.visitors && (
+            <Link
+              href="/admin/analytics"
+              className="card flex flex-wrap items-center gap-x-8 gap-y-3 px-5 py-4 transition hover:shadow-md"
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <BarChart3 className="h-5 w-5 text-brand-600" /> ผู้เข้าชมเว็บไซต์
+              </span>
+              <span className="flex items-center gap-2 text-sm text-slate-600">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                ออนไลน์ <b className="text-slate-900">{num(data.visitors.online)}</b>
+              </span>
+              <span className="text-sm text-slate-600">วันนี้ <b className="text-slate-900">{num(data.visitors.today)}</b> คน</span>
+              <span className="text-sm text-slate-600">เมื่อวาน <b className="text-slate-900">{num(data.visitors.yesterday)}</b> คน</span>
+              <span className="text-sm text-slate-600">30 วัน <b className="text-slate-900">{num(data.visitors.last30)}</b> คน · {num(data.visitors.pageviews30)} หน้า</span>
+              <span className="ml-auto flex items-center gap-1 text-sm font-medium text-brand-700">
+                ดูสถิติทั้งหมด <ArrowRight className="h-4 w-4" />
               </span>
             </Link>
           )}

@@ -74,6 +74,16 @@ export const GET = route(
               0 AS unreadContacts`
     ));
 
+    const [visitors] = await query(
+      `SELECT
+         COUNT(DISTINCT CASE WHEN created_at >= UTC_TIMESTAMP() - INTERVAL 5 MINUTE THEN session_id END) AS online,
+         COUNT(DISTINCT CASE WHEN DATE(CONVERT_TZ(created_at,'+00:00','+07:00')) = DATE(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00','+07:00')) THEN visitor_id END) AS today,
+         COUNT(DISTINCT CASE WHEN DATE(CONVERT_TZ(created_at,'+00:00','+07:00')) = DATE(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00','+07:00')) - INTERVAL 1 DAY THEN visitor_id END) AS yesterday,
+         COUNT(DISTINCT CASE WHEN created_at >= UTC_TIMESTAMP() - INTERVAL 30 DAY THEN visitor_id END) AS last30,
+         COUNT(CASE WHEN created_at >= UTC_TIMESTAMP() - INTERVAL 30 DAY THEN 1 END) AS pageviews30
+       FROM analytics_events WHERE event = 'pageview' AND created_at >= UTC_TIMESTAMP() - INTERVAL 31 DAY`
+    ).catch(() => [{}]);
+
     const years = await query("SELECT DISTINCT YEAR(createdAt) AS y FROM `order` ORDER BY y DESC");
 
     const n = (v) => Number(v) || 0;
@@ -96,6 +106,7 @@ export const GET = route(
       recentOrders: recentOrders.map((o) => ({ ...o, totalPrice: n(o.totalPrice) })),
       topProducts,
       lowStock,
+      visitors: Object.fromEntries(Object.entries(visitors || {}).map(([k, v]) => [k, n(v)])),
       counts: Object.fromEntries(Object.entries(counts[0] || counts).map(([k, v]) => [k, n(v)])),
     });
   },

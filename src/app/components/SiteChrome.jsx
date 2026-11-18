@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { track } from "@/app/lib/analytics-client";
 import { MessageCircle, X, Phone, ArrowUp } from "lucide-react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -91,6 +92,17 @@ function CookieBanner() {
   );
 }
 
+function PageTracker() {
+  const pathname = usePathname();
+  const search = useSearchParams()?.toString();
+  useEffect(() => {
+    // small delay so document.title is updated by the page
+    const t = setTimeout(() => track("pageview"), 300);
+    return () => clearTimeout(t);
+  }, [pathname, search]);
+  return null;
+}
+
 /** Storefront chrome (navbar/footer); the admin area renders its own shell. */
 export default function SiteChrome({ children }) {
   const pathname = usePathname() || "/";
@@ -102,6 +114,9 @@ export default function SiteChrome({ children }) {
       <Footer />
       <FloatingContact />
       <CookieBanner />
+      <Suspense fallback={null}>
+        <PageTracker />
+      </Suspense>
     </div>
   );
 }

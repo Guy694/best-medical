@@ -1,4 +1,5 @@
 import Link from "next/link";
+import VisitorCounter from "./VisitorCounter";
 import { MapPin, Phone, Mail, Clock, ShieldCheck, Truck, BadgeCheck, Headphones } from "lucide-react";
 
 const PERKS = [
@@ -108,7 +109,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container-page flex flex-col items-center justify-between gap-2 py-5 text-xs text-brand-300 sm:flex-row">
           <p>© {new Date().getFullYear()} บริษัท เบสท เมดิคอล จำกัด – All Rights Reserved</p>
-          <p>Best-Medical-BM</p>
+          <VisitorCounter />
         </div>
       </div>
     </footer>

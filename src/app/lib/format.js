@@ -1,4 +1,5 @@
 // Client-side formatting & display helpers.
+import { analyticsHeaders } from "./analytics-client";
 
 export const formatTHB = (value, { decimals = 2 } = {}) =>
   `฿${Number(value || 0).toLocaleString("th-TH", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
@@ -62,7 +63,11 @@ export async function api(url, { method = "GET", body, headers, ...rest } = {}) 
   const isForm = typeof FormData !== "undefined" && body instanceof FormData;
   const res = await fetch(url, {
     method,
-    headers: isForm || body === undefined ? headers : { "Content-Type": "application/json", ...headers },
+    headers: {
+      ...(typeof window !== "undefined" ? analyticsHeaders() : {}),
+      ...(isForm || body === undefined ? {} : { "Content-Type": "application/json" }),
+      ...headers,
+    },
     body: isForm ? body : body === undefined ? undefined : JSON.stringify(body),
     cache: "no-store",
     ...rest,

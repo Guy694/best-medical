@@ -2,6 +2,7 @@ import { transaction } from "@/app/lib/db";
 import { route, json, HttpError, email as parseEmail, rateLimit } from "@/app/lib/api";
 import { newOrderCode } from "@/app/lib/orders";
 import { sendMail, templates } from "@/app/lib/mailer";
+import { recordServerEvent } from "@/app/lib/analytics";
 
 const SHIPPING_METHODS = ["ems", "store"];
 
@@ -97,6 +98,8 @@ export const POST = route(async (req, { user }) => {
 
     return { order_code, orderId, items, totalPrice, shippingCost };
   });
+
+  await recordServerEvent(req, "purchase", { value: result.totalPrice, ref_code: result.order_code });
 
   // fire-and-forget email
   sendMail({
