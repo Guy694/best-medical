@@ -38,6 +38,22 @@ PREV=$(git rev-parse HEAD)
 echo "$PREV" > "$BK/previous_commit"
 echo "ไฟล์รูป/สลิปก่อนอัปเดต: $BEFORE ไฟล์ · commit เดิม: ${PREV:0:7}"
 
+# payment slips are private: move them out of public/ BEFORE pulling
+# (the new version no longer keeps them in git, so this keeps the pull clean;
+#  the total file count is unchanged because both folders are counted)
+if [ -d public/payments ]; then
+  mkdir -p storage/payments
+  for f in public/payments/*; do
+    [ -f "$f" ] || continue
+    dst="storage/payments/$(basename "$f")"
+    [ -e "$dst" ] || cp -p "$f" "$dst"
+    cmp -s "$f" "$dst" && rm -f "$f"
+  done
+  rmdir public/payments 2>/dev/null || true
+  echo "ย้ายสลิปไป storage/payments แล้ว: $(find storage/payments -type f ! -name .gitkeep | wc -l) ไฟล์"
+fi
+[ "$(count_files)" -eq "$BEFORE" ] || die "จำนวนไฟล์ไม่ตรงหลังย้ายสลิป — หยุดก่อน git pull (backup: $BK)"
+
 restore_files() {
   say "กู้คืนไฟล์รูปจาก backup"
   tar xzf "$BK/uploads.tar.gz" -C "$APP_DIR"
